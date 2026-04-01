@@ -1,4 +1,12 @@
 {
+  "scripts": {
+    "supabase:init": "supabase init",
+    "supabase:login": "supabase login",
+    "supabase:link": "supabase link",
+    "supabase:migration:new": "supabase migration new",
+    "supabase:db:push": "supabase db push",
+    "supabase:db:pull": "supabase db pull"
+  },
   "devDependencies": {
     "supabase": "^2.84.6"
   }

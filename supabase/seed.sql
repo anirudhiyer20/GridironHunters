@@ -1,0 +1,2 @@
+-- Seed data belongs here when we intentionally add local or development seed records.
+-- Keep this file safe to run multiple times when possible.
