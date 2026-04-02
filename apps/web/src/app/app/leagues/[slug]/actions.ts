@@ -136,15 +136,41 @@ export async function pauseDraft(formData: FormData) {
   );
 }
 
-export async function removeMember(formData: FormData) {
+export async function fillWithBots(formData: FormData) {
   const leagueId = String(formData.get("league_id") ?? "");
   const leagueSlug = String(formData.get("league_slug") ?? "");
-  const memberUserId = String(formData.get("member_user_id") ?? "");
 
   const supabase = await createClient();
-  const { error } = await supabase.rpc("remove_league_member", {
+  const { data, error } = await supabase.rpc("fill_empty_slots_with_bots", {
     p_league_id: leagueId,
-    p_member_user_id: memberUserId,
+  });
+
+  if (error) {
+    redirect(
+      `/app/leagues/${leagueSlug}?message=${encodeMessage(error.message)}`,
+    );
+  }
+
+  const result = Array.isArray(data) ? data[0] : data;
+
+  revalidatePath(`/app/leagues/${leagueSlug}`);
+  revalidatePath("/app/leagues");
+  redirect(
+    `/app/leagues/${leagueSlug}?message=${encodeMessage(
+      `Added ${result?.filled_count ?? 0} bot participants for testing.`,
+    )}`,
+  );
+}
+
+export async function removeParticipant(formData: FormData) {
+  const leagueId = String(formData.get("league_id") ?? "");
+  const leagueSlug = String(formData.get("league_slug") ?? "");
+  const participantId = String(formData.get("participant_id") ?? "");
+
+  const supabase = await createClient();
+  const { error } = await supabase.rpc("remove_league_participant", {
+    p_league_id: leagueId,
+    p_participant_id: participantId,
   });
 
   if (error) {
@@ -156,6 +182,6 @@ export async function removeMember(formData: FormData) {
   revalidatePath(`/app/leagues/${leagueSlug}`);
   revalidatePath("/app/leagues");
   redirect(
-    `/app/leagues/${leagueSlug}?message=${encodeMessage("Member removed.")}`,
+    `/app/leagues/${leagueSlug}?message=${encodeMessage("Participant removed.")}`,
   );
 }

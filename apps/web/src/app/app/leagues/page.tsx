@@ -12,11 +12,15 @@ export default async function LeaguesPage({
 }) {
   const { message } = await searchParams;
   const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
   const { data: memberships, error } = await supabase
     .from("league_members")
     .select(
       "role, joined_at, leagues!inner(id, name, slug, season, status, draft_starts_at, max_members)",
     )
+    .eq("user_id", user?.id ?? "")
     .order("joined_at", { ascending: false });
 
   return (

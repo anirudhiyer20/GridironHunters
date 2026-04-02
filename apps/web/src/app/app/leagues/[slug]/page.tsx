@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { notFound } from "next/navigation";
 
 import { PageShell } from "@/components/page-shell";
@@ -5,13 +6,24 @@ import { Panel } from "@/components/panel";
 import { createClient } from "@/lib/supabase/server";
 
 import {
+  fillWithBots,
   pauseDraft,
   prepareDraft,
   regenerateInvite,
-  removeMember,
+  removeParticipant,
   startDraft,
   updateLeagueSettings,
 } from "./actions";
+
+type LeagueParticipant = {
+  id: string;
+  user_id: string | null;
+  participant_type: "human" | "bot";
+  role: "commissioner" | "member";
+  display_name: string;
+  email: string | null;
+  joined_at: string;
+};
 
 export default async function LeagueDetailPage({
   params,
@@ -38,47 +50,71 @@ export default async function LeagueDetailPage({
     notFound();
   }
 
-  const [{ data: inviteCodes }, { data: members }, { data: currentMembership }, { data: draft }] =
-    await Promise.all([
-      supabase
-        .from("invite_codes")
-        .select("code, expires_at, disabled_at, created_at")
-        .eq("league_id", league.id)
-        .is("disabled_at", null)
-        .order("created_at", { ascending: false }),
-      supabase
-        .from("league_members")
-        .select("user_id, role, joined_at, profiles(display_name, email)")
-        .eq("league_id", league.id)
-        .order("joined_at", { ascending: true }),
-      supabase
-        .from("league_members")
-        .select("role")
-        .eq("league_id", league.id)
-        .eq("user_id", user?.id ?? "")
-        .maybeSingle(),
-      supabase
-        .from("drafts")
-        .select("id, status, scheduled_start_at, actual_started_at, paused_at, current_round, current_pick_number, pick_time_seconds")
-        .eq("league_id", league.id)
-        .maybeSingle(),
-    ]);
+  const [
+    { data: inviteCodes },
+    { data: participants, error: participantsError },
+    { data: currentParticipant },
+    { data: draft },
+  ] = await Promise.all([
+    supabase
+      .from("invite_codes")
+      .select("code, expires_at, disabled_at, created_at")
+      .eq("league_id", league.id)
+      .is("disabled_at", null)
+      .order("created_at", { ascending: false }),
+    supabase
+      .from("league_participants")
+      .select("id, user_id, participant_type, role, display_name, email, joined_at")
+      .eq("league_id", league.id)
+      .order("joined_at", { ascending: true }),
+    supabase
+      .from("league_participants")
+      .select("id, user_id, participant_type, role, display_name, email, joined_at")
+      .eq("league_id", league.id)
+      .eq("user_id", user?.id ?? "")
+      .maybeSingle(),
+    supabase
+      .from("drafts")
+      .select(
+        "id, status, scheduled_start_at, actual_started_at, paused_at, current_round, current_pick_number, pick_time_seconds",
+      )
+      .eq("league_id", league.id)
+      .maybeSingle(),
+  ]);
+
+  const myDraftPicks =
+    currentParticipant?.id
+      ? (
+          await supabase
+            .from("draft_picks")
+            .select("pick_number, round_number, slot_number")
+            .eq("league_id", league.id)
+            .eq("participant_id", currentParticipant.id)
+            .order("pick_number", { ascending: true })
+        ).data
+      : [];
 
   const activeInvite = inviteCodes?.[0];
-  const isCommissioner = currentMembership?.role === "commissioner";
+  const isCommissioner = currentParticipant?.role === "commissioner";
   const canManageLeague = isCommissioner && league.status === "pre_draft";
   const canManageDraft = isCommissioner;
+  const visibleParticipants = (participants ?? []) as LeagueParticipant[];
+  const totalParticipants = visibleParticipants.length;
+  const openSpots = Math.max(league.max_members - totalParticipants, 0);
+  const hasBotParticipants = visibleParticipants.some(
+    (participant) => participant.participant_type === "bot",
+  );
 
   return (
     <PageShell
       eyebrow="App / Leagues"
       title={league.name}
-      description="This league page now supports the first commissioner controls for Sprint 1: durable invite-code management and pre-draft member removal."
+      description="This league page now reads from league participants so humans and bots can share the same draft and season structure."
     >
       <div className="grid gap-8 lg:grid-cols-[1.15fr_0.85fr]">
         <Panel
           title="League overview"
-          description="More commissioner controls and pre-draft settings will continue to land here as Sprint 1 progresses."
+          description="Commissioner controls, participant management, and pre-draft settings all live here while the league remains editable."
         >
           {message ? (
             <p className="mb-5 rounded-2xl border border-emerald-400/20 bg-emerald-400/10 px-4 py-3 text-sm text-emerald-100">
@@ -97,15 +133,21 @@ export default async function LeagueDetailPage({
                   : "Not set"
               }
             />
-            <InfoRow label="League Size" value={String(league.max_members)} />
+            <InfoRow
+              label="Participants"
+              value={`${totalParticipants} / ${league.max_members}`}
+            />
             <InfoRow
               label="Your Role"
-              value={currentMembership?.role ?? "member"}
+              value={currentParticipant?.role ?? "member"}
             />
           </div>
 
           {canManageLeague ? (
-            <form action={updateLeagueSettings} className="mt-6 grid gap-4 md:grid-cols-2">
+            <form
+              action={updateLeagueSettings}
+              className="mt-6 grid gap-4 md:grid-cols-2"
+            >
               <input type="hidden" name="league_id" value={league.id} />
               <input type="hidden" name="league_slug" value={league.slug} />
               <label className="grid gap-2 text-sm text-stone-200">
@@ -169,24 +211,47 @@ export default async function LeagueDetailPage({
           )}
 
           {canManageLeague ? (
-            <form action={regenerateInvite} className="mt-5">
-              <input type="hidden" name="league_id" value={league.id} />
-              <input type="hidden" name="league_slug" value={league.slug} />
-              <button
-                type="submit"
-                className="rounded-full bg-[#f2bf5e] px-5 py-3 text-sm font-medium text-[#102117]"
-              >
-                Regenerate invite code
-              </button>
-            </form>
+            <div className="mt-5 flex flex-wrap gap-3">
+              <form action={regenerateInvite}>
+                <input type="hidden" name="league_id" value={league.id} />
+                <input type="hidden" name="league_slug" value={league.slug} />
+                <button
+                  type="submit"
+                  className="rounded-full bg-[#f2bf5e] px-5 py-3 text-sm font-medium text-[#102117]"
+                >
+                  Regenerate invite code
+                </button>
+              </form>
+
+              {openSpots > 0 ? (
+                <form action={fillWithBots}>
+                  <input type="hidden" name="league_id" value={league.id} />
+                  <input type="hidden" name="league_slug" value={league.slug} />
+                  <button
+                    type="submit"
+                    className="rounded-full border border-emerald-300/25 bg-emerald-400/10 px-5 py-3 text-sm text-emerald-100"
+                  >
+                    Fill remaining spots with bots
+                  </button>
+                </form>
+              ) : null}
+            </div>
           ) : null}
+
+          <p className="mt-4 text-sm text-stone-400">
+            {openSpots > 0
+              ? `${openSpots} open spot${openSpots === 1 ? "" : "s"} remain before the league is full.`
+              : hasBotParticipants
+                ? "League is full, including bot participants added for testing."
+                : "League is full."}
+          </p>
         </Panel>
       </div>
 
       <div className="mt-8">
         <Panel
           title="Draft lifecycle"
-          description="This is the first draft control layer. It separates pre-draft setup from draft-ready, draft-live, and paused states so commissioners can handle delays more safely."
+          description="This separates pre-draft setup from draft-ready, draft-live, and paused states so commissioners can handle delays more safely."
         >
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
             <InfoRow label="League State" value={league.status.replaceAll("_", " ")} />
@@ -214,6 +279,48 @@ export default async function LeagueDetailPage({
             />
           </div>
 
+          <div className="mt-5 rounded-[1.5rem] border border-white/10 bg-white/6 px-5 py-5">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <div>
+                <p className="font-mono text-[0.7rem] uppercase tracking-[0.28em] text-stone-500">
+                  Draft summary
+                </p>
+                <p className="mt-2 text-sm text-stone-300">
+                  For testing, draft order is generated when the commissioner prepares the room. The participant layer lets us support both humans and bots without fake auth accounts.
+                </p>
+              </div>
+              <Link
+                href={`/app/leagues/${league.slug}/draft`}
+                className="rounded-full border border-white/14 bg-white/6 px-5 py-3 text-sm font-medium text-stone-100 transition-colors hover:bg-white/10"
+              >
+                Open draft room
+              </Link>
+            </div>
+
+            <div className="mt-5 grid gap-3 sm:grid-cols-3">
+              <InfoRow
+                label="Your Slot"
+                value={
+                  myDraftPicks?.[0]?.slot_number
+                    ? String(myDraftPicks[0].slot_number)
+                    : "Not published"
+                }
+              />
+              <InfoRow
+                label="Next Picks"
+                value={
+                  myDraftPicks && myDraftPicks.length > 0
+                    ? myDraftPicks
+                        .slice(0, 3)
+                        .map((pick) => `#${pick.pick_number}`)
+                        .join(", ")
+                    : "Not published"
+                }
+              />
+              <InfoRow label="Format" value="Snake draft, 8 rounds" />
+            </div>
+          </div>
+
           {canManageDraft ? (
             <div className="mt-5 flex flex-wrap gap-3">
               {league.status === "pre_draft" ? (
@@ -229,7 +336,8 @@ export default async function LeagueDetailPage({
                 </form>
               ) : null}
 
-              {(league.status === "draft_ready" || league.status === "draft_paused") ? (
+              {(league.status === "draft_ready" ||
+                league.status === "draft_paused") ? (
                 <form action={startDraft}>
                   <input type="hidden" name="league_id" value={league.id} />
                   <input type="hidden" name="league_slug" value={league.slug} />
@@ -237,7 +345,9 @@ export default async function LeagueDetailPage({
                     type="submit"
                     className="rounded-full bg-[#f2bf5e] px-5 py-3 text-sm font-medium text-[#102117]"
                   >
-                    {league.status === "draft_paused" ? "Resume draft" : "Start draft now"}
+                    {league.status === "draft_paused"
+                      ? "Resume draft"
+                      : "Start draft now"}
                   </button>
                 </form>
               ) : null}
@@ -261,57 +371,67 @@ export default async function LeagueDetailPage({
 
       <div className="mt-8">
         <Panel
-          title="League members"
-          description="Commissioners can remove non-commissioner members only before the league leaves pre-draft."
+          title="League participants"
+          description="Participants are now the draft-facing source of truth. Humans and bots both live here so the room can behave consistently."
         >
-          <div className="grid gap-4">
-            {members?.map((member) => {
-              const profile = Array.isArray(member.profiles)
-                ? member.profiles[0]
-                : member.profiles;
-              const canRemove =
-                canManageLeague &&
-                member.role !== "commissioner" &&
-                member.user_id !== user?.id;
+          {participantsError ? (
+            <p className="rounded-2xl border border-amber-400/20 bg-amber-400/10 px-4 py-3 text-sm text-amber-100">
+              Unable to load participants: {participantsError.message}
+            </p>
+          ) : visibleParticipants.length > 0 ? (
+            <div className="grid gap-4">
+              {visibleParticipants.map((participant) => {
+                const canRemove =
+                  canManageLeague &&
+                  participant.role !== "commissioner" &&
+                  participant.id !== currentParticipant?.id;
 
-              return (
-                <div
-                  key={member.user_id}
-                  className="flex flex-col gap-4 rounded-[1.5rem] border border-white/10 bg-white/6 px-5 py-5 sm:flex-row sm:items-center sm:justify-between"
-                >
-                  <div>
-                    <p className="text-lg font-semibold text-stone-100">
-                      {profile?.display_name ?? "Unnamed player"}
-                    </p>
-                    <p className="mt-1 text-sm text-stone-400">
-                      {profile?.email ?? "No email available"}
-                    </p>
-                    <p className="mt-2 font-mono text-[0.7rem] uppercase tracking-[0.28em] text-stone-500">
-                      {member.role}
-                    </p>
+                return (
+                  <div
+                    key={participant.id}
+                    className="flex flex-col gap-4 rounded-[1.5rem] border border-white/10 bg-white/6 px-5 py-5 sm:flex-row sm:items-center sm:justify-between"
+                  >
+                    <div>
+                      <p className="text-lg font-semibold text-stone-100">
+                        {participant.display_name}
+                      </p>
+                      <p className="mt-1 text-sm text-stone-400">
+                        {participant.email ??
+                          (participant.participant_type === "bot"
+                            ? "Bot participant"
+                            : "No email available")}
+                      </p>
+                      <p className="mt-2 font-mono text-[0.7rem] uppercase tracking-[0.28em] text-stone-500">
+                        {participant.participant_type} | {participant.role}
+                      </p>
+                    </div>
+
+                    {canRemove ? (
+                      <form action={removeParticipant}>
+                        <input type="hidden" name="league_id" value={league.id} />
+                        <input type="hidden" name="league_slug" value={league.slug} />
+                        <input
+                          type="hidden"
+                          name="participant_id"
+                          value={participant.id}
+                        />
+                        <button
+                          type="submit"
+                          className="rounded-full border border-rose-300/25 bg-rose-400/10 px-4 py-2 text-sm text-rose-100"
+                        >
+                          Remove participant
+                        </button>
+                      </form>
+                    ) : null}
                   </div>
-
-                  {canRemove ? (
-                    <form action={removeMember}>
-                      <input type="hidden" name="league_id" value={league.id} />
-                      <input type="hidden" name="league_slug" value={league.slug} />
-                      <input
-                        type="hidden"
-                        name="member_user_id"
-                        value={member.user_id}
-                      />
-                      <button
-                        type="submit"
-                        className="rounded-full border border-rose-300/25 bg-rose-400/10 px-4 py-2 text-sm text-rose-100"
-                      >
-                        Remove member
-                      </button>
-                    </form>
-                  ) : null}
-                </div>
-              );
-            })}
-          </div>
+                );
+              })}
+            </div>
+          ) : (
+            <p className="rounded-2xl border border-white/10 bg-white/6 px-4 py-3 text-sm text-stone-300">
+              No participants are visible yet for this league.
+            </p>
+          )}
         </Panel>
       </div>
     </PageShell>
