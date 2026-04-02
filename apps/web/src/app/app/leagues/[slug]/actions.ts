@@ -108,9 +108,10 @@ export async function startDraft(formData: FormData) {
   }
 
   revalidatePath(`/app/leagues/${leagueSlug}`);
+  revalidatePath(`/app/leagues/${leagueSlug}/draft`);
   revalidatePath("/app/leagues");
   redirect(
-    `/app/leagues/${leagueSlug}?message=${encodeMessage("Draft started.")}`,
+    `/app/leagues/${leagueSlug}/draft?message=${encodeMessage("Draft started.")}`,
   );
 }
 
@@ -130,9 +131,10 @@ export async function pauseDraft(formData: FormData) {
   }
 
   revalidatePath(`/app/leagues/${leagueSlug}`);
+  revalidatePath(`/app/leagues/${leagueSlug}/draft`);
   revalidatePath("/app/leagues");
   redirect(
-    `/app/leagues/${leagueSlug}?message=${encodeMessage("Draft paused.")}`,
+    `/app/leagues/${leagueSlug}/draft?message=${encodeMessage("Draft paused.")}`,
   );
 }
 
@@ -183,5 +185,83 @@ export async function removeParticipant(formData: FormData) {
   revalidatePath("/app/leagues");
   redirect(
     `/app/leagues/${leagueSlug}?message=${encodeMessage("Participant removed.")}`,
+  );
+}
+
+export async function submitDraftPick(formData: FormData) {
+  const leagueId = String(formData.get("league_id") ?? "");
+  const leagueSlug = String(formData.get("league_slug") ?? "");
+  const playerKey = String(formData.get("player_key") ?? "").trim();
+  const playerName = String(formData.get("player_name") ?? "").trim();
+  const position = String(formData.get("position") ?? "").trim().toUpperCase();
+
+  if (!playerKey || !playerName || !position) {
+    redirect(
+      `/app/leagues/${leagueSlug}/draft?message=${encodeMessage("Choose a player before submitting your pick.")}`,
+    );
+  }
+
+  const supabase = await createClient();
+  const { data, error } = await supabase.rpc("submit_draft_pick", {
+    p_league_id: leagueId,
+    p_player_key: playerKey,
+    p_player_name: playerName,
+    p_position: position,
+  });
+
+  if (error) {
+    const message =
+      error.message === "That player has already been drafted."
+        ? "That player was just drafted by someone else. The room has been refreshed, so choose another player."
+        : error.message === "It is not your turn to pick."
+          ? "The draft moved before your pick was submitted. The room has been refreshed."
+          : error.message;
+
+    revalidatePath(`/app/leagues/${leagueSlug}/draft`);
+    redirect(
+      `/app/leagues/${leagueSlug}/draft?message=${encodeMessage(message)}`,
+    );
+  }
+
+  const result = Array.isArray(data) ? data[0] : data;
+
+  revalidatePath(`/app/leagues/${leagueSlug}`);
+  revalidatePath(`/app/leagues/${leagueSlug}/draft`);
+  revalidatePath("/app/leagues");
+  redirect(
+    `/app/leagues/${leagueSlug}/draft?message=${encodeMessage(
+      result?.bot_autopicks
+        ? `Pick submitted. ${result.bot_autopicks} bot pick(s) resolved automatically.`
+        : "Pick submitted.",
+    )}`,
+  );
+}
+
+export async function resolveTimedOutPick(formData: FormData) {
+  const leagueId = String(formData.get("league_id") ?? "");
+  const leagueSlug = String(formData.get("league_slug") ?? "");
+
+  const supabase = await createClient();
+  const { data, error } = await supabase.rpc("resolve_timed_out_pick", {
+    p_league_id: leagueId,
+  });
+
+  if (error) {
+    redirect(
+      `/app/leagues/${leagueSlug}/draft?message=${encodeMessage(error.message)}`,
+    );
+  }
+
+  const result = Array.isArray(data) ? data[0] : data;
+
+  revalidatePath(`/app/leagues/${leagueSlug}`);
+  revalidatePath(`/app/leagues/${leagueSlug}/draft`);
+  revalidatePath("/app/leagues");
+  redirect(
+    `/app/leagues/${leagueSlug}/draft?message=${encodeMessage(
+      result?.bot_autopicks
+        ? `Timed out pick resolved as ${result.player_name} (${result.player_position}). ${result.bot_autopicks} bot pick(s) also resolved.`
+        : `Timed out pick resolved as ${result?.player_name} (${result?.player_position}).`,
+    )}`,
   );
 }
