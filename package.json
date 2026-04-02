@@ -1,11 +1,15 @@
 {
+  "private": true,
   "scripts": {
     "supabase:init": "supabase init",
     "supabase:login": "supabase login",
     "supabase:link": "supabase link",
     "supabase:migration:new": "supabase migration new",
     "supabase:db:push": "supabase db push",
-    "supabase:db:pull": "supabase db pull"
+    "supabase:db:pull": "supabase db pull",
+    "web:dev": "npm --prefix apps/web run dev",
+    "web:build": "npm --prefix apps/web run build",
+    "web:lint": "npm --prefix apps/web run lint"
   },
   "devDependencies": {
     "supabase": "^2.84.6"
