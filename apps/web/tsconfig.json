@@ -19,7 +19,9 @@
       }
     ],
     "paths": {
-      "@/*": ["./src/*"]
+      "@/*": ["./src/*"],
+      "@gridiron/shared": ["../../packages/shared/src/index.ts"],
+      "@gridiron/shared/*": ["../../packages/shared/src/*"]
     }
   },
   "include": [

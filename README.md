@@ -4,6 +4,10 @@ This repository is the home base for the GridironHunters project.
 
 Fantasy Football Game.
 
+## Start Here
+
+Read [PROJECT_CONTEXT.md](PROJECT_CONTEXT.md) first.
+
 Before development starts, use the docs in [`docs/`](docs/) to:
 
 - connect the project to the correct GitHub repository
