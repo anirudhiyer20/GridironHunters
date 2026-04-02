@@ -2,8 +2,15 @@ import Link from "next/link";
 
 import { PageShell } from "@/components/page-shell";
 import { Panel } from "@/components/panel";
+import { signup } from "@/app/auth/actions";
 
-export default function SignupPage() {
+export default async function SignupPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ message?: string }>;
+}) {
+  const { message } = await searchParams;
+
   return (
     <PageShell
       eyebrow="Auth"
@@ -12,11 +19,17 @@ export default function SignupPage() {
     >
       <div className="grid gap-8 lg:grid-cols-[1fr_0.8fr]">
         <Panel title="Sign Up">
-          <form className="grid gap-4">
+          <form action={signup} className="grid gap-4">
+            {message ? (
+              <p className="rounded-2xl border border-[#f2bf5e]/30 bg-[#f2bf5e]/10 px-4 py-3 text-sm text-[#f7dca6]">
+                {message}
+              </p>
+            ) : null}
             <label className="grid gap-2 text-sm text-stone-200">
               Display name
               <input
                 type="text"
+                name="display_name"
                 placeholder="Anirudh"
                 className="rounded-2xl border border-white/12 bg-white/6 px-4 py-3 outline-none placeholder:text-stone-500"
               />
@@ -25,6 +38,7 @@ export default function SignupPage() {
               Email
               <input
                 type="email"
+                name="email"
                 placeholder="you@example.com"
                 className="rounded-2xl border border-white/12 bg-white/6 px-4 py-3 outline-none placeholder:text-stone-500"
               />
@@ -33,15 +47,16 @@ export default function SignupPage() {
               Password
               <input
                 type="password"
+                name="password"
                 placeholder="Choose a secure password"
                 className="rounded-2xl border border-white/12 bg-white/6 px-4 py-3 outline-none placeholder:text-stone-500"
               />
             </label>
             <button
-              type="button"
+              type="submit"
               className="mt-2 rounded-full bg-[#f2bf5e] px-5 py-3 text-sm font-medium text-[#102117]"
             >
-              Signup flow next
+              Create account
             </button>
           </form>
         </Panel>

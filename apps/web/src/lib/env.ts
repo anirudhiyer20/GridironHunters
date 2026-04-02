@@ -26,3 +26,13 @@ export function getPublicSupabaseEnv() {
     supabasePublishableKey,
   };
 }
+
+export function requirePublicSupabaseEnv() {
+  if (!hasSupabaseEnv) {
+    throw new Error(
+      "Missing NEXT_PUBLIC_SUPABASE_URL or NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY in apps/web/.env.local",
+    );
+  }
+
+  return getPublicSupabaseEnv();
+}

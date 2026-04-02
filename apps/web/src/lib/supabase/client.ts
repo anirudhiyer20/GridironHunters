@@ -1,13 +1,13 @@
-import { createClient } from "@supabase/supabase-js";
+import { createBrowserClient } from "@supabase/ssr";
 
-import { getPublicSupabaseEnv, hasSupabaseEnv } from "@/lib/env";
+import { hasSupabaseEnv, requirePublicSupabaseEnv } from "@/lib/env";
 
-export function createBrowserSupabaseClient() {
+export function createClient() {
   if (!hasSupabaseEnv) {
     return null;
   }
 
-  const { supabaseUrl, supabasePublishableKey } = getPublicSupabaseEnv();
+  const { supabaseUrl, supabasePublishableKey } = requirePublicSupabaseEnv();
 
-  return createClient(supabaseUrl, supabasePublishableKey);
+  return createBrowserClient(supabaseUrl, supabasePublishableKey);
 }
