@@ -215,7 +215,9 @@ export async function submitDraftPick(formData: FormData) {
         ? "That player was just drafted by someone else. The room has been refreshed, so choose another player."
         : error.message === "It is not your turn to pick."
           ? "The draft moved before your pick was submitted. The room has been refreshed."
-          : error.message;
+          : error.message === "You are currently on autopick. Reclaim control before making a manual pick."
+            ? "You are on autopick right now. Reclaim manual control first, then make your pick."
+            : error.message;
 
     revalidatePath(`/app/leagues/${leagueSlug}/draft`);
     redirect(
@@ -263,5 +265,57 @@ export async function resolveTimedOutPick(formData: FormData) {
         ? `Timed out pick resolved as ${result.player_name} (${result.player_position}). ${result.bot_autopicks} bot pick(s) also resolved.`
         : `Timed out pick resolved as ${result?.player_name} (${result?.player_position}).`,
     )}`,
+  );
+}
+
+export async function forceAutopickCurrentPick(formData: FormData) {
+  const leagueId = String(formData.get("league_id") ?? "");
+  const leagueSlug = String(formData.get("league_slug") ?? "");
+
+  const supabase = await createClient();
+  const { data, error } = await supabase.rpc("force_autopick_current_pick", {
+    p_league_id: leagueId,
+  });
+
+  if (error) {
+    redirect(
+      `/app/leagues/${leagueSlug}/draft?message=${encodeMessage(error.message)}`,
+    );
+  }
+
+  const result = Array.isArray(data) ? data[0] : data;
+
+  revalidatePath(`/app/leagues/${leagueSlug}`);
+  revalidatePath(`/app/leagues/${leagueSlug}/draft`);
+  revalidatePath("/app/leagues");
+  redirect(
+    `/app/leagues/${leagueSlug}/draft?message=${encodeMessage(
+      result?.bot_autopicks
+        ? `Commissioner forced an autopick: ${result.player_name} (${result.player_position}). ${result.bot_autopicks} bot pick(s) also resolved.`
+        : `Commissioner forced an autopick: ${result?.player_name} (${result?.player_position}).`,
+    )}`,
+  );
+}
+
+export async function reclaimManualControl(formData: FormData) {
+  const leagueId = String(formData.get("league_id") ?? "");
+  const leagueSlug = String(formData.get("league_slug") ?? "");
+
+  const supabase = await createClient();
+  const { error } = await supabase.rpc("reclaim_manual_draft_control", {
+    p_league_id: leagueId,
+  });
+
+  if (error) {
+    redirect(
+      `/app/leagues/${leagueSlug}/draft?message=${encodeMessage(error.message)}`,
+    );
+  }
+
+  revalidatePath(`/app/leagues/${leagueSlug}`);
+  revalidatePath(`/app/leagues/${leagueSlug}/draft`);
+  revalidatePath("/app/leagues");
+  redirect(
+    `/app/leagues/${leagueSlug}/draft?message=${encodeMessage("Manual draft control reclaimed. You will keep it unless you time out again.")}`,
   );
 }

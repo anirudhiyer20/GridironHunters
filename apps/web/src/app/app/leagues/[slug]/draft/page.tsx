@@ -4,7 +4,12 @@ import { PageShell } from "@/components/page-shell";
 import { Panel } from "@/components/panel";
 import { createClient } from "@/lib/supabase/server";
 
-import { resolveTimedOutPick, submitDraftPick } from "../actions";
+import {
+  forceAutopickCurrentPick,
+  reclaimManualControl,
+  resolveTimedOutPick,
+  submitDraftPick,
+} from "../actions";
 import { DraftLiveClient } from "./draft-live-client";
 
 type DraftRoomPick = {
@@ -25,6 +30,8 @@ type LeagueParticipant = {
   participant_type: "human" | "bot";
   display_name: string;
   role?: "commissioner" | "member";
+  draft_control_mode: "manual" | "autopick";
+  draft_control_reason: string | null;
 };
 
 type TestDraftPlayer = {
@@ -60,7 +67,19 @@ export default async function DraftRoomPage({
     notFound();
   }
 
-  const [{ data: draft }, { data: picks }, { data: participants }, { data: myParticipant }] =
+  const { data: initialDraft } = await supabase
+    .from("drafts")
+    .select("status")
+    .eq("league_id", league.id)
+    .maybeSingle();
+
+  if (initialDraft?.status === "live") {
+    await supabase.rpc("process_live_draft_queue", {
+      p_league_id: league.id,
+    });
+  }
+
+  const [draftResult, picksResult, participantsResult, myParticipantResult, availablePlayersResult] =
     await Promise.all([
       supabase
         .from("drafts")
@@ -78,30 +97,41 @@ export default async function DraftRoomPage({
         .order("pick_number", { ascending: true }),
       supabase
         .from("league_participants")
-        .select("id, user_id, participant_type, display_name, role")
+        .select(
+          "id, user_id, participant_type, display_name, role, draft_control_mode, draft_control_reason",
+        )
         .eq("league_id", league.id),
       supabase
         .from("league_participants")
-        .select("id, user_id, participant_type, display_name, role")
+        .select(
+          "id, user_id, participant_type, display_name, role, draft_control_mode, draft_control_reason",
+        )
         .eq("league_id", league.id)
         .eq("user_id", user?.id ?? "")
         .maybeSingle(),
+      supabase.rpc("list_available_test_players", {
+        p_league_id: league.id,
+      }),
     ]);
 
-  const participantList = (participants ?? []) as LeagueParticipant[];
-  const draftPicks = (picks ?? []) as DraftRoomPick[];
+  const draft = draftResult.data;
+  const draftPicks = (picksResult.data ?? []) as DraftRoomPick[];
+  const participantList = (participantsResult.data ?? []) as LeagueParticipant[];
+  const myParticipant = myParticipantResult.data as LeagueParticipant | null;
+  const availablePlayers = ((availablePlayersResult.data ?? []) as Array<{
+    player_key: string;
+    player_name: string;
+    picked_position: string;
+  }>).map((player) => ({
+    key: player.player_key,
+    name: player.player_name,
+    position: player.picked_position as TestDraftPlayer["position"],
+  }));
+
   const participantsById = new Map(
     participantList.map((participant) => [participant.id, participant]),
   );
   const groupedPicks = groupPicksByRound(draftPicks);
-  const draftedKeys = new Set(
-    draftPicks
-      .map((pick) => pick.picked_player_key)
-      .filter((value): value is string => Boolean(value)),
-  );
-  const availablePlayers = buildTestDraftPool().filter(
-    (player) => !draftedKeys.has(player.key),
-  );
   const availablePlayersByPosition = new Map(
     TEST_DRAFT_POSITIONS.map((position) => [
       position,
@@ -123,14 +153,9 @@ export default async function DraftRoomPage({
     draft?.status === "live" &&
     currentParticipant?.participant_type === "human" &&
     myParticipant?.role === "commissioner";
-
-  const pickStartedAt = draft?.current_pick_started_at
-    ? new Date(draft.current_pick_started_at)
-    : null;
-  const timeoutAt =
-    pickStartedAt && draft?.pick_time_seconds
-      ? new Date(pickStartedAt.getTime() + draft.pick_time_seconds * 1000)
-      : null;
+  const canForceAutopick =
+    canResolveTimeout && currentParticipant?.draft_control_mode === "manual";
+  const isMyAutopickMode = myParticipant?.draft_control_mode === "autopick";
 
   const myRoster = myParticipant
     ? draftPicks.filter(
@@ -155,7 +180,13 @@ export default async function DraftRoomPage({
           title="Draft status"
           description="For now, order is published when the commissioner prepares the draft room. The same participant model now supports both humans and test bots in a single draft loop."
         >
-          <DraftLiveClient isLive={draft?.status === "live"} />
+          <DraftLiveClient
+            isLive={draft?.status === "live"}
+            leagueId={league.id}
+            currentPickStartedAt={draft?.current_pick_started_at ?? null}
+            pickTimeSeconds={draft?.pick_time_seconds ?? null}
+            onTheClockName={currentParticipant?.display_name ?? null}
+          />
           {message ? (
             <p className="mb-5 rounded-2xl border border-emerald-400/20 bg-emerald-400/10 px-4 py-3 text-sm text-emerald-100">
               {message}
@@ -183,17 +214,35 @@ export default async function DraftRoomPage({
               value={currentParticipant?.display_name ?? "Waiting"}
             />
             <InfoRow
-              label="Timeout"
-              value={timeoutAt ? timeoutAt.toLocaleTimeString() : "Not running"}
+              label="Current Control"
+              value={currentParticipant?.draft_control_mode ?? "n/a"}
             />
           </div>
+
+          {isMyAutopickMode ? (
+            <div className="mt-5 rounded-[1.5rem] border border-sky-300/25 bg-sky-400/10 px-5 py-5">
+              <p className="text-sm text-sky-100">
+                You are currently in autopick mode{myParticipant?.draft_control_reason ? ` because of ${myParticipant.draft_control_reason.replaceAll("_", " ")}` : ""}. Reclaim manual control whenever you are ready, and you will keep it unless you time out again.
+              </p>
+              <div className="mt-4">
+                <form action={reclaimManualControl}>
+                  <input type="hidden" name="league_id" value={league.id} />
+                  <input type="hidden" name="league_slug" value={league.slug} />
+                  <button
+                    type="submit"
+                    className="rounded-full border border-sky-300/30 bg-sky-400/15 px-5 py-3 text-sm text-sky-100"
+                  >
+                    Reclaim manual control
+                  </button>
+                </form>
+              </div>
+            </div>
+          ) : null}
 
           {canResolveTimeout ? (
             <div className="mt-5 rounded-[1.5rem] border border-white/10 bg-white/6 px-5 py-5">
               <p className="text-sm text-stone-300">
-                {timeoutAt
-                  ? `If ${currentParticipant?.display_name} has exceeded the pick clock, you can resolve this turn at or after ${timeoutAt.toLocaleTimeString()}.`
-                  : `${currentParticipant?.display_name} is currently on the clock.`}
+                Once the pick clock reaches 00:00, the room should auto-advance on its own. If someone is clearly unavailable or stuck, you can still force autopick early and they will stay on autopick until they reclaim control.
               </p>
               <div className="mt-4 flex flex-wrap gap-3">
                 <form action={resolveTimedOutPick}>
@@ -206,9 +255,18 @@ export default async function DraftRoomPage({
                     Resolve timed out pick
                   </button>
                 </form>
-                <p className="self-center text-sm text-stone-400">
-                  The database will reject this if the timer has not actually expired yet.
-                </p>
+                {canForceAutopick ? (
+                  <form action={forceAutopickCurrentPick}>
+                    <input type="hidden" name="league_id" value={league.id} />
+                    <input type="hidden" name="league_slug" value={league.slug} />
+                    <button
+                      type="submit"
+                      className="rounded-full border border-rose-300/25 bg-rose-400/10 px-5 py-3 text-sm text-rose-100"
+                    >
+                      Force autopick now
+                    </button>
+                  </form>
+                ) : null}
               </div>
             </div>
           ) : null}
@@ -257,7 +315,7 @@ export default async function DraftRoomPage({
                                   {participant?.display_name ?? "Unknown participant"}
                                 </p>
                                 <p className="mt-1 text-xs uppercase tracking-[0.24em] text-stone-500">
-                                  {participant?.participant_type ?? "unknown"}
+                                  {participant?.participant_type ?? "unknown"} | {participant?.draft_control_mode ?? "manual"}
                                 </p>
                                 <p className="mt-3 text-sm text-stone-300">
                                   {pick.picked_player_name
@@ -322,10 +380,26 @@ export default async function DraftRoomPage({
               title="Pick center"
               description="Only the current on-the-clock human participant can submit a pick. Bot turns resolve automatically while the draft is live."
             >
-              {isMyTurn ? (
+              {isMyTurn && isMyAutopickMode ? (
+                <div className="grid gap-4">
+                  <p className="rounded-2xl border border-sky-300/25 bg-sky-400/10 px-4 py-3 text-sm text-sky-100">
+                    It is your turn, but you are currently in autopick mode. Reclaim manual control first if you want to choose this pick yourself. Otherwise the system or commissioner can let autopick handle it.
+                  </p>
+                  <form action={reclaimManualControl}>
+                    <input type="hidden" name="league_id" value={league.id} />
+                    <input type="hidden" name="league_slug" value={league.slug} />
+                    <button
+                      type="submit"
+                      className="rounded-full border border-sky-300/30 bg-sky-400/15 px-5 py-3 text-sm text-sky-100"
+                    >
+                      Reclaim manual control
+                    </button>
+                  </form>
+                </div>
+              ) : isMyTurn ? (
                 <div className="grid gap-5">
                   <p className="rounded-2xl border border-white/10 bg-white/6 px-4 py-3 text-sm text-stone-300">
-                    This list refreshes during the live draft, but the database still has the final say. If another participant grabs a player first, your submission will be rejected and the room will refresh.
+                    This list comes straight from the database now. If another participant grabs a player first, the player should disappear on refresh and the submission will still be rejected server-side.
                   </p>
                   {TEST_DRAFT_POSITIONS.map((position) => {
                     const options = availablePlayersByPosition.get(position) ?? [];
@@ -384,7 +458,9 @@ export default async function DraftRoomPage({
                     : currentParticipant?.participant_type === "bot"
                       ? `${currentParticipant.display_name} is a bot. Its pick will resolve automatically.`
                       : currentParticipant
-                        ? `${currentParticipant.display_name} is currently on the clock.`
+                        ? currentParticipant.draft_control_mode === "autopick"
+                          ? `${currentParticipant.display_name} is on the clock in autopick mode.`
+                          : `${currentParticipant.display_name} is currently on the clock.`
                         : "Waiting for the current pick to load."}
                 </p>
               )}
@@ -427,16 +503,6 @@ export default async function DraftRoomPage({
         </div>
       </div>
     </PageShell>
-  );
-}
-
-function buildTestDraftPool(): TestDraftPlayer[] {
-  return TEST_DRAFT_POSITIONS.flatMap((position) =>
-    Array.from({ length: 20 }, (_, index) => ({
-      key: `${position}${String(index + 1).padStart(2, "0")}`,
-      name: `Test ${position} ${index + 1}`,
-      position,
-    })),
   );
 }
 
