@@ -191,11 +191,9 @@ export async function removeParticipant(formData: FormData) {
 export async function submitDraftPick(formData: FormData) {
   const leagueId = String(formData.get("league_id") ?? "");
   const leagueSlug = String(formData.get("league_slug") ?? "");
-  const playerKey = String(formData.get("player_key") ?? "").trim();
-  const playerName = String(formData.get("player_name") ?? "").trim();
-  const position = String(formData.get("position") ?? "").trim().toUpperCase();
+  const playerId = String(formData.get("player_id") ?? "").trim();
 
-  if (!playerKey || !playerName || !position) {
+  if (!playerId) {
     redirect(
       `/app/leagues/${leagueSlug}/draft?message=${encodeMessage("Choose a player before submitting your pick.")}`,
     );
@@ -204,9 +202,7 @@ export async function submitDraftPick(formData: FormData) {
   const supabase = await createClient();
   const { data, error } = await supabase.rpc("submit_draft_pick", {
     p_league_id: leagueId,
-    p_player_key: playerKey,
-    p_player_name: playerName,
-    p_position: position,
+    p_player_id: playerId,
   });
 
   if (error) {

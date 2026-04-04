@@ -19,6 +19,7 @@ type DraftRoomPick = {
   round_number: number;
   slot_number: number;
   status: string;
+  picked_player_id: string | null;
   picked_player_key: string | null;
   picked_player_name: string | null;
   picked_position: string | null;
@@ -34,13 +35,29 @@ type LeagueParticipant = {
   draft_control_reason: string | null;
 };
 
-type TestDraftPlayer = {
+type DraftablePlayer = {
+  id: string;
   key: string;
-  name: string;
+  fullName: string;
+  shortName: string | null;
   position: "QB" | "RB" | "WR" | "TE";
+  nflTeam: string;
+  byeWeek: number | null;
+  yearsExperience: number;
+  age: number | null;
+  college: string | null;
+  fantasyPointsPpr: number;
+  gamesPlayed: number;
+  passingYards: number;
+  passingTds: number;
+  rushingYards: number;
+  rushingTds: number;
+  receptions: number;
+  receivingYards: number;
+  receivingTds: number;
 };
 
-const TEST_DRAFT_POSITIONS = ["QB", "RB", "WR", "TE"] as const;
+const PLAYER_POSITIONS = ["QB", "RB", "WR", "TE"] as const;
 
 export default async function DraftRoomPage({
   params,
@@ -91,7 +108,7 @@ export default async function DraftRoomPage({
       supabase
         .from("draft_picks")
         .select(
-          "id, participant_id, pick_number, round_number, slot_number, status, picked_player_key, picked_player_name, picked_position",
+          "id, participant_id, pick_number, round_number, slot_number, status, picked_player_id, picked_player_key, picked_player_name, picked_position",
         )
         .eq("league_id", league.id)
         .order("pick_number", { ascending: true }),
@@ -109,8 +126,9 @@ export default async function DraftRoomPage({
         .eq("league_id", league.id)
         .eq("user_id", user?.id ?? "")
         .maybeSingle(),
-      supabase.rpc("list_available_test_players", {
+      supabase.rpc("list_available_draft_players", {
         p_league_id: league.id,
+        p_position: null,
       }),
     ]);
 
@@ -119,13 +137,45 @@ export default async function DraftRoomPage({
   const participantList = (participantsResult.data ?? []) as LeagueParticipant[];
   const myParticipant = myParticipantResult.data as LeagueParticipant | null;
   const availablePlayers = ((availablePlayersResult.data ?? []) as Array<{
+    player_id: string;
     player_key: string;
-    player_name: string;
+    full_name: string;
+    short_name: string | null;
     picked_position: string;
+    nfl_team: string;
+    bye_week: number | null;
+    years_experience: number;
+    age: number | null;
+    college: string | null;
+    fantasy_points_ppr: number;
+    games_played: number;
+    passing_yards: number;
+    passing_tds: number;
+    rushing_yards: number;
+    rushing_tds: number;
+    receptions: number;
+    receiving_yards: number;
+    receiving_tds: number;
   }>).map((player) => ({
+    id: player.player_id,
     key: player.player_key,
-    name: player.player_name,
-    position: player.picked_position as TestDraftPlayer["position"],
+    fullName: player.full_name,
+    shortName: player.short_name,
+    position: player.picked_position as DraftablePlayer["position"],
+    nflTeam: player.nfl_team,
+    byeWeek: player.bye_week,
+    yearsExperience: player.years_experience,
+    age: player.age,
+    college: player.college,
+    fantasyPointsPpr: Number(player.fantasy_points_ppr ?? 0),
+    gamesPlayed: Number(player.games_played ?? 0),
+    passingYards: Number(player.passing_yards ?? 0),
+    passingTds: Number(player.passing_tds ?? 0),
+    rushingYards: Number(player.rushing_yards ?? 0),
+    rushingTds: Number(player.rushing_tds ?? 0),
+    receptions: Number(player.receptions ?? 0),
+    receivingYards: Number(player.receiving_yards ?? 0),
+    receivingTds: Number(player.receiving_tds ?? 0),
   }));
 
   const participantsById = new Map(
@@ -133,7 +183,7 @@ export default async function DraftRoomPage({
   );
   const groupedPicks = groupPicksByRound(draftPicks);
   const availablePlayersByPosition = new Map(
-    TEST_DRAFT_POSITIONS.map((position) => [
+    PLAYER_POSITIONS.map((position) => [
       position,
       availablePlayers.filter((player) => player.position === position),
     ]),
@@ -173,12 +223,12 @@ export default async function DraftRoomPage({
     <PageShell
       eyebrow="App / Leagues / Draft"
       title={`${league.name} draft room`}
-      description="This room now supports the first real pick flow: humans make live picks, bots auto-advance during testing, and roster rules are enforced at the database layer."
+      description="This room now drafts against a real player model with team, bye-week, and prior-season production context instead of placeholder names."
     >
       <div className="grid gap-8">
         <Panel
           title="Draft status"
-          description="For now, order is published when the commissioner prepares the draft room. The same participant model now supports both humans and test bots in a single draft loop."
+          description="Order is published when the commissioner prepares the room, and the live draft loop now runs against actual player records."
         >
           <DraftLiveClient
             isLive={draft?.status === "live"}
@@ -193,30 +243,14 @@ export default async function DraftRoomPage({
             </p>
           ) : null}
           <div className="grid gap-3 sm:grid-cols-5">
-            <InfoRow
-              label="League State"
-              value={league.status.replaceAll("_", " ")}
-            />
-            <InfoRow
-              label="Draft State"
-              value={draft?.status?.replaceAll("_", " ") ?? "not prepared"}
-            />
+            <InfoRow label="League State" value={league.status.replaceAll("_", " ")} />
+            <InfoRow label="Draft State" value={draft?.status?.replaceAll("_", " ") ?? "not prepared"} />
             <InfoRow
               label="Current Pick"
-              value={
-                draft
-                  ? `Round ${draft.current_round}, Pick ${draft.current_pick_number}`
-                  : "Not started"
-              }
+              value={draft ? `Round ${draft.current_round}, Pick ${draft.current_pick_number}` : "Not started"}
             />
-            <InfoRow
-              label="On The Clock"
-              value={currentParticipant?.display_name ?? "Waiting"}
-            />
-            <InfoRow
-              label="Current Control"
-              value={currentParticipant?.draft_control_mode ?? "n/a"}
-            />
+            <InfoRow label="On The Clock" value={currentParticipant?.display_name ?? "Waiting"} />
+            <InfoRow label="Current Control" value={currentParticipant?.draft_control_mode ?? "n/a"} />
           </div>
 
           {isMyAutopickMode ? (
@@ -228,10 +262,7 @@ export default async function DraftRoomPage({
                 <form action={reclaimManualControl}>
                   <input type="hidden" name="league_id" value={league.id} />
                   <input type="hidden" name="league_slug" value={league.slug} />
-                  <button
-                    type="submit"
-                    className="rounded-full border border-sky-300/30 bg-sky-400/15 px-5 py-3 text-sm text-sky-100"
-                  >
+                  <button type="submit" className="rounded-full border border-sky-300/30 bg-sky-400/15 px-5 py-3 text-sm text-sky-100">
                     Reclaim manual control
                   </button>
                 </form>
@@ -248,10 +279,7 @@ export default async function DraftRoomPage({
                 <form action={resolveTimedOutPick}>
                   <input type="hidden" name="league_id" value={league.id} />
                   <input type="hidden" name="league_slug" value={league.slug} />
-                  <button
-                    type="submit"
-                    className="rounded-full border border-amber-300/25 bg-amber-400/10 px-5 py-3 text-sm text-amber-100"
-                  >
+                  <button type="submit" className="rounded-full border border-amber-300/25 bg-amber-400/10 px-5 py-3 text-sm text-amber-100">
                     Resolve timed out pick
                   </button>
                 </form>
@@ -259,10 +287,7 @@ export default async function DraftRoomPage({
                   <form action={forceAutopickCurrentPick}>
                     <input type="hidden" name="league_id" value={league.id} />
                     <input type="hidden" name="league_slug" value={league.slug} />
-                    <button
-                      type="submit"
-                      className="rounded-full border border-rose-300/25 bg-rose-400/10 px-5 py-3 text-sm text-rose-100"
-                    >
+                    <button type="submit" className="rounded-full border border-rose-300/25 bg-rose-400/10 px-5 py-3 text-sm text-rose-100">
                       Force autopick now
                     </button>
                   </form>
@@ -272,7 +297,7 @@ export default async function DraftRoomPage({
           ) : null}
         </Panel>
 
-        <div className="grid gap-8 xl:grid-cols-[1.15fr_0.85fr]">
+        <div className="grid gap-8 xl:grid-cols-[1.2fr_0.8fr]">
           <Panel
             title="Draft board"
             description="Inside the room, we show the full snake order grouped by round and now mark completed picks with the drafted player."
@@ -280,19 +305,12 @@ export default async function DraftRoomPage({
             {groupedPicks.length > 0 ? (
               <div className="grid gap-6 lg:grid-cols-2">
                 {groupedPicks.map(([roundNumber, roundPicks]) => (
-                  <section
-                    key={roundNumber}
-                    className="rounded-[1.5rem] border border-white/10 bg-white/6 px-5 py-5"
-                  >
-                    <h2 className="text-lg font-semibold text-stone-100">
-                      Round {roundNumber}
-                    </h2>
+                  <section key={roundNumber} className="rounded-[1.5rem] border border-white/10 bg-white/6 px-5 py-5">
+                    <h2 className="text-lg font-semibold text-stone-100">Round {roundNumber}</h2>
                     <div className="mt-4 grid gap-3">
                       {roundPicks.map((pick) => {
                         const participant = participantsById.get(pick.participant_id);
-                        const isCurrentPick =
-                          draft?.current_pick_number === pick.pick_number &&
-                          pick.status === "pending";
+                        const isCurrentPick = draft?.current_pick_number === pick.pick_number && pick.status === "pending";
                         const isMyPick = pick.participant_id === myParticipant?.id;
 
                         return (
@@ -324,11 +342,7 @@ export default async function DraftRoomPage({
                                 </p>
                               </div>
                               <div className="text-right text-xs uppercase tracking-[0.24em] text-stone-400">
-                                {isCurrentPick
-                                  ? "On the clock"
-                                  : isMyPick
-                                    ? "Your pick"
-                                    : pick.status}
+                                {isCurrentPick ? "On the clock" : isMyPick ? "Your pick" : pick.status}
                               </div>
                             </div>
                           </div>
@@ -348,24 +362,17 @@ export default async function DraftRoomPage({
           <div className="grid gap-8">
             <Panel
               title="Your roster"
-              description="Roster-rule enforcement starts now: 8 total picks, minimum 1 QB / RB / WR / TE, and a maximum of 2 QBs."
+              description="Roster-rule enforcement remains the same, but picks now carry forward real player identity."
             >
               {myRoster.length > 0 ? (
                 <div className="grid gap-3">
                   {myRoster.map((pick) => (
-                    <div
-                      key={pick.id}
-                      className="rounded-2xl border border-white/10 bg-white/6 px-4 py-4"
-                    >
+                    <div key={pick.id} className="rounded-2xl border border-white/10 bg-white/6 px-4 py-4">
                       <p className="font-mono text-[0.7rem] uppercase tracking-[0.28em] text-stone-500">
                         Pick {pick.pick_number} | {pick.status}
                       </p>
-                      <p className="mt-2 text-base font-medium text-stone-100">
-                        {pick.picked_player_name}
-                      </p>
-                      <p className="mt-1 text-sm text-stone-400">
-                        {pick.picked_position}
-                      </p>
+                      <p className="mt-2 text-base font-medium text-stone-100">{pick.picked_player_name}</p>
+                      <p className="mt-1 text-sm text-stone-400">{pick.picked_position}</p>
                     </div>
                   ))}
                 </div>
@@ -378,7 +385,7 @@ export default async function DraftRoomPage({
 
             <Panel
               title="Pick center"
-              description="Only the current on-the-clock human participant can submit a pick. Bot turns resolve automatically while the draft is live."
+              description="Draftables now show the player attributes and prior-season context that matter most during draft decisions."
             >
               {isMyTurn && isMyAutopickMode ? (
                 <div className="grid gap-4">
@@ -388,10 +395,7 @@ export default async function DraftRoomPage({
                   <form action={reclaimManualControl}>
                     <input type="hidden" name="league_id" value={league.id} />
                     <input type="hidden" name="league_slug" value={league.slug} />
-                    <button
-                      type="submit"
-                      className="rounded-full border border-sky-300/30 bg-sky-400/15 px-5 py-3 text-sm text-sky-100"
-                    >
+                    <button type="submit" className="rounded-full border border-sky-300/30 bg-sky-400/15 px-5 py-3 text-sm text-sky-100">
                       Reclaim manual control
                     </button>
                   </form>
@@ -399,45 +403,55 @@ export default async function DraftRoomPage({
               ) : isMyTurn ? (
                 <div className="grid gap-5">
                   <p className="rounded-2xl border border-white/10 bg-white/6 px-4 py-3 text-sm text-stone-300">
-                    This list comes straight from the database now. If another participant grabs a player first, the player should disappear on refresh and the submission will still be rejected server-side.
+                    This list comes straight from the database now. Historical stats are included for drafting context, while future projections can be layered in later.
                   </p>
-                  {TEST_DRAFT_POSITIONS.map((position) => {
+                  {PLAYER_POSITIONS.map((position) => {
                     const options = availablePlayersByPosition.get(position) ?? [];
 
                     return (
                       <section key={position} className="grid gap-3">
                         <div>
-                          <h3 className="text-base font-semibold text-stone-100">
-                            {position}
-                          </h3>
+                          <h3 className="text-base font-semibold text-stone-100">{position}</h3>
                           <p className="text-sm text-stone-400">
-                            Test pool options for this position. The database will reject picks that would break roster rules.
+                            Available {position}s, sorted by prior-season fantasy production inside this development dataset.
                           </p>
                         </div>
-                        <div className="grid gap-2">
+                        <div className="grid gap-3">
                           {options.length > 0 ? (
                             options.map((player) => (
-                              <form key={player.key} action={submitDraftPick}>
+                              <form key={player.id} action={submitDraftPick}>
                                 <input type="hidden" name="league_id" value={league.id} />
                                 <input type="hidden" name="league_slug" value={league.slug} />
-                                <input type="hidden" name="player_key" value={player.key} />
-                                <input type="hidden" name="player_name" value={player.name} />
-                                <input type="hidden" name="position" value={player.position} />
+                                <input type="hidden" name="player_id" value={player.id} />
                                 <button
                                   type="submit"
-                                  className="flex w-full items-center justify-between rounded-2xl border border-white/10 bg-white/6 px-4 py-3 text-left transition-colors hover:bg-white/10"
+                                  className="grid w-full gap-3 rounded-[1.35rem] border border-white/10 bg-white/6 px-4 py-4 text-left transition-colors hover:bg-white/10"
                                 >
-                                  <span>
-                                    <span className="block text-sm font-medium text-stone-100">
-                                      {player.name}
-                                    </span>
-                                    <span className="mt-1 block font-mono text-[0.7rem] uppercase tracking-[0.28em] text-stone-500">
-                                      {player.key}
-                                    </span>
-                                  </span>
-                                  <span className="text-xs uppercase tracking-[0.24em] text-stone-400">
-                                    Draft
-                                  </span>
+                                  <div className="flex items-start justify-between gap-3">
+                                    <div>
+                                      <p className="text-base font-semibold text-stone-100">{player.fullName}</p>
+                                      <p className="mt-1 text-sm text-stone-400">
+                                        {player.position} | {player.nflTeam} | Bye {player.byeWeek ?? "-"}
+                                      </p>
+                                    </div>
+                                    <div className="text-right">
+                                      <p className="font-mono text-[0.7rem] uppercase tracking-[0.28em] text-stone-500">
+                                        2025 PPR
+                                      </p>
+                                      <p className="mt-1 text-lg font-semibold text-stone-100">
+                                        {player.fantasyPointsPpr.toFixed(1)}
+                                      </p>
+                                    </div>
+                                  </div>
+                                  <div className="grid gap-2 sm:grid-cols-3">
+                                    <StatChip label="Games" value={String(player.gamesPlayed)} />
+                                    <StatChip label="Age" value={player.age ? String(player.age) : "-"} />
+                                    <StatChip label="Exp" value={String(player.yearsExperience)} />
+                                  </div>
+                                  <p className="text-sm text-stone-300">{formatStatSummary(player)}</p>
+                                  <p className="font-mono text-[0.7rem] uppercase tracking-[0.28em] text-stone-500">
+                                    {player.key}{player.college ? ` | ${player.college}` : ""}
+                                  </p>
                                 </button>
                               </form>
                             ))
@@ -476,16 +490,9 @@ export default async function DraftRoomPage({
                     const participant = participantsById.get(pick.participant_id);
 
                     return (
-                      <div
-                        key={pick.id}
-                        className="rounded-2xl border border-white/10 bg-white/6 px-4 py-4"
-                      >
-                        <p className="font-mono text-[0.7rem] uppercase tracking-[0.28em] text-stone-500">
-                          Pick {pick.pick_number}
-                        </p>
-                        <p className="mt-2 text-base font-medium text-stone-100">
-                          {pick.picked_player_name}
-                        </p>
+                      <div key={pick.id} className="rounded-2xl border border-white/10 bg-white/6 px-4 py-4">
+                        <p className="font-mono text-[0.7rem] uppercase tracking-[0.28em] text-stone-500">Pick {pick.pick_number}</p>
+                        <p className="mt-2 text-base font-medium text-stone-100">{pick.picked_player_name}</p>
                         <p className="mt-1 text-sm text-stone-400">
                           {participant?.display_name ?? "Unknown participant"} | {pick.picked_position}
                         </p>
@@ -518,15 +525,31 @@ function groupPicksByRound(picks: DraftRoomPick[]) {
   return Array.from(grouped.entries()).sort((a, b) => a[0] - b[0]);
 }
 
+function formatStatSummary(player: DraftablePlayer) {
+  if (player.position === "QB") {
+    return `${player.passingYards.toLocaleString()} pass yds, ${player.passingTds} pass TD, ${player.rushingYards.toLocaleString()} rush yds`;
+  }
+
+  if (player.position === "RB") {
+    return `${player.rushingYards.toLocaleString()} rush yds, ${player.rushingTds} rush TD, ${player.receptions} rec`;
+  }
+
+  return `${player.receptions} rec, ${player.receivingYards.toLocaleString()} rec yds, ${player.receivingTds} rec TD`;
+}
+
+function StatChip({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="rounded-full border border-white/10 bg-black/15 px-3 py-2 text-xs uppercase tracking-[0.24em] text-stone-300">
+      {label}: {value}
+    </div>
+  );
+}
+
 function InfoRow({ label, value }: { label: string; value: string }) {
   return (
     <div className="rounded-2xl border border-white/10 bg-white/6 px-4 py-4">
-      <p className="font-mono text-[0.7rem] uppercase tracking-[0.28em] text-stone-500">
-        {label}
-      </p>
-      <p className="mt-2 break-words text-base font-medium text-stone-100">
-        {value}
-      </p>
+      <p className="font-mono text-[0.7rem] uppercase tracking-[0.28em] text-stone-500">{label}</p>
+      <p className="mt-2 break-words text-base font-medium text-stone-100">{value}</p>
     </div>
   );
 }
