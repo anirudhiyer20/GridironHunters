@@ -1,5 +1,13 @@
 import { notFound } from "next/navigation";
 
+import {
+  DRAFT_POSITIONS,
+  MVP_DRAFT_ROSTER_SIZE,
+  MVP_MAX_POSITION_COUNTS,
+  MVP_REQUIRED_POSITION_COUNTS,
+  type DraftPosition,
+} from "@gridiron/shared";
+
 import { PageShell } from "@/components/page-shell";
 import { Panel } from "@/components/panel";
 import { createClient } from "@/lib/supabase/server";
@@ -40,7 +48,7 @@ type DraftablePlayer = {
   key: string;
   fullName: string;
   shortName: string | null;
-  position: "QB" | "RB" | "WR" | "TE";
+  position: DraftPosition;
   nflTeam: string;
   byeWeek: number | null;
   yearsExperience: number;
@@ -60,6 +68,8 @@ type DraftablePlayer = {
 type QueuedPlayer = DraftablePlayer & {
   queueRank: number;
 };
+
+type RosterCounts = Record<DraftPosition, number>;
 
 export default async function DraftRoomPage({
   params,
@@ -183,12 +193,20 @@ export default async function DraftRoomPage({
     .filter((pick) => pick.status === "made" || pick.status === "autopicked")
     .slice(-8)
     .reverse();
+  const rosterCounts = buildRosterCounts(myRoster);
+  const rosterSlotsRemaining = Math.max(
+    0,
+    MVP_DRAFT_ROSTER_SIZE - myRoster.length,
+  );
+  const missingRequiredPositions = DRAFT_POSITIONS.filter(
+    (position) => rosterCounts[position] < MVP_REQUIRED_POSITION_COUNTS[position],
+  );
 
   return (
     <PageShell
       eyebrow="App / Leagues / Draft"
       title={`${league.name} draft room`}
-      description="The draft room now keeps the live player pool visible at all times, lets users queue targets while others pick, and uses that queue as part of the autopick flow."
+      description="The draft room now keeps the live player pool visible at all times, lets users queue targets while others pick, and adds first-pass rules-based draft guidance without relying on projections yet."
     >
       <div className="grid gap-8">
         <Panel
@@ -327,10 +345,39 @@ export default async function DraftRoomPage({
           <div className="grid gap-8">
             <Panel
               title="Your roster"
-              description="Roster-rule enforcement remains the same, but picks now carry forward real player identity."
+              description="This panel now shows what you still need to satisfy MVP roster rules, not just who you already drafted."
             >
+              <div className="grid gap-3 sm:grid-cols-2">
+                <InfoRow label="Roster Spots Left" value={String(rosterSlotsRemaining)} />
+                <InfoRow
+                  label="Required Needs"
+                  value={missingRequiredPositions.length > 0 ? missingRequiredPositions.join(", ") : "All minimums covered"}
+                />
+              </div>
+              <div className="mt-4 grid gap-3 sm:grid-cols-2">
+                {DRAFT_POSITIONS.map((position) => {
+                  const currentCount = rosterCounts[position];
+                  const requiredCount = MVP_REQUIRED_POSITION_COUNTS[position];
+                  const maxCount = MVP_MAX_POSITION_COUNTS[position];
+                  const remainingNeed = Math.max(0, requiredCount - currentCount);
+
+                  return (
+                    <div key={position} className="rounded-2xl border border-white/10 bg-white/6 px-4 py-4">
+                      <div className="flex items-center justify-between gap-3">
+                        <p className="font-mono text-[0.7rem] uppercase tracking-[0.28em] text-stone-500">{position}</p>
+                        <span className={`rounded-full border px-3 py-1 text-xs uppercase tracking-[0.24em] ${remainingNeed > 0 ? "border-[#f2bf5e]/30 bg-[#f2bf5e]/10 text-[#f2bf5e]" : "border-emerald-300/25 bg-emerald-400/10 text-emerald-100"}`}>
+                          {remainingNeed > 0 ? `${remainingNeed} needed` : "Covered"}
+                        </span>
+                      </div>
+                      <p className="mt-3 text-sm text-stone-300">
+                        {currentCount} rostered | minimum {requiredCount}{maxCount ? ` | max ${maxCount}` : ""}
+                      </p>
+                    </div>
+                  );
+                })}
+              </div>
               {myRoster.length > 0 ? (
-                <div className="grid gap-3">
+                <div className="mt-4 grid gap-3">
                   {myRoster.map((pick) => (
                     <div key={pick.id} className="rounded-2xl border border-white/10 bg-white/6 px-4 py-4">
                       <p className="font-mono text-[0.7rem] uppercase tracking-[0.28em] text-stone-500">
@@ -342,7 +389,7 @@ export default async function DraftRoomPage({
                   ))}
                 </div>
               ) : (
-                <p className="rounded-2xl border border-white/10 bg-white/6 px-4 py-3 text-sm text-stone-300">
+                <p className="mt-4 rounded-2xl border border-white/10 bg-white/6 px-4 py-3 text-sm text-stone-300">
                   You have not drafted anyone yet.
                 </p>
               )}
@@ -367,6 +414,7 @@ export default async function DraftRoomPage({
                 canQueue={Boolean(canQueue)}
                 availablePlayers={availablePlayers}
                 queuedPlayers={queuedPlayers}
+                rosterCounts={rosterCounts}
               />
             </Panel>
 
@@ -435,7 +483,7 @@ function mapDraftablePlayers(players: PlayerRpcRow[]): DraftablePlayer[] {
     key: player.player_key,
     fullName: player.full_name,
     shortName: player.short_name,
-    position: player.picked_position as DraftablePlayer["position"],
+    position: player.picked_position as DraftPosition,
     nflTeam: player.nfl_team,
     byeWeek: player.bye_week,
     yearsExperience: Number(player.years_experience ?? 0),
@@ -458,6 +506,16 @@ function mapQueuedPlayers(players: QueueRpcRow[]): QueuedPlayer[] {
     queueRank: Number(player.queue_rank),
     ...mapDraftablePlayers([player])[0],
   }));
+}
+
+function buildRosterCounts(picks: DraftRoomPick[]): RosterCounts {
+  return DRAFT_POSITIONS.reduce(
+    (counts, position) => ({
+      ...counts,
+      [position]: picks.filter((pick) => pick.picked_position === position).length,
+    }),
+    {} as RosterCounts,
+  );
 }
 
 function groupPicksByRound(picks: DraftRoomPick[]) {
