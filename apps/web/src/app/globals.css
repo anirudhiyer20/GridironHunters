@@ -1,15 +1,15 @@
 @import "tailwindcss";
 
 :root {
-  --background: #081024;
-  --foreground: #f5f2ea;
+  --background: #130e09;
+  --foreground: #f6ead0;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: "Bahnschrift", "Trebuchet MS", "Avenir Next", "Segoe UI", sans-serif;
-  --font-mono: "IBM Plex Mono", "Consolas", "Courier New", monospace;
+  --font-sans: "Trebuchet MS", "Verdana", "Segoe UI", sans-serif;
+  --font-mono: "Courier New", "Consolas", monospace;
 }
 
 * {
@@ -23,7 +23,7 @@ html {
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: "Bahnschrift", "Trebuchet MS", "Avenir Next", "Segoe UI", sans-serif;
+  font-family: "Trebuchet MS", "Verdana", "Segoe UI", sans-serif;
 }
 
 a {
@@ -36,80 +36,341 @@ a {
   min-height: 100vh;
   overflow: hidden;
   background:
-    radial-gradient(circle at top, rgba(73, 101, 255, 0.16), transparent 24%),
-    linear-gradient(180deg, #0b1230 0%, #081024 60%, #060b18 100%);
+    radial-gradient(circle at top, rgba(226, 184, 104, 0.14), transparent 26%),
+    linear-gradient(180deg, #24180e 0%, #171008 52%, #0d0805 100%);
 }
 
-.app-shell__grid {
+.app-shell__noise {
   position: absolute;
   inset: 0;
   background-image:
-    linear-gradient(rgba(83, 126, 255, 0.16) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(83, 126, 255, 0.16) 1px, transparent 1px);
-  background-size: 46px 46px;
-  opacity: 0.35;
+    linear-gradient(rgba(229, 197, 135, 0.08) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(229, 197, 135, 0.08) 1px, transparent 1px);
+  background-size: 28px 28px;
+  opacity: 0.18;
+  pointer-events: none;
+}
+
+.app-shell__vignette {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at center, transparent 40%, rgba(0, 0, 0, 0.35) 100%);
   pointer-events: none;
 }
 
 .app-frame {
-  border: 3px solid rgba(70, 113, 255, 0.5);
+  border: 4px solid rgba(115, 78, 37, 0.8);
   background:
-    linear-gradient(180deg, rgba(20, 32, 82, 0.96) 0%, rgba(10, 16, 38, 0.96) 100%);
+    linear-gradient(180deg, rgba(71, 45, 22, 0.96) 0%, rgba(43, 28, 13, 0.97) 100%);
   box-shadow:
-    0 0 0 8px rgba(20, 43, 116, 0.84),
-    inset 0 0 0 1px rgba(136, 169, 255, 0.1),
-    0 18px 44px rgba(0, 0, 0, 0.34);
+    0 0 0 8px rgba(31, 17, 6, 0.82),
+    inset 0 0 0 2px rgba(231, 205, 155, 0.1),
+    0 22px 44px rgba(0, 0, 0, 0.38);
 }
 
 .app-frame::before {
   content: "";
   position: absolute;
   inset: 14px;
-  border: 1px solid rgba(115, 149, 255, 0.2);
-  border-radius: 22px;
+  border: 2px solid rgba(191, 154, 94, 0.26);
+  border-radius: 24px;
   pointer-events: none;
 }
 
-.app-title {
-  letter-spacing: 0.06em;
-  text-shadow: 0 0 18px rgba(255, 255, 255, 0.34);
+.app-title,
+.fantasy-title,
+.draft-console-title {
+  font-family: "Courier New", "Consolas", monospace;
+  letter-spacing: 0.05em;
+  text-shadow: 0 0 18px rgba(255, 239, 188, 0.25);
 }
 
 .app-kicker,
-.draft-console-kicker {
-  font-family: "IBM Plex Mono", "Consolas", monospace;
-  letter-spacing: 0.28em;
+.draft-console-kicker,
+.fantasy-kicker,
+.room-scene__eyebrow {
+  font-family: "Courier New", "Consolas", monospace;
+  letter-spacing: 0.24em;
   text-transform: uppercase;
+}
+
+.app-nav-pill,
+.fantasy-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 9999px;
+  text-transform: uppercase;
+  letter-spacing: 0.16em;
+  font-size: 0.75rem;
+  transition: transform 140ms ease, background-color 140ms ease, border-color 140ms ease, color 140ms ease;
 }
 
 .app-nav-pill {
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  background: rgba(0, 0, 0, 0.24);
-  padding: 0.6rem 1rem;
-  border-radius: 9999px;
-  text-transform: uppercase;
-  letter-spacing: 0.18em;
-  font-size: 0.72rem;
-  transition: background-color 160ms ease, border-color 160ms ease, color 160ms ease;
+  border: 1px solid rgba(199, 163, 107, 0.2);
+  background: rgba(31, 20, 10, 0.78);
+  padding: 0.7rem 1rem;
 }
 
-.app-nav-pill:hover {
-  background: rgba(255, 255, 255, 0.08);
-  border-color: rgba(135, 169, 255, 0.24);
-  color: #ffffff;
+.app-nav-pill:hover,
+.fantasy-button:hover {
+  transform: translateY(-1px);
+}
+
+.fantasy-button {
+  padding: 0.85rem 1.15rem;
+  border: 1px solid transparent;
+  font-weight: 600;
+}
+
+.fantasy-button--gold {
+  border-color: rgba(218, 178, 99, 0.38);
+  background: linear-gradient(180deg, #d6a24d 0%, #a97326 100%);
+  color: #201206;
+  box-shadow: inset 0 1px 0 rgba(255, 241, 201, 0.28);
+}
+
+.fantasy-button--stone {
+  border-color: rgba(174, 150, 112, 0.28);
+  background: linear-gradient(180deg, rgba(66, 53, 37, 0.92) 0%, rgba(41, 31, 22, 0.95) 100%);
+  color: #f4e6c7;
+}
+
+.fantasy-panel {
+  border: 2px solid rgba(107, 77, 42, 0.82);
+  box-shadow:
+    inset 0 0 0 1px rgba(226, 200, 154, 0.08),
+    0 18px 36px rgba(0, 0, 0, 0.28);
+}
+
+.fantasy-panel--stone {
+  background:
+    linear-gradient(180deg, rgba(55, 37, 20, 0.92) 0%, rgba(28, 19, 10, 0.95) 100%);
+}
+
+.fantasy-panel--dungeon {
+  background:
+    linear-gradient(180deg, rgba(31, 38, 35, 0.96) 0%, rgba(13, 18, 17, 0.98) 100%);
+  border-color: rgba(77, 101, 89, 0.84);
+}
+
+.fantasy-panel--arena {
+  background:
+    linear-gradient(180deg, rgba(58, 24, 20, 0.96) 0%, rgba(22, 11, 9, 0.98) 100%);
+  border-color: rgba(133, 74, 56, 0.84);
+}
+
+.room-scene {
+  position: relative;
+  overflow: hidden;
+  min-height: 34rem;
+  border-radius: 2rem;
+  border: 4px solid rgba(109, 76, 39, 0.9);
+  box-shadow:
+    0 0 0 8px rgba(32, 18, 7, 0.78),
+    inset 0 0 0 2px rgba(236, 212, 172, 0.07),
+    0 24px 56px rgba(0, 0, 0, 0.34);
+}
+
+.room-scene__hud {
+  position: absolute;
+  inset: 1rem 1rem auto 1rem;
+  z-index: 2;
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  border-radius: 1.4rem;
+  border: 1px solid rgba(214, 184, 132, 0.15);
+  background: rgba(20, 13, 7, 0.72);
+  padding: 1rem 1.1rem;
+  backdrop-filter: blur(4px);
+}
+
+.room-scene__title {
+  font-family: "Courier New", "Consolas", monospace;
+  font-size: 1.85rem;
+  font-weight: 700;
+  color: #fff1cf;
+}
+
+.room-scene__mood {
+  max-width: 18rem;
+  text-align: right;
+  font-size: 0.85rem;
+  line-height: 1.6;
+  color: #ebddbf;
+}
+
+.room-scene__playfield {
+  position: absolute;
+  inset: 0;
+}
+
+.room-scene--house {
+  background:
+    radial-gradient(circle at top, rgba(255, 213, 120, 0.14), transparent 22%),
+    linear-gradient(180deg, rgba(87, 58, 30, 0.82) 0%, rgba(61, 40, 22, 0.95) 26%, rgba(42, 26, 12, 1) 100%);
+}
+
+.room-scene--house::before {
+  content: "";
+  position: absolute;
+  inset: 18% 10% 12% 10%;
+  border: 4px solid rgba(118, 80, 41, 0.85);
+  background:
+    linear-gradient(180deg, rgba(108, 73, 38, 0.55) 0%, rgba(72, 44, 19, 0.68) 100%),
+    repeating-linear-gradient(90deg, rgba(154, 108, 58, 0.22) 0 30px, rgba(106, 71, 36, 0.22) 30px 60px);
+  border-radius: 1.2rem;
+  box-shadow: inset 0 0 0 2px rgba(233, 196, 136, 0.06);
+}
+
+.room-scene--house::after {
+  content: "";
+  position: absolute;
+  inset: auto 8% 8% 8%;
+  height: 26%;
+  background: repeating-linear-gradient(90deg, #6a4322 0 18px, #5c391c 18px 36px);
+  border-top: 4px solid rgba(86, 55, 24, 0.92);
+}
+
+.room-scene--guild {
+  background:
+    radial-gradient(circle at top, rgba(255, 222, 145, 0.12), transparent 24%),
+    linear-gradient(180deg, rgba(69, 44, 22, 0.82) 0%, rgba(45, 28, 13, 0.94) 100%);
+}
+
+.room-scene--guild::before,
+.room-scene--dungeon::before,
+.room-scene--arena::before {
+  content: "";
+  position: absolute;
+  inset: 16% 8% 12% 8%;
+  border-radius: 1.3rem;
+  box-shadow: inset 0 0 0 2px rgba(226, 200, 154, 0.06);
+}
+
+.room-scene--guild::before {
+  background:
+    linear-gradient(180deg, rgba(70, 45, 24, 0.72) 0%, rgba(39, 24, 12, 0.92) 100%),
+    repeating-linear-gradient(90deg, rgba(144, 101, 55, 0.18) 0 34px, rgba(103, 68, 34, 0.18) 34px 68px);
+  border: 4px solid rgba(121, 83, 44, 0.86);
+}
+
+.room-scene--dungeon {
+  background:
+    radial-gradient(circle at top, rgba(119, 172, 141, 0.12), transparent 22%),
+    linear-gradient(180deg, rgba(31, 39, 36, 0.86) 0%, rgba(16, 20, 18, 0.98) 100%);
+}
+
+.room-scene--dungeon::before {
+  background:
+    linear-gradient(180deg, rgba(44, 54, 49, 0.74) 0%, rgba(22, 28, 26, 0.94) 100%),
+    linear-gradient(90deg, rgba(124, 144, 133, 0.14) 0 50%, rgba(0, 0, 0, 0) 50% 100%);
+  background-size: 42px 42px;
+  border: 4px solid rgba(72, 91, 83, 0.86);
+}
+
+.room-scene--arena {
+  background:
+    radial-gradient(circle at top, rgba(219, 131, 93, 0.14), transparent 24%),
+    linear-gradient(180deg, rgba(58, 27, 20, 0.88) 0%, rgba(25, 12, 10, 0.98) 100%);
+}
+
+.room-scene--arena::before {
+  background:
+    linear-gradient(180deg, rgba(83, 40, 30, 0.72) 0%, rgba(36, 18, 14, 0.94) 100%),
+    radial-gradient(circle at center, rgba(219, 131, 93, 0.12), transparent 38%);
+  border: 4px solid rgba(125, 67, 51, 0.86);
+}
+
+.room-hotspot {
+  position: absolute;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 1rem;
+  border: 2px solid rgba(214, 184, 132, 0.35);
+  background: rgba(32, 21, 11, 0.35);
+  color: #fff1cf;
+  font-family: "Courier New", "Consolas", monospace;
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  transition: transform 160ms ease, border-color 160ms ease, background-color 160ms ease, box-shadow 160ms ease;
+}
+
+.room-hotspot:hover,
+.room-hotspot--selected {
+  transform: translateY(-2px);
+  border-color: rgba(246, 215, 156, 0.58);
+  background: rgba(84, 57, 29, 0.42);
+  box-shadow: 0 0 18px rgba(231, 190, 122, 0.16);
+}
+
+.room-hotspot--active {
+  box-shadow: 0 0 26px rgba(242, 191, 94, 0.24);
+}
+
+.room-hotspot--stone {
+  border-color: rgba(149, 171, 157, 0.4);
+}
+
+.room-hotspot--ember {
+  border-color: rgba(216, 120, 96, 0.44);
+}
+
+.room-hotspot--forest {
+  border-color: rgba(119, 168, 116, 0.45);
+}
+
+.room-avatar {
+  position: absolute;
+  width: 34px;
+  height: 58px;
+  transform: translate(-50%, -100%);
+  transition: left 360ms ease, top 360ms ease;
+  z-index: 3;
+}
+
+.room-avatar__head {
+  width: 18px;
+  height: 18px;
+  margin: 0 auto;
+  border: 2px solid rgba(51, 26, 13, 0.8);
+  background: #f3c58d;
+}
+
+.room-avatar__body {
+  width: 28px;
+  height: 30px;
+  margin: 4px auto 0;
+  border: 2px solid rgba(25, 15, 8, 0.88);
+  background: linear-gradient(180deg, #2f6f8a 0%, #1b4157 100%);
+}
+
+.room-avatar__shadow {
+  width: 28px;
+  height: 8px;
+  margin: 3px auto 0;
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.35);
+}
+
+.room-avatar--walking .room-avatar__body {
+  background: linear-gradient(180deg, #4e9154 0%, #2f5d38 100%);
 }
 
 .draft-console-shell {
   position: relative;
   overflow: hidden;
-  border: 3px solid rgba(70, 113, 255, 0.55);
+  border: 4px solid rgba(105, 74, 37, 0.9);
   border-radius: 34px;
   background:
-    radial-gradient(circle at top, rgba(46, 88, 220, 0.18), transparent 28%),
-    linear-gradient(180deg, rgba(12, 23, 68, 0.96) 0%, rgba(8, 12, 28, 0.98) 62%, rgba(4, 8, 18, 1) 100%);
+    radial-gradient(circle at top, rgba(255, 210, 127, 0.12), transparent 24%),
+    linear-gradient(180deg, rgba(55, 34, 18, 0.96) 0%, rgba(24, 15, 8, 0.98) 62%, rgba(14, 9, 6, 1) 100%);
   box-shadow:
-    0 0 0 8px rgba(20, 43, 116, 0.9),
-    inset 0 0 0 2px rgba(120, 164, 255, 0.14),
+    0 0 0 8px rgba(26, 15, 7, 0.88),
+    inset 0 0 0 2px rgba(236, 212, 172, 0.08),
     0 22px 60px rgba(0, 0, 0, 0.48);
 }
 
@@ -118,33 +379,25 @@ a {
   position: absolute;
   inset: 0;
   background-image:
-    linear-gradient(rgba(83, 126, 255, 0.18) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(83, 126, 255, 0.18) 1px, transparent 1px);
-  background-size: 30px 30px;
-  opacity: 0.45;
+    linear-gradient(rgba(226, 197, 147, 0.08) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(226, 197, 147, 0.08) 1px, transparent 1px);
+  background-size: 24px 24px;
+  opacity: 0.2;
   pointer-events: none;
 }
 
 .draft-console-inner {
   position: relative;
   border-radius: 28px;
-  border: 2px solid rgba(76, 120, 255, 0.42);
-  background: linear-gradient(180deg, rgba(16, 28, 80, 0.9) 0%, rgba(10, 16, 38, 0.96) 100%);
-  box-shadow: inset 0 0 0 2px rgba(157, 188, 255, 0.08);
+  border: 2px solid rgba(138, 101, 56, 0.42);
+  background: linear-gradient(180deg, rgba(64, 38, 18, 0.9) 0%, rgba(26, 16, 9, 0.96) 100%);
+  box-shadow: inset 0 0 0 2px rgba(236, 212, 172, 0.05);
 }
 
 .draft-console-panel {
-  border-color: rgba(102, 136, 255, 0.24) !important;
-  background:
-    linear-gradient(180deg, rgba(19, 30, 76, 0.92) 0%, rgba(9, 16, 39, 0.94) 100%) !important;
-  box-shadow:
-    inset 0 0 0 1px rgba(136, 169, 255, 0.08),
-    0 14px 34px rgba(0, 0, 0, 0.26);
-}
-
-.draft-console-title {
-  letter-spacing: 0.06em;
-  text-shadow: 0 0 18px rgba(255, 255, 255, 0.36);
+  border-color: rgba(148, 112, 65, 0.32) !important;
+  background: linear-gradient(180deg, rgba(63, 38, 19, 0.92) 0%, rgba(25, 16, 10, 0.94) 100%) !important;
+  box-shadow: inset 0 0 0 1px rgba(236, 212, 172, 0.07), 0 14px 34px rgba(0, 0, 0, 0.26);
 }
 
 .draft-console-outline {
@@ -155,17 +408,17 @@ a {
   content: "";
   position: absolute;
   inset: 8px;
-  border: 1px solid rgba(115, 149, 255, 0.22);
+  border: 1px solid rgba(190, 158, 110, 0.16);
   border-radius: 22px;
   pointer-events: none;
 }
 
 .draft-console-chip {
-  border: 1px solid rgba(111, 147, 255, 0.28);
-  background: rgba(8, 14, 34, 0.7);
-  box-shadow: inset 0 0 0 1px rgba(151, 184, 255, 0.06);
+  border: 1px solid rgba(155, 121, 73, 0.28);
+  background: rgba(19, 12, 7, 0.7);
+  box-shadow: inset 0 0 0 1px rgba(236, 212, 172, 0.05);
 }
 
 .draft-console-glow {
-  box-shadow: 0 0 20px rgba(123, 157, 255, 0.16);
+  box-shadow: 0 0 18px rgba(226, 184, 104, 0.16);
 }

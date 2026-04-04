@@ -32,6 +32,48 @@ export const MVP_MAX_POSITION_COUNTS: Partial<Record<(typeof DRAFT_POSITIONS)[nu
   QB: 2,
 };
 
+export const TRIBE_NAMES = [
+  "Combat",
+  "Forge",
+  "Storm",
+  "Tundra",
+  "Halo",
+  "Blaze",
+  "Shroud",
+  "Prowl",
+] as const;
+
+export const WORLD_ROOMS = ["house", "guild", "dungeon", "arena"] as const;
+
+export const FANTASY_TERMS = {
+  league: "Guild",
+  leagues: "Guilds",
+  commissioner: "Guild Master",
+  commissioners: "Guild Masters",
+  member: "Guildmate",
+  members: "Guildmates",
+  teamIdentity: "House",
+  homeBase: "House",
+  roster: "Party",
+  rosterManager: "Party Chest",
+  activityFeed: "Guild Board",
+  captureBattle: "Hunt",
+  pvp: "Arena",
+  type: "Tribe",
+  badge: "Sigil",
+  draft: "Draft",
+  draftRoom: "Draft Room",
+  draftQueue: "Draft Queue",
+  wildPlayers: "Wild Players",
+} as const;
+
+export const ROOM_ROUTE_MAP: Record<(typeof WORLD_ROOMS)[number], string> = {
+  house: "/app",
+  guild: "/app/guild",
+  dungeon: "/app/dungeon",
+  arena: "/app/arena",
+};
+
 export type PlatformRole = (typeof PLATFORM_ROLES)[number];
 export type LeagueMemberRole = (typeof LEAGUE_MEMBER_ROLES)[number];
 export type ParticipantType = (typeof PARTICIPANT_TYPES)[number];
@@ -39,3 +81,5 @@ export type DraftControlMode = (typeof DRAFT_CONTROL_MODES)[number];
 export type LeagueStatus = (typeof LEAGUE_STATUSES)[number];
 export type DraftStatus = (typeof DRAFT_STATUSES)[number];
 export type DraftPosition = (typeof DRAFT_POSITIONS)[number];
+export type TribeName = (typeof TRIBE_NAMES)[number];
+export type WorldRoom = (typeof WORLD_ROOMS)[number];

@@ -14,10 +14,10 @@ export function Panel({
   descriptionClassName?: string;
 }) {
   return (
-    <section className={`rounded-[1.75rem] border border-white/10 bg-black/20 p-6 ${className ?? ""}`}>
-      <h2 className={`text-xl font-semibold text-stone-50 ${titleClassName ?? ""}`}>{title}</h2>
+    <section className={`fantasy-panel fantasy-panel--stone rounded-[1.8rem] p-6 ${className ?? ""}`}>
+      <h2 className={`fantasy-title text-2xl text-[#fff4d8] ${titleClassName ?? ""}`}>{title}</h2>
       {description ? (
-        <p className={`mt-2 max-w-2xl text-sm leading-6 text-stone-300 ${descriptionClassName ?? ""}`}>
+        <p className={`mt-2 max-w-2xl text-sm leading-7 text-[#efe2c9] ${descriptionClassName ?? ""}`}>
           {description}
         </p>
       ) : null}

@@ -2,13 +2,13 @@
 
 ## Vision
 
-Gridiron Hunters is a fantasy-football and creature-collection hybrid where users draft weaker rosters, then capture stronger wild players through weekly battles.
+Gridiron Hunters is a fantasy-football and creature-collection hybrid where players belong to Houses inside Guilds, draft weaker Parties, then capture stronger Wild Players through weekly battles.
 
-The product should feel strategic, competitive, and readable. Weekly outcomes are driven by real NFL PPR scoring, layered with type advantages and badge bonuses to create a game system that still feels grounded in football.
+The product should feel strategic, competitive, and readable while also delivering a strong medieval pixel-arcade fantasy. The user should move through a House, Guild, Dungeon, and Arena shell that gives the season a sense of place rather than feeling like a stack of disconnected dashboards.
 
 ## Problem
 
-Traditional fantasy football is familiar, but it offers limited novelty once a league is underway. Gridiron Hunters adds progression, collection, and battle mechanics while preserving the weekly rhythm and tension that fantasy players already understand.
+Traditional fantasy football is familiar, but it offers limited novelty once a league is underway. Gridiron Hunters adds progression, collection, battle systems, and now a stronger navigable fantasy shell while preserving the weekly rhythm and tension fantasy players already understand.
 
 ## Target Users
 
@@ -26,43 +26,76 @@ Traditional fantasy football is familiar, but it offers limited novelty once a l
 
 ## Core Experience
 
-The user joins a 10-team league, drafts an initial roster, then improves that roster through weekly capture battles against wild players. The season progresses through structured phases: draft, capture, gauntlet PvP, and playoffs.
+The user joins a 10-team Guild, establishes a House, drafts an initial Party, then improves that Party through weekly Hunts against Wild Players. The season progresses through structured phases: Draft, capture, Arena PvP, and playoffs.
 
-Users should understand why they won or lost. Matchups and capture battles must clearly show fantasy points, type advantage effects, and badge bonuses.
+Users should understand why they won or lost. Matchups and capture battles must clearly show fantasy points, Tribe advantage effects, and Sigil bonuses.
+
+## World Shell
+
+The MVP presentation layer uses a hub-and-room structure:
+
+- **House**: the player’s home base and identity shell
+- **Guild**: Guild management, membership, Draft access, and shared seasonal info
+- **Dungeon**: Wild Player and Hunt entry point, including 8 Tribe doors
+- **Arena**: PvP matchups, standings, and results
+
+Rules for the first shell:
+
+- Navigation is click-to-move
+- The shell is local/single-player only
+- No visible other players in rooms during MVP
+- No NPCs during MVP
+- No open overworld during MVP
+
+## Terminology
+
+Player-facing language should shift to the fantasy shell where practical:
+
+- League -> Guild
+- Commissioner -> Guild Master
+- League member -> Guildmate
+- House = the player’s identity within a Guild
+- Party = the House roster
+- Type -> Tribe
+- Badge -> Sigil
+- PvP -> Arena framing
+- Draft stays Draft for clarity
+- Draft Room stays Draft Room for clarity
 
 ## MVP Scope
 
-All of the following are in MVP:
+All of the following are still in MVP:
 
 - Account and auth
-- Leagues
+- Guilds
 - Draft
-- Capture battles
-- Gauntlet PvP
+- Hunts / capture battles
+- Arena PvP
 - Playoffs
 - Bots
 - Admin tools
+- Medieval world shell
 
-## User And League Rules
+## User And Guild Rules
 
-- League size is fixed at 10 teams in MVP.
-- Anyone can create a league.
-- General users can participate in one league at a time.
-- Platform admins can join multiple leagues for testing and backtesting.
-- Leagues lock on a commissioner-selected draft datetime.
-- Bots fill open slots 1 hour before draft if a league is not full.
+- Guild size is fixed at 10 Houses in MVP.
+- Anyone can found a Guild.
+- General users can participate in one Guild at a time.
+- Platform admins can join multiple Guilds for testing and backtesting.
+- Guilds lock on a Guild Master-selected draft datetime.
+- Bots fill open slots 1 hour before Draft if a Guild is not full.
 - Humans have priority until the bot-fill threshold.
-- No joining after the draft starts.
+- No joining after the Draft starts.
 - No leaving mid-season.
-- Before the draft, users may leave and commissioners may remove users.
+- Before the Draft, users may leave and Guild Masters may remove users.
 
 ## Invite Codes
 
 - Reusable
 - Human-friendly format
-- Show "league full" when capacity is reached
-- Become usable again if a pre-draft spot opens
-- Expire at draft start
+- Show "guild full" when capacity is reached
+- Become usable again if a pre-Draft spot opens
+- Expire at Draft start
 
 ## Auth, Identity, And Roles
 
@@ -74,7 +107,7 @@ All of the following are in MVP:
 Roles:
 
 - User
-- Commissioner
+- Guild Master
 - Platform Admin
 
 Platform admins may impersonate users for support and debugging during closed beta.
@@ -103,19 +136,19 @@ If data provider updates are delayed:
 
 Stat corrections finalize at Tuesday 8:00 AM ET. Any change after finalization requires admin approval.
 
-## Player Ownership And Roster Rules
+## Player Ownership And Party Rules
 
-- Player ownership is unique within a league, not across the platform.
+- Player ownership is unique within a Guild, not across the platform.
 - MVP has no waivers or free agency.
-- Acquisition paths are draft plus capture only.
+- Acquisition paths are Draft plus capture only.
 - Users may drop players voluntarily.
 - Drops become effective at the next Tuesday 8:00 AM ET rollover.
 - Dropped players re-enter the wild pool for the following lock window, not immediately.
-- There is no roster cap in MVP.
+- There is no roster cap in MVP outside explicit Draft rules.
 
-## Types, Advantages, And Badges
+## Tribes, Advantages, And Sigils
 
-Type groups:
+Tribe groups:
 
 - Combat: Chiefs, Raiders, Commanders, Titans
 - Forge: Steelers, Colts, 49ers, Jets
@@ -132,12 +165,12 @@ Advantage chain:
 
 Rules:
 
-- Non-mythic type advantage bonus is +10%.
-- Mythic type advantage bonus is +20%.
+- Non-mythic Tribe advantage bonus is +10%.
+- Mythic Tribe advantage bonus is +20%.
 - There is no disadvantage penalty.
-- Badge bonus is +5% when a team has 4 or more players of a matching type.
-- Badges stack across types at team level, but a player only benefits from that player's own type badge.
-- Type chart is visible before lock.
+- Sigil bonus is +5% when a Party has 4 or more players of a matching Tribe.
+- Sigils stack across Tribes at team level, but a player only benefits from that player's own Tribe Sigil.
+- The Tribe chart is visible before lock.
 - Ties are allowed and recorded.
 
 Final score formula:
@@ -146,12 +179,12 @@ Final score formula:
 
 ## Draft
 
-- Snake draft
-- Random draft order
+- Snake Draft
+- Random Draft order
 - 1 minute per pick
 - Timeout triggers autopick
 - Pre-rank and queue are supported
-- Draft supports pause and resume by commissioner or admin
+- Draft supports pause and resume by Guild Master or admin
 - Disconnects fall back to autopick when the timer expires
 
 Draft constraints:
@@ -164,7 +197,7 @@ Draft constraints:
 - Draft pool and top wild exclusions are set by admins at season start
 - Traded draft picks are out of scope for MVP
 
-## Capture Phase
+## Hunts / Capture Phase
 
 Capture runs during Weeks 1 through 4.
 
@@ -177,8 +210,8 @@ Rules:
 
 Wild battle rules:
 
-- Each key targets one wild player with one challenger
-- Multiple keys may target the same wild player
+- Each key targets one Wild Player with one challenger
+- Multiple keys may target the same Wild Player
 - The same challenger cannot be reused for multiple keys in the same week
 - Challenger and target must be valid relative to game lock timing
 - Users may edit submissions until lock
@@ -195,9 +228,9 @@ Wild battle rules:
 - The same mythic may appear in consecutive weeks if selected
 - Admins may override weekly mythic reveals
 
-## Gauntlet Phase
+## Arena Phase
 
-Gauntlet runs during Weeks 5 through 13 as a 9-week round robin schedule generated at season start.
+Arena runs during Weeks 5 through 13 as a 9-week round robin schedule generated at season start.
 
 Each weekly matchup has 7 outcomes:
 
@@ -219,7 +252,7 @@ Capture continues in Weeks 5 through 13 with modified rules:
 
 - +1 key per week
 - Keys still carry over
-- Only non-starters may challenge wild players
+- Only non-starters may challenge Wild Players
 - Any player used as a challenger cannot start that same week
 - The player remains on the roster afterward
 
@@ -262,9 +295,10 @@ The user regains control through an explicit toggle prompt after returning.
 
 Most polished MVP screens:
 
-- Draft room
-- Wild player target lobby
-- Weekly PvP matchup screen with transparent scoring breakdown
+- Draft Room
+- Wild Player target lobby / Hunt chamber
+- Weekly Arena matchup screen with transparent scoring breakdown
+- House shell and navigation surfaces
 
 Tutorial expectations:
 
@@ -283,20 +317,20 @@ Notifications:
 - Results notifications at Tuesday 8:00 AM ET finalization
 - Activity feed includes weekly results and capture acquisitions
 
-## Commissioner And Admin Capabilities
+## Guild Master And Admin Capabilities
 
-Commissioner abilities:
+Guild Master abilities:
 
-- Edit league settings before draft
-- Remove members before draft
-- Pause and resume draft
-- View league-relevant audit events
-- Compete as a team owner within the same league
+- Edit Guild settings before Draft
+- Remove Guildmates before Draft
+- Pause and resume Draft
+- View Guild-relevant audit events
+- Compete as a House owner within the same Guild
 
 Platform admin abilities:
 
-- All commissioner abilities
-- Set draft pools
+- All Guild Master abilities
+- Set Draft pools
 - Set mythic tags
 - Override weekly mythic reveals
 - Force-advance the week
@@ -322,10 +356,14 @@ Platform admin abilities:
 - Waivers or free agency in MVP
 - Real-time push notifications outside the app in MVP
 - Licensed NFL branding in MVP
+- Overworld traversal in MVP
+- NPC-driven room interactions in MVP
+- Visible multiplayer movement in MVP
 
 ## Success Criteria
 
-- Closed-beta users can complete a full season loop from league join through playoffs
+- Closed-beta users can complete a full season loop from Guild join through playoffs
 - Weekly outcomes are deterministic and understandable after Tuesday finalization
-- League-local player uniqueness remains intact across draft, capture, and playoffs
+- Guild-local player uniqueness remains intact across Draft, Hunts, and playoffs
 - Admins can operate the season safely when provider data is delayed or corrected
+- The House / Guild / Dungeon / Arena shell makes the product feel cohesive rather than dashboard-fragmented

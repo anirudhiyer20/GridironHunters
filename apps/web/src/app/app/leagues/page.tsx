@@ -1,3 +1,4 @@
+import { FANTASY_TERMS } from "@gridiron/shared";
 import Link from "next/link";
 
 import { HeroLink } from "@/components/hero-link";
@@ -25,56 +26,50 @@ export default async function LeaguesPage({
 
   return (
     <PageShell
-      eyebrow="App / Leagues"
-      title="League hub"
-      description="Sprint 1 starts here: creating a league, joining with an invite code, and enforcing pre-draft membership rules before we move into the draft flow."
+      eyebrow="Guild / Ledger"
+      title="Guild Ledger"
+      description="The Guild Ledger keeps the underlying guild records visible while the hall, House, Dungeon, and Arena start taking over the world-facing navigation."
     >
       <div className="grid gap-8 lg:grid-cols-[1.15fr_0.85fr]">
         <Panel
-          title="Your leagues"
-          description="This list is now backed by the database for the signed-in user."
+          title="Your Guilds"
+          description="These are the Guilds your House currently belongs to. Open one to manage pre-Draft membership, invites, and the existing Draft flow."
         >
           {message ? (
-            <p className="mb-5 rounded-2xl border border-emerald-400/20 bg-emerald-400/10 px-4 py-3 text-sm text-emerald-100">
+            <p className="mb-5 rounded-[1.4rem] border border-emerald-400/20 bg-emerald-400/10 px-4 py-3 text-sm text-emerald-100">
               {message}
             </p>
           ) : null}
           {error ? (
-            <p className="rounded-2xl border border-amber-400/20 bg-amber-400/10 px-4 py-3 text-sm text-amber-100">
-              Unable to load leagues: {error.message}
+            <p className="rounded-[1.4rem] border border-amber-400/20 bg-amber-400/10 px-4 py-3 text-sm text-amber-100">
+              Unable to load guilds: {error.message}
             </p>
           ) : memberships && memberships.length > 0 ? (
             <div className="grid gap-4">
               {memberships.map((membership) => {
-                const league = Array.isArray(membership.leagues)
+                const guild = Array.isArray(membership.leagues)
                   ? membership.leagues[0]
                   : membership.leagues;
+                const roleName = membership.role === "commissioner" ? FANTASY_TERMS.commissioner : FANTASY_TERMS.member;
 
                 return (
                   <Link
-                    key={league.id}
-                    href={`/app/leagues/${league.slug}`}
-                    className="rounded-[1.5rem] border border-white/10 bg-white/6 px-5 py-5 transition-colors hover:bg-white/10"
+                    key={guild.id}
+                    href={`/app/leagues/${guild.slug}`}
+                    className="rounded-[1.5rem] border border-[#9e8455]/18 bg-black/20 px-5 py-5 transition-colors hover:bg-white/8"
                   >
                     <div className="flex flex-wrap items-start justify-between gap-3">
                       <div>
-                        <p className="font-mono text-[0.7rem] uppercase tracking-[0.28em] text-stone-500">
-                          {membership.role}
-                        </p>
-                        <h2 className="mt-2 text-xl font-semibold text-stone-100">
-                          {league.name}
-                        </h2>
-                        <p className="mt-2 text-sm text-stone-300">
-                          Season {league.season} | {league.status.replace("_", " ")}
+                        <p className="fantasy-kicker text-[0.7rem] text-[#c6ad7d]">{roleName}</p>
+                        <h2 className="mt-2 text-xl font-semibold text-[#fff4d8]">{guild.name}</h2>
+                        <p className="mt-2 text-sm text-[#efe2c9]">
+                          Season {guild.season} | {guild.status.replace("_", " ")}
                         </p>
                       </div>
-                      <div className="text-right text-sm text-stone-400">
-                        <p>{league.slug}</p>
+                      <div className="text-right text-sm text-[#d8c6a7]">
+                        <p>{guild.slug}</p>
                         <p className="mt-1">
-                          Draft:{" "}
-                          {league.draft_starts_at
-                            ? new Date(league.draft_starts_at).toLocaleString()
-                            : "Not set"}
+                          Draft: {guild.draft_starts_at ? new Date(guild.draft_starts_at).toLocaleString() : "Not set"}
                         </p>
                       </div>
                     </div>
@@ -83,21 +78,23 @@ export default async function LeaguesPage({
               })}
             </div>
           ) : (
-            <div className="rounded-[1.5rem] border border-dashed border-white/12 bg-black/15 px-5 py-8 text-sm text-stone-300">
-              You are not in a league yet. Create one or join with an invite code
-              to start your season loop.
+            <div className="rounded-[1.5rem] border border-dashed border-[#9e8455]/20 bg-black/15 px-5 py-8 text-sm text-[#efe2c9]">
+              Your House is not in a Guild yet. Found one or join with a code to begin the season loop.
             </div>
           )}
         </Panel>
 
         <Panel
-          title="League actions"
-          description="These are the first fully wired Sprint 1 product flows."
+          title="Guild Actions"
+          description="These are still the same account-backed flows, now framed as Guild actions in the medieval shell."
         >
           <div className="flex flex-wrap gap-3">
-            <HeroLink href="/app/leagues/create">Create league</HeroLink>
+            <HeroLink href="/app/leagues/create">Found a Guild</HeroLink>
             <HeroLink href="/app/leagues/join" tone="secondary">
-              Join with code
+              Join with Code
+            </HeroLink>
+            <HeroLink href="/app/guild" tone="secondary">
+              Return to Guild Hall
             </HeroLink>
           </div>
         </Panel>

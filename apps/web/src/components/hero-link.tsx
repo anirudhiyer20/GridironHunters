@@ -11,14 +11,11 @@ export function HeroLink({
 }) {
   const className =
     tone === "primary"
-      ? "bg-[#f2bf5e] text-[#102117] hover:bg-[#f7cd7c]"
-      : "border border-white/14 bg-white/6 text-stone-100 hover:bg-white/10";
+      ? "fantasy-button fantasy-button--gold"
+      : "fantasy-button fantasy-button--stone";
 
   return (
-    <Link
-      href={href}
-      className={`inline-flex items-center justify-center rounded-full px-5 py-3 text-sm font-medium transition-colors ${className}`}
-    >
+    <Link href={href} className={className}>
       {children}
     </Link>
   );

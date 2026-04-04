@@ -4,19 +4,19 @@ import { Panel } from "@/components/panel";
 export default function AdminPage() {
   return (
     <PageShell
-      eyebrow="App / Admin"
-      title="Admin workspace"
-      description="Platform admin tooling is part of the MVP, but most capabilities land later. This route reserves the namespace now so it doesn’t become an afterthought."
+      eyebrow="Admin / Steward Tools"
+      title="Steward Console"
+      description="Admin tools remain practical and low-fantasy on purpose, but they now sit inside the same medieval shell as the rest of the world."
     >
       <Panel
-        title="Planned admin capabilities"
-        description="These will expand through later sprints once Sprint 1 access and league flows are solid."
+        title="Planned Admin Capabilities"
+        description="These deepen through later sprints once the Guild, Draft, Hunt, and Arena loops are fully in place."
       >
-        <ul className="grid gap-3 text-sm leading-6 text-stone-300">
-          <li>League testing across multiple leagues</li>
+        <ul className="grid gap-3 text-sm leading-6 text-[#efe2c9]">
+          <li>Guild testing across multiple Guilds</li>
           <li>Draft pool and mythic override controls</li>
           <li>Score correction approvals and audit review</li>
-          <li>Impersonation support for closed beta operations</li>
+          <li>Impersonation support for closed-beta operations</li>
         </ul>
       </Panel>
     </PageShell>

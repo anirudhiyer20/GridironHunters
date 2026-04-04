@@ -1,33 +1,40 @@
+import { FANTASY_TERMS, TRIBE_NAMES } from "@gridiron/shared";
+
 import { HeroLink } from "@/components/hero-link";
 import { PageShell } from "@/components/page-shell";
 import { Panel } from "@/components/panel";
 import { getProjectHost, hasSupabaseEnv } from "@/lib/env";
-import { appName, sprintOneChecklist } from "@/lib/mock-data";
+import { appName } from "@/lib/mock-data";
 
 export default function Home() {
   const projectHost = getProjectHost();
 
   return (
     <PageShell
-      eyebrow="Closed Beta Foundation"
+      eyebrow="Closed Beta / World Shell"
       title={appName}
-      description="Sprint 1 is focused on auth, leagues, roles, and invite-driven onboarding. The routes now follow the long-term /auth and /app structure so we can grow into drafts, capture, gauntlet, and admin tooling without flattening everything into one level."
+      description="GridironHunters now pivots into a medieval pixel-arcade presentation where each player belongs to a House within a Guild, carries a Party, and moves through the House, Guild, Dungeon, and Arena."
     >
-      <div className="grid gap-8 lg:grid-cols-[1.15fr_0.85fr]">
+      <div className="grid gap-8 lg:grid-cols-[1.05fr_0.95fr]">
         <Panel
-          title="Where We Are"
-          description="The project now has a real frontend shell, a migration-first backend, and the first route namespaces in place."
+          title="What Changed"
+          description="The project is no longer aiming for a futuristic console aesthetic. The new direction is a warm medieval world shell with object-driven navigation and stronger fantasy language."
         >
           <ul className="grid gap-4">
-            {sprintOneChecklist.map((check) => (
+            {[
+              `League becomes ${FANTASY_TERMS.league} in player-facing UI.`,
+              `Each player belongs to a House and manages a ${FANTASY_TERMS.roster}.`,
+              `The House now leads into the ${FANTASY_TERMS.league}, Dungeon, and ${FANTASY_TERMS.pvp}.`,
+              `${FANTASY_TERMS.type} replaces type in player-facing language.`,
+            ].map((check) => (
               <li
                 key={check}
-                className="flex items-start gap-3 rounded-2xl border border-white/8 bg-white/6 px-4 py-4"
+                className="flex items-start gap-3 rounded-[1.4rem] border border-[#9e8455]/18 bg-black/20 px-4 py-4"
               >
-                <span className="mt-0.5 inline-flex h-6 w-6 items-center justify-center rounded-full bg-emerald-400/20 text-sm text-emerald-300">
-                  V
+                <span className="mt-0.5 inline-flex h-6 w-6 items-center justify-center rounded-full bg-[#d6a24d]/20 text-sm text-[#f4d28d]">
+                  ?
                 </span>
-                <span className="text-sm leading-6 text-stone-200 sm:text-base">
+                <span className="text-sm leading-6 text-[#efe2c9] sm:text-base">
                   {check}
                 </span>
               </li>
@@ -36,23 +43,21 @@ export default function Home() {
 
           <div className="mt-6 flex flex-wrap gap-3">
             <HeroLink href="/auth/signup">Create Account</HeroLink>
-            <HeroLink href="/app/leagues" tone="secondary">
-              Explore League Flows
+            <HeroLink href="/app" tone="secondary">
+              Enter House
             </HeroLink>
           </div>
         </Panel>
 
         <Panel
-          title="Current Runtime"
-          description="These are lightweight checks from the app environment, useful while the shared auth and league flows are still being built."
+          title="World Shell Snapshot"
+          description="The first pass establishes the navigation shell and terminology foundation so deeper Draft, Hunt, and Arena systems can slot into the right rooms."
         >
           <div className="grid gap-3">
             <StatusCard label="Supabase Env" value={hasSupabaseEnv ? "Configured" : "Missing"} />
-            <StatusCard
-              label="Project Host"
-              value={projectHost ?? "Add apps/web/.env.local"}
-            />
-            <StatusCard label="Route Shape" value="/auth + /app" />
+            <StatusCard label="Project Host" value={projectHost ?? "Add apps/web/.env.local"} />
+            <StatusCard label="Rooms" value="House / Guild / Dungeon / Arena" />
+            <StatusCard label="Tribes" value={TRIBE_NAMES.join(", ")} />
           </div>
         </Panel>
       </div>
@@ -62,11 +67,11 @@ export default function Home() {
 
 function StatusCard({ label, value }: { label: string; value: string }) {
   return (
-    <div className="min-w-[14rem] rounded-[1.5rem] border border-white/10 bg-black/20 px-4 py-4">
-      <p className="font-mono text-[0.7rem] uppercase tracking-[0.28em] text-stone-500">
+    <div className="min-w-[14rem] rounded-[1.5rem] border border-[#9e8455]/18 bg-black/20 px-4 py-4">
+      <p className="fantasy-kicker text-[0.7rem] text-[#c6ad7d]">
         {label}
       </p>
-      <p className="mt-2 break-all text-base font-medium text-stone-100">{value}</p>
+      <p className="mt-2 break-all text-base font-medium text-[#fff4d8]">{value}</p>
     </div>
   );
 }
