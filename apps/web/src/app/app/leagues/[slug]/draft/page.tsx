@@ -14,9 +14,11 @@ import { createClient } from "@/lib/supabase/server";
 
 import {
   forceAutopickCurrentPick,
-  reclaimManualControl,
+  pauseDraft,
   resolveTimedOutPick,
+  setDraftControlMode,
 } from "../actions";
+import { DraftClock } from "./draft-clock";
 import { DraftLiveClient } from "./draft-live-client";
 import { DraftPlayerBrowser } from "./draft-player-browser";
 
@@ -73,13 +75,10 @@ type RosterCounts = Record<DraftPosition, number>;
 
 export default async function DraftRoomPage({
   params,
-  searchParams,
 }: {
   params: Promise<{ slug: string }>;
-  searchParams: Promise<{ message?: string }>;
 }) {
   const { slug } = await params;
-  const { message } = await searchParams;
   const supabase = await createClient();
 
   const {
@@ -169,17 +168,20 @@ export default async function DraftRoomPage({
   const currentParticipant = currentPick
     ? participantsById.get(currentPick.participant_id)
     : undefined;
-  const isMyTurn =
-    draft?.status === "live" &&
-    Boolean(currentPick) &&
-    currentPick?.participant_id === myParticipant?.id;
+  const isMyTurn = Boolean(
+    draft?.status === "live" && currentPick?.participant_id === myParticipant?.id,
+  );
   const canResolveTimeout =
     draft?.status === "live" &&
     currentParticipant?.participant_type === "human" &&
     myParticipant?.role === "commissioner";
   const canForceAutopick =
     canResolveTimeout && currentParticipant?.draft_control_mode === "manual";
-  const isMyAutopickMode = myParticipant?.draft_control_mode === "autopick";
+  const canPauseDraft =
+    draft?.status === "live" && myParticipant?.role === "commissioner";
+  const canToggleMode = Boolean(myParticipant?.participant_type === "human");
+  const currentMode = myParticipant?.draft_control_mode ?? "manual";
+  const nextMode = currentMode === "manual" ? "autopick" : "manual";
   const canQueue = myParticipant?.participant_type === "human";
 
   const myRoster = myParticipant
@@ -191,167 +193,115 @@ export default async function DraftRoomPage({
     : [];
   const recentPicks = draftPicks
     .filter((pick) => pick.status === "made" || pick.status === "autopicked")
-    .slice(-8)
+    .slice(-6)
     .reverse();
   const rosterCounts = buildRosterCounts(myRoster);
-  const rosterSlotsRemaining = Math.max(
-    0,
-    MVP_DRAFT_ROSTER_SIZE - myRoster.length,
-  );
+  const rosterSlotsRemaining = Math.max(0, MVP_DRAFT_ROSTER_SIZE - myRoster.length);
   const missingRequiredPositions = DRAFT_POSITIONS.filter(
     (position) => rosterCounts[position] < MVP_REQUIRED_POSITION_COUNTS[position],
   );
+  const hasAdminControls = Boolean(canPauseDraft || canResolveTimeout || canForceAutopick);
 
   return (
     <PageShell
       eyebrow="App / Leagues / Draft"
-      title={`${league.name} draft room`}
-      description="The draft room now keeps the live player pool visible at all times, lets users queue targets while others pick, and adds first-pass rules-based draft guidance without relying on projections yet."
+      title={`${league.name} Draft Room`}
+      description="Live draft command center for tracking the board, your roster build, and the player pool without burying the important information."
     >
-      <div className="grid gap-8">
-        <Panel
-          title="Draft status"
-          description="Order is published when the commissioner prepares the room, and the live draft loop now runs against actual player records."
-        >
-          <DraftLiveClient
-            isLive={draft?.status === "live"}
-            leagueId={league.id}
-            currentPickStartedAt={draft?.current_pick_started_at ?? null}
-            pickTimeSeconds={draft?.pick_time_seconds ?? null}
-            onTheClockName={currentParticipant?.display_name ?? null}
-          />
-          {message ? (
-            <p className="mb-5 rounded-2xl border border-emerald-400/20 bg-emerald-400/10 px-4 py-3 text-sm text-emerald-100">
-              {message}
-            </p>
-          ) : null}
-          <div className="grid gap-3 sm:grid-cols-5">
-            <InfoRow label="League State" value={league.status.replaceAll("_", " ")} />
-            <InfoRow label="Draft State" value={draft?.status?.replaceAll("_", " ") ?? "not prepared"} />
-            <InfoRow
-              label="Current Pick"
-              value={draft ? `Round ${draft.current_round}, Pick ${draft.current_pick_number}` : "Not started"}
-            />
-            <InfoRow label="On The Clock" value={currentParticipant?.display_name ?? "Waiting"} />
-            <InfoRow label="Current Control" value={currentParticipant?.draft_control_mode ?? "n/a"} />
+      <div className="draft-console-shell p-4 sm:p-6">
+        <div className="draft-console-inner p-4 sm:p-6 lg:p-8">
+          <div className="mb-6 border-b border-[#6e95ff]/20 pb-5">
+            <p className="draft-console-kicker text-xs text-[#7ca2ff]">Draft Command Center</p>
           </div>
 
-          {isMyAutopickMode ? (
-            <div className="mt-5 rounded-[1.5rem] border border-sky-300/25 bg-sky-400/10 px-5 py-5">
-              <p className="text-sm text-sky-100">
-                You are currently in autopick mode{myParticipant?.draft_control_reason ? ` because of ${myParticipant.draft_control_reason.replaceAll("_", " ")}` : ""}. Reclaim manual control whenever you are ready, and you will keep it unless you time out again.
-              </p>
-              <div className="mt-4">
-                <form action={reclaimManualControl}>
+          <Panel
+            title="Live Draft Flow"
+            className="draft-console-panel draft-console-outline"
+            titleClassName="draft-console-title text-2xl"
+          >
+            <div className="flex flex-wrap items-center gap-3">
+              <DraftClock
+                isLive={draft?.status === "live"}
+                currentPickStartedAt={draft?.current_pick_started_at ?? null}
+                pickTimeSeconds={draft?.pick_time_seconds ?? null}
+                isUsersPick={isMyTurn}
+              />
+              <ConsoleStat
+                label="On The Clock"
+                value={currentParticipant?.display_name ?? "Waiting"}
+                accent={currentParticipant ? "blue" : "neutral"}
+              />
+              {canToggleMode ? (
+                <form action={setDraftControlMode}>
                   <input type="hidden" name="league_id" value={league.id} />
                   <input type="hidden" name="league_slug" value={league.slug} />
-                  <button type="submit" className="rounded-full border border-sky-300/30 bg-sky-400/15 px-5 py-3 text-sm text-sky-100">
-                    Reclaim manual control
+                  <input type="hidden" name="next_mode" value={nextMode} />
+                  <button
+                    type="submit"
+                    className={`inline-flex h-14 min-w-[10rem] flex-col justify-center rounded-[1.25rem] border bg-[#0b1129]/75 px-4 text-left shadow-[inset_0_0_0_1px_rgba(142,171,255,0.06)] transition-colors hover:bg-[#111938] ${
+                      currentMode === "autopick"
+                        ? "border-fuchsia-400/30"
+                        : "border-[#f2bf5e]/28"
+                    }`}
+                  >
+                    <span className="draft-console-kicker text-[0.68rem] text-stone-500">Your</span>
+                    <span className="mt-1 text-base font-semibold text-stone-100">
+                      {toTitleCase(currentMode)}
+                    </span>
                   </button>
                 </form>
-              </div>
+              ) : null}
+              <DraftLiveClient
+                isLive={draft?.status === "live"}
+                leagueId={league.id}
+                className="inline-flex h-14 items-center rounded-[1.25rem] border border-white/10 bg-black/20 px-5 text-xs uppercase tracking-[0.24em] text-stone-200 transition-colors hover:bg-white/10"
+              />
             </div>
-          ) : null}
-
-          {canResolveTimeout ? (
-            <div className="mt-5 rounded-[1.5rem] border border-white/10 bg-white/6 px-5 py-5">
-              <p className="text-sm text-stone-300">
-                Once the pick clock reaches 00:00, the room should auto-advance on its own. If someone is clearly unavailable or stuck, you can still force autopick early and they will stay on autopick until they reclaim control.
-              </p>
-              <div className="mt-4 flex flex-wrap gap-3">
-                <form action={resolveTimedOutPick}>
-                  <input type="hidden" name="league_id" value={league.id} />
-                  <input type="hidden" name="league_slug" value={league.slug} />
-                  <button type="submit" className="rounded-full border border-amber-300/25 bg-amber-400/10 px-5 py-3 text-sm text-amber-100">
-                    Resolve timed out pick
-                  </button>
-                </form>
+            {hasAdminControls ? (
+              <div className="mt-4 flex flex-wrap items-center gap-3 border-t border-[#6e95ff]/12 pt-4">
+                {canPauseDraft ? (
+                  <form action={pauseDraft}>
+                    <input type="hidden" name="league_id" value={league.id} />
+                    <input type="hidden" name="league_slug" value={league.slug} />
+                    <button type="submit" className="rounded-full border border-violet-300/25 bg-violet-400/10 px-5 py-3 text-sm uppercase tracking-[0.2em] text-violet-100 transition-colors hover:bg-violet-400/15">
+                      Pause Draft
+                    </button>
+                  </form>
+                ) : null}
+                {canResolveTimeout ? (
+                  <form action={resolveTimedOutPick}>
+                    <input type="hidden" name="league_id" value={league.id} />
+                    <input type="hidden" name="league_slug" value={league.slug} />
+                    <button type="submit" className="rounded-full border border-amber-300/25 bg-amber-400/10 px-5 py-3 text-sm uppercase tracking-[0.2em] text-amber-100 transition-colors hover:bg-amber-400/15">
+                      Resolve Timeout
+                    </button>
+                  </form>
+                ) : null}
                 {canForceAutopick ? (
                   <form action={forceAutopickCurrentPick}>
                     <input type="hidden" name="league_id" value={league.id} />
                     <input type="hidden" name="league_slug" value={league.slug} />
-                    <button type="submit" className="rounded-full border border-rose-300/25 bg-rose-400/10 px-5 py-3 text-sm text-rose-100">
-                      Force autopick now
+                    <button type="submit" className="rounded-full border border-rose-300/25 bg-rose-400/10 px-5 py-3 text-sm uppercase tracking-[0.2em] text-rose-100 transition-colors hover:bg-rose-400/15">
+                      Force Autopick
                     </button>
                   </form>
                 ) : null}
               </div>
-            </div>
-          ) : null}
-        </Panel>
-
-        <div className="grid gap-8 xl:grid-cols-[1.2fr_0.8fr]">
-          <Panel
-            title="Draft board"
-            description="Inside the room, we show the full snake order grouped by round and now mark completed picks with the drafted player."
-          >
-            {groupedPicks.length > 0 ? (
-              <div className="grid gap-6 lg:grid-cols-2">
-                {groupedPicks.map(([roundNumber, roundPicks]) => (
-                  <section key={roundNumber} className="rounded-[1.5rem] border border-white/10 bg-white/6 px-5 py-5">
-                    <h2 className="text-lg font-semibold text-stone-100">Round {roundNumber}</h2>
-                    <div className="mt-4 grid gap-3">
-                      {roundPicks.map((pick) => {
-                        const participant = participantsById.get(pick.participant_id);
-                        const isCurrentPick = draft?.current_pick_number === pick.pick_number && pick.status === "pending";
-                        const isMyPick = pick.participant_id === myParticipant?.id;
-
-                        return (
-                          <div
-                            key={pick.pick_number}
-                            className={`rounded-2xl border px-4 py-4 ${
-                              isCurrentPick
-                                ? "border-[#f2bf5e]/45 bg-[#f2bf5e]/10"
-                                : isMyPick
-                                  ? "border-emerald-300/25 bg-emerald-400/10"
-                                  : "border-white/10 bg-black/15"
-                            }`}
-                          >
-                            <div className="flex items-start justify-between gap-3">
-                              <div>
-                                <p className="font-mono text-[0.7rem] uppercase tracking-[0.28em] text-stone-500">
-                                  Pick {pick.pick_number} | Slot {pick.slot_number}
-                                </p>
-                                <p className="mt-2 text-base font-medium text-stone-100">
-                                  {participant?.display_name ?? "Unknown participant"}
-                                </p>
-                                <p className="mt-1 text-xs uppercase tracking-[0.24em] text-stone-500">
-                                  {participant?.participant_type ?? "unknown"} | {participant?.draft_control_mode ?? "manual"}
-                                </p>
-                                <p className="mt-3 text-sm text-stone-300">
-                                  {pick.picked_player_name
-                                    ? `${pick.picked_player_name} (${pick.picked_position})`
-                                    : "No player selected yet"}
-                                </p>
-                              </div>
-                              <div className="text-right text-xs uppercase tracking-[0.24em] text-stone-400">
-                                {isCurrentPick ? "On the clock" : isMyPick ? "Your pick" : pick.status}
-                              </div>
-                            </div>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  </section>
-                ))}
-              </div>
-            ) : (
-              <p className="rounded-2xl border border-white/10 bg-white/6 px-4 py-3 text-sm text-stone-300">
-                Draft order has not been published yet. Fill the league and prepare the room first.
-              </p>
-            )}
+            ) : null}
           </Panel>
 
-          <div className="grid gap-8">
+          <div className="mt-8 grid gap-8 xl:grid-cols-[0.88fr_1.12fr]">
             <Panel
-              title="Your roster"
-              description="This panel now shows what you still need to satisfy MVP roster rules, not just who you already drafted."
+              title="Roster"
+              className="draft-console-panel draft-console-outline"
+              titleClassName="draft-console-title text-2xl"
             >
               <div className="grid gap-3 sm:grid-cols-2">
-                <InfoRow label="Roster Spots Left" value={String(rosterSlotsRemaining)} />
-                <InfoRow
-                  label="Required Needs"
-                  value={missingRequiredPositions.length > 0 ? missingRequiredPositions.join(", ") : "All minimums covered"}
+                <ConsoleStat label="Roster Spots" value={String(rosterSlotsRemaining)} accent="gold" />
+                <ConsoleStat
+                  label="Needs"
+                  value={missingRequiredPositions.length > 0 ? missingRequiredPositions.join(", ") : "Covered"}
+                  accent={missingRequiredPositions.length > 0 ? "pink" : "blue"}
                 />
               </div>
               <div className="mt-4 grid gap-3 sm:grid-cols-2">
@@ -362,85 +312,135 @@ export default async function DraftRoomPage({
                   const remainingNeed = Math.max(0, requiredCount - currentCount);
 
                   return (
-                    <div key={position} className="rounded-2xl border border-white/10 bg-white/6 px-4 py-4">
+                    <div key={position} className="rounded-[1.2rem] border border-[#6e95ff]/15 bg-[#0b1129]/70 px-4 py-4">
                       <div className="flex items-center justify-between gap-3">
-                        <p className="font-mono text-[0.7rem] uppercase tracking-[0.28em] text-stone-500">{position}</p>
-                        <span className={`rounded-full border px-3 py-1 text-xs uppercase tracking-[0.24em] ${remainingNeed > 0 ? "border-[#f2bf5e]/30 bg-[#f2bf5e]/10 text-[#f2bf5e]" : "border-emerald-300/25 bg-emerald-400/10 text-emerald-100"}`}>
-                          {remainingNeed > 0 ? `${remainingNeed} needed` : "Covered"}
+                        <p className="draft-console-kicker text-[0.68rem] text-[#8eb0ff]">{position}</p>
+                        <span className={`rounded-full border px-3 py-1 text-[0.68rem] uppercase tracking-[0.24em] ${remainingNeed > 0 ? "border-[#f2bf5e]/30 bg-[#f2bf5e]/10 text-[#f2bf5e]" : "border-emerald-300/25 bg-emerald-400/10 text-emerald-100"}`}>
+                          {remainingNeed > 0 ? `${remainingNeed} Needed` : "Covered"}
                         </span>
                       </div>
                       <p className="mt-3 text-sm text-stone-300">
-                        {currentCount} rostered | minimum {requiredCount}{maxCount ? ` | max ${maxCount}` : ""}
+                        {currentCount} rostered | min {requiredCount}{maxCount ? ` | max ${maxCount}` : ""}
                       </p>
                     </div>
                   );
                 })}
               </div>
-              {myRoster.length > 0 ? (
-                <div className="mt-4 grid gap-3">
-                  {myRoster.map((pick) => (
-                    <div key={pick.id} className="rounded-2xl border border-white/10 bg-white/6 px-4 py-4">
-                      <p className="font-mono text-[0.7rem] uppercase tracking-[0.28em] text-stone-500">
-                        Pick {pick.pick_number} | {pick.status}
-                      </p>
-                      <p className="mt-2 text-base font-medium text-stone-100">{pick.picked_player_name}</p>
-                      <p className="mt-1 text-sm text-stone-400">{pick.picked_position}</p>
+
+              <div className="mt-5 grid gap-5 lg:grid-cols-2 xl:grid-cols-1">
+                <section>
+                  <p className="draft-console-kicker text-[0.68rem] text-[#8eb0ff]">Recent Picks</p>
+                  {recentPicks.length > 0 ? (
+                    <div className="mt-3 grid gap-3">
+                      {recentPicks.map((pick) => {
+                        const participant = participantsById.get(pick.participant_id);
+
+                        return (
+                          <div key={pick.id} className="rounded-[1.2rem] border border-[#6e95ff]/15 bg-[#0b1129]/70 px-4 py-4">
+                            <p className="draft-console-kicker text-[0.68rem] text-stone-500">Pick {pick.pick_number}</p>
+                            <p className="mt-2 text-base font-semibold text-stone-100">{pick.picked_player_name}</p>
+                            <p className="mt-1 text-sm text-stone-400">
+                              {participant?.display_name ?? "Unknown participant"} | {pick.picked_position}
+                            </p>
+                          </div>
+                        );
+                      })}
                     </div>
-                  ))}
-                </div>
-              ) : (
-                <p className="mt-4 rounded-2xl border border-white/10 bg-white/6 px-4 py-3 text-sm text-stone-300">
-                  You have not drafted anyone yet.
-                </p>
-              )}
+                  ) : (
+                    <p className="mt-3 rounded-[1.2rem] border border-white/10 bg-black/20 px-4 py-3 text-sm text-stone-300">
+                      No picks yet.
+                    </p>
+                  )}
+                </section>
+
+                <section>
+                  <p className="draft-console-kicker text-[0.68rem] text-[#8eb0ff]">Your Roster</p>
+                  {myRoster.length > 0 ? (
+                    <div className="mt-3 grid gap-3">
+                      {myRoster.map((pick) => (
+                        <div key={pick.id} className="rounded-[1.2rem] border border-[#6e95ff]/15 bg-[#0b1129]/70 px-4 py-4">
+                          <p className="draft-console-kicker text-[0.68rem] text-stone-500">Pick {pick.pick_number}</p>
+                          <p className="mt-2 text-base font-semibold text-stone-100">{pick.picked_player_name}</p>
+                          <p className="mt-1 text-sm text-stone-400">{pick.picked_position}</p>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="mt-3 rounded-[1.2rem] border border-white/10 bg-black/20 px-4 py-3 text-sm text-stone-300">
+                      No rostered players yet.
+                    </p>
+                  )}
+                </section>
+              </div>
             </Panel>
 
             <Panel
-              title="Player pool and queue"
-              description="Scout the live pool while others pick, build your queue ahead of time, and still draft directly from the same cards when your turn arrives."
+              title="Player Intelligence"
+              className="draft-console-panel draft-console-outline"
+              titleClassName="draft-console-title text-2xl"
             >
-              {isMyTurn && isMyAutopickMode ? (
-                <p className="mb-5 rounded-2xl border border-sky-300/25 bg-sky-400/10 px-4 py-3 text-sm text-sky-100">
-                  It is your turn, but you are currently in autopick mode. Reclaim manual control first if you want to choose this pick yourself. Your queue will still guide autopick until you take control back.
-                </p>
-              ) : null}
-
               <DraftPlayerBrowser
                 leagueId={league.id}
                 leagueSlug={league.slug}
                 draftStatus={draft?.status ?? null}
-                isMyTurn={Boolean(isMyTurn)}
-                isMyAutopickMode={Boolean(isMyAutopickMode)}
+                isMyTurn={isMyTurn}
+                isMyAutopickMode={currentMode === "autopick"}
                 canQueue={Boolean(canQueue)}
                 availablePlayers={availablePlayers}
                 queuedPlayers={queuedPlayers}
                 rosterCounts={rosterCounts}
               />
             </Panel>
+          </div>
 
+          <div className="mt-8">
             <Panel
-              title="Recent picks"
-              description="This gives you a quick pulse on what just happened without scanning the whole board."
+              title="Snake Board"
+              className="draft-console-panel draft-console-outline"
+              titleClassName="draft-console-title text-2xl"
             >
-              {recentPicks.length > 0 ? (
-                <div className="grid gap-3">
-                  {recentPicks.map((pick) => {
-                    const participant = participantsById.get(pick.participant_id);
-
-                    return (
-                      <div key={pick.id} className="rounded-2xl border border-white/10 bg-white/6 px-4 py-4">
-                        <p className="font-mono text-[0.7rem] uppercase tracking-[0.28em] text-stone-500">Pick {pick.pick_number}</p>
-                        <p className="mt-2 text-base font-medium text-stone-100">{pick.picked_player_name}</p>
-                        <p className="mt-1 text-sm text-stone-400">
-                          {participant?.display_name ?? "Unknown participant"} | {pick.picked_position}
-                        </p>
+              {groupedPicks.length > 0 ? (
+                <div className="grid gap-5">
+                  {groupedPicks.map(([roundNumber, roundPicks]) => (
+                    <section key={roundNumber} className="rounded-[1.5rem] border border-[#6e95ff]/18 bg-[#0b1129]/70 px-5 py-5 shadow-[inset_0_0_0_1px_rgba(142,171,255,0.06)]">
+                      <div className="mb-4 flex items-center justify-between gap-3 border-b border-[#6e95ff]/16 pb-3">
+                        <h2 className="draft-console-title text-xl text-white">Round {roundNumber}</h2>
+                        <span className="draft-console-kicker text-[0.68rem] text-[#8eb0ff]">Snake Lane</span>
                       </div>
-                    );
-                  })}
+                      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5 xl:grid-cols-10">
+                        {roundPicks.map((pick) => {
+                          const participant = participantsById.get(pick.participant_id);
+                          const isCurrentPick = draft?.current_pick_number === pick.pick_number && pick.status === "pending";
+                          const isMyPick = pick.participant_id === myParticipant?.id;
+
+                          return (
+                            <div
+                              key={pick.pick_number}
+                              className={`rounded-[1.25rem] border px-3 py-3 transition-colors ${
+                                isCurrentPick
+                                  ? "border-[#f2bf5e]/50 bg-[#f2bf5e]/12 shadow-[0_0_24px_rgba(242,191,94,0.12)]"
+                                  : isMyPick
+                                    ? "border-emerald-300/25 bg-emerald-400/10"
+                                    : "border-[#6e95ff]/14 bg-black/25"
+                              }`}
+                            >
+                              <p className="draft-console-kicker text-[0.62rem] text-stone-500">{pick.pick_number}</p>
+                              <p className="mt-2 text-sm font-semibold leading-5 text-stone-100">
+                                {participant?.display_name ?? "Unknown"}
+                              </p>
+                              <p className="mt-2 text-xs leading-5 text-stone-400">
+                                {pick.picked_player_name ? pick.picked_player_name : "Pending"}
+                              </p>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </section>
+                  ))}
                 </div>
               ) : (
-                <p className="rounded-2xl border border-white/10 bg-white/6 px-4 py-3 text-sm text-stone-300">
-                  No picks have been made yet.
+                <p className="rounded-[1.25rem] border border-white/10 bg-black/20 px-4 py-3 text-sm text-stone-300">
+                  Draft order has not been published yet.
                 </p>
               )}
             </Panel>
@@ -530,11 +530,32 @@ function groupPicksByRound(picks: DraftRoomPick[]) {
   return Array.from(grouped.entries()).sort((a, b) => a[0] - b[0]);
 }
 
-function InfoRow({ label, value }: { label: string; value: string }) {
+function toTitleCase(value: string) {
+  return value.charAt(0).toUpperCase() + value.slice(1).toLowerCase();
+}
+
+function ConsoleStat({
+  label,
+  value,
+  accent = "neutral",
+}: {
+  label: string;
+  value: string;
+  accent?: "neutral" | "blue" | "gold" | "pink";
+}) {
+  const accentClass =
+    accent === "blue"
+      ? "border-[#6e95ff]/28"
+      : accent === "gold"
+        ? "border-[#f2bf5e]/28"
+        : accent === "pink"
+          ? "border-fuchsia-400/25"
+          : "border-white/10";
+
   return (
-    <div className="rounded-2xl border border-white/10 bg-white/6 px-4 py-4">
-      <p className="font-mono text-[0.7rem] uppercase tracking-[0.28em] text-stone-500">{label}</p>
-      <p className="mt-2 break-words text-base font-medium text-stone-100">{value}</p>
+    <div className={`inline-flex h-14 min-w-[10rem] flex-col justify-center rounded-[1.25rem] bg-[#0b1129]/70 px-4 shadow-[inset_0_0_0_1px_rgba(142,171,255,0.06)] ${accentClass} border`}>
+      <p className="draft-console-kicker text-[0.68rem] text-stone-500">{label}</p>
+      <p className="mt-1 text-base font-semibold text-stone-100">{value}</p>
     </div>
   );
 }

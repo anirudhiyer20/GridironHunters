@@ -158,11 +158,12 @@ export function DraftPlayerBrowser({
   return (
     <div className="grid gap-6">
       {canQueue ? (
-        <section className="rounded-[1.5rem] border border-white/10 bg-white/6 px-5 py-5">
-          <div className="flex flex-wrap items-start justify-between gap-4">
+        <section className="draft-console-outline rounded-[1.65rem] border border-[#6e95ff]/18 bg-[#091228]/82 px-5 py-5">
+          <div className="flex flex-wrap items-start justify-between gap-4 border-b border-[#6e95ff]/14 pb-4">
             <div>
-              <h3 className="text-base font-semibold text-stone-100">Your queue</h3>
-              <p className="mt-1 text-sm text-stone-400">
+              <p className="draft-console-kicker text-[0.68rem] text-[#8eb0ff]">Priority queue</p>
+              <h3 className="draft-console-title mt-2 text-xl text-white">Your queue</h3>
+              <p className="mt-2 max-w-xl text-sm leading-7 text-stone-300">
                 Queue players while others are on the clock. If you time out or stay on autopick, the system will try your queued players first.
               </p>
             </div>
@@ -172,7 +173,7 @@ export function DraftPlayerBrowser({
                 <input type="hidden" name="league_slug" value={leagueSlug} />
                 <button
                   type="submit"
-                  className="rounded-full border border-white/10 bg-black/20 px-4 py-2 text-xs uppercase tracking-[0.24em] text-stone-200 transition-colors hover:bg-white/10"
+                  className="rounded-full border border-white/10 bg-black/25 px-4 py-2 text-xs uppercase tracking-[0.24em] text-stone-200 transition-colors hover:bg-white/10"
                 >
                   Clear queue
                 </button>
@@ -183,12 +184,10 @@ export function DraftPlayerBrowser({
           {queuedPlayers.length > 0 ? (
             <div className="mt-5 grid gap-3">
               {queuedPlayers.map((player) => (
-                <div key={player.id} className="rounded-2xl border border-white/10 bg-black/15 px-4 py-4">
+                <div key={player.id} className="rounded-[1.2rem] border border-[#6e95ff]/14 bg-black/25 px-4 py-4">
                   <div className="flex flex-wrap items-start justify-between gap-3">
                     <div>
-                      <p className="font-mono text-[0.7rem] uppercase tracking-[0.28em] text-stone-500">
-                        Queue #{player.queueRank}
-                      </p>
+                      <p className="draft-console-kicker text-[0.68rem] text-stone-500">Queue #{player.queueRank}</p>
                       <p className="mt-2 text-base font-semibold text-stone-100">{player.fullName}</p>
                       <p className="mt-1 text-sm text-stone-400">
                         {player.position} | {player.nflTeam} | Bye {player.byeWeek ?? "-"}
@@ -230,7 +229,7 @@ export function DraftPlayerBrowser({
               ))}
             </div>
           ) : (
-            <p className="mt-5 rounded-2xl border border-white/10 bg-black/15 px-4 py-3 text-sm text-stone-400">
+            <p className="mt-5 rounded-[1.2rem] border border-white/10 bg-black/20 px-4 py-3 text-sm text-stone-400">
               Your queue is empty. Add players below so you have a plan ready before your next turn.
             </p>
           )}
@@ -240,25 +239,27 @@ export function DraftPlayerBrowser({
       <section className="grid gap-5">
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div>
-            <h3 className="text-base font-semibold text-stone-100">Available player pool</h3>
-            <p className="mt-1 text-sm text-stone-400">
-              The pool stays visible throughout the live draft now, so you can scout, sort, and queue players while other teams are picking.
+            <p className="draft-console-kicker text-[0.68rem] text-[#8eb0ff]">Player intelligence</p>
+            <h3 className="draft-console-title mt-2 text-2xl text-white">Available player pool</h3>
+            <p className="mt-2 max-w-2xl text-sm leading-7 text-stone-300">
+              The pool stays visible throughout the live draft, with enough structure to browse comfortably even while other teams are making decisions.
             </p>
           </div>
-          <div className="rounded-full border border-white/10 bg-white/6 px-4 py-2 text-xs uppercase tracking-[0.24em] text-stone-300">
+          <div className="draft-console-chip rounded-full px-4 py-2 text-xs uppercase tracking-[0.24em] text-stone-300">
             {filteredPlayers.length} available
           </div>
         </div>
 
-        <div className="rounded-[1.5rem] border border-[#f2bf5e]/20 bg-[#f2bf5e]/8 px-5 py-5">
-          <div className="flex flex-wrap items-start justify-between gap-3">
+        <div className="draft-console-outline rounded-[1.65rem] border border-[#f2bf5e]/18 bg-[#120f22]/78 px-5 py-5">
+          <div className="flex flex-wrap items-start justify-between gap-3 border-b border-[#f2bf5e]/14 pb-4">
             <div>
-              <h4 className="text-sm font-semibold uppercase tracking-[0.24em] text-[#f2bf5e]">Recommendation snapshot</h4>
-              <p className="mt-2 text-sm text-stone-300">
+              <p className="draft-console-kicker text-[0.68rem] text-[#f2bf5e]">Guidance layer</p>
+              <h4 className="draft-console-title mt-2 text-xl text-white">Recommendation snapshot</h4>
+              <p className="mt-2 max-w-xl text-sm leading-7 text-stone-300">
                 This first-pass guidance is purely rules-based: it weights roster needs against last season&apos;s fantasy production.
               </p>
             </div>
-            <div className="rounded-full border border-white/10 bg-black/20 px-4 py-2 text-xs uppercase tracking-[0.24em] text-stone-300">
+            <div className="draft-console-chip rounded-full px-4 py-2 text-xs uppercase tracking-[0.24em] text-stone-300">
               {rosterSlotsRemaining} slots left
             </div>
           </div>
@@ -268,13 +269,11 @@ export function DraftPlayerBrowser({
                 const insight = playerInsights.get(player.id)!;
 
                 return (
-                  <div key={player.id} className="rounded-2xl border border-white/10 bg-black/15 px-4 py-4">
-                    <p className="font-mono text-[0.7rem] uppercase tracking-[0.28em] text-stone-500">
-                      Recommendation #{index + 1}
-                    </p>
+                  <div key={player.id} className="rounded-[1.2rem] border border-white/10 bg-black/25 px-4 py-4">
+                    <p className="draft-console-kicker text-[0.68rem] text-stone-500">Recommendation #{index + 1}</p>
                     <p className="mt-2 text-base font-semibold text-stone-100">{player.fullName}</p>
                     <p className="mt-1 text-sm text-stone-400">{player.position} | {player.nflTeam}</p>
-                    <p className="mt-3 text-sm text-stone-300">{insight.reason}</p>
+                    <p className="mt-3 text-sm leading-7 text-stone-300">{insight.reason}</p>
                   </div>
                 );
               })}
@@ -282,14 +281,14 @@ export function DraftPlayerBrowser({
           ) : null}
         </div>
 
-        <div className="grid gap-3 lg:grid-cols-[1.2fr_0.8fr_0.8fr_0.8fr]">
+        <div className="grid gap-3 lg:grid-cols-[1.25fr_0.75fr_0.75fr_0.75fr]">
           <label className="grid gap-2 text-sm text-stone-300">
             Search
             <input
               value={search}
               onChange={(event) => setSearch(event.target.value)}
               placeholder="Search by player, school, team, or key"
-              className="rounded-2xl border border-white/10 bg-black/20 px-4 py-3 text-sm text-stone-100 outline-none transition-colors placeholder:text-stone-500 focus:border-[#f2bf5e]/40"
+              className="rounded-[1.15rem] border border-[#6e95ff]/16 bg-black/25 px-4 py-3 text-sm text-stone-100 outline-none transition-colors placeholder:text-stone-500 focus:border-[#f2bf5e]/40"
             />
           </label>
           <label className="grid gap-2 text-sm text-stone-300">
@@ -297,7 +296,7 @@ export function DraftPlayerBrowser({
             <select
               value={position}
               onChange={(event) => setPosition(event.target.value as (typeof POSITION_OPTIONS)[number])}
-              className="rounded-2xl border border-white/10 bg-black/20 px-4 py-3 text-sm text-stone-100 outline-none transition-colors focus:border-[#f2bf5e]/40"
+              className="rounded-[1.15rem] border border-[#6e95ff]/16 bg-black/25 px-4 py-3 text-sm text-stone-100 outline-none transition-colors focus:border-[#f2bf5e]/40"
             >
               {POSITION_OPTIONS.map((option) => (
                 <option key={option} value={option}>
@@ -311,7 +310,7 @@ export function DraftPlayerBrowser({
             <select
               value={team}
               onChange={(event) => setTeam(event.target.value)}
-              className="rounded-2xl border border-white/10 bg-black/20 px-4 py-3 text-sm text-stone-100 outline-none transition-colors focus:border-[#f2bf5e]/40"
+              className="rounded-[1.15rem] border border-[#6e95ff]/16 bg-black/25 px-4 py-3 text-sm text-stone-100 outline-none transition-colors focus:border-[#f2bf5e]/40"
             >
               <option value="ALL">ALL</option>
               {nflTeams.map((option) => (
@@ -326,7 +325,7 @@ export function DraftPlayerBrowser({
             <select
               value={sort}
               onChange={(event) => setSort(event.target.value as SortOption)}
-              className="rounded-2xl border border-white/10 bg-black/20 px-4 py-3 text-sm text-stone-100 outline-none transition-colors focus:border-[#f2bf5e]/40"
+              className="rounded-[1.15rem] border border-[#6e95ff]/16 bg-black/25 px-4 py-3 text-sm text-stone-100 outline-none transition-colors focus:border-[#f2bf5e]/40"
             >
               <option value="recommended">Recommended</option>
               <option value="best">Best available</option>
@@ -346,31 +345,27 @@ export function DraftPlayerBrowser({
               return (
                 <div
                   key={player.id}
-                  className={`grid gap-4 rounded-[1.35rem] border px-4 py-4 ${
+                  className={`draft-console-glow grid gap-4 rounded-[1.4rem] border px-4 py-4 transition-colors ${
                     isQueued
                       ? "border-sky-300/25 bg-sky-400/10"
-                      : "border-white/10 bg-white/6"
+                      : "border-[#6e95ff]/16 bg-[#0a1127]/84"
                   }`}
                 >
                   <div className="flex items-start justify-between gap-3">
                     <div>
-                      <p className="text-base font-semibold text-stone-100">{player.fullName}</p>
+                      <p className="text-lg font-semibold text-stone-100">{player.fullName}</p>
                       <p className="mt-1 text-sm text-stone-400">
                         {player.position} | {player.nflTeam} | Bye {player.byeWeek ?? "-"}
                       </p>
                     </div>
                     <div className="text-right">
-                      <p className="font-mono text-[0.7rem] uppercase tracking-[0.28em] text-stone-500">
-                        2025 PPR
-                      </p>
-                      <p className="mt-1 text-lg font-semibold text-stone-100">{player.fantasyPointsPpr.toFixed(1)}</p>
+                      <p className="draft-console-kicker text-[0.68rem] text-stone-500">2025 PPR</p>
+                      <p className="mt-1 text-xl font-semibold text-stone-100">{player.fantasyPointsPpr.toFixed(1)}</p>
                     </div>
                   </div>
 
                   <div className="flex flex-wrap gap-2">
-                    <TagChip tone={insight.isLegalNow ? "emerald" : "stone"}>
-                      {insight.recommendationLabel}
-                    </TagChip>
+                    <TagChip tone={insight.isLegalNow ? "emerald" : "stone"}>{insight.recommendationLabel}</TagChip>
                     {isQueued ? <TagChip tone="sky">Queued</TagChip> : null}
                   </div>
 
@@ -382,8 +377,8 @@ export function DraftPlayerBrowser({
                   </div>
 
                   <p className="text-sm text-stone-300">{formatStatSummary(player)}</p>
-                  <p className="text-sm text-stone-400">{insight.reason}</p>
-                  <p className="font-mono text-[0.7rem] uppercase tracking-[0.28em] text-stone-500">
+                  <p className="text-sm leading-7 text-stone-400">{insight.reason}</p>
+                  <p className="draft-console-kicker text-[0.68rem] text-stone-500">
                     {player.key}{player.college ? ` | ${player.college}` : ""}
                   </p>
 
@@ -439,7 +434,7 @@ export function DraftPlayerBrowser({
             })}
           </div>
         ) : (
-          <p className="rounded-2xl border border-white/10 bg-black/15 px-4 py-3 text-sm text-stone-400">
+          <p className="rounded-[1.25rem] border border-white/10 bg-black/20 px-4 py-3 text-sm text-stone-400">
             No players match the current filters. Try clearing search or switching the sort and position filters.
           </p>
         )}
@@ -539,7 +534,7 @@ function formatStatSummary(player: DraftablePlayer) {
 
 function StatChip({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-full border border-white/10 bg-black/15 px-3 py-2 text-xs uppercase tracking-[0.24em] text-stone-300">
+    <div className="draft-console-chip rounded-full px-3 py-2 text-xs uppercase tracking-[0.24em] text-stone-300">
       {label}: {value}
     </div>
   );

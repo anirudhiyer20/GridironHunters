@@ -138,6 +138,33 @@ export async function pauseDraft(formData: FormData) {
   );
 }
 
+export async function setDraftControlMode(formData: FormData) {
+  const leagueId = String(formData.get("league_id") ?? "");
+  const leagueSlug = String(formData.get("league_slug") ?? "");
+  const nextMode = String(formData.get("next_mode") ?? "").trim().toLowerCase();
+
+  const supabase = await createClient();
+  const { data, error } = await supabase.rpc("set_my_draft_control_mode", {
+    p_league_id: leagueId,
+    p_mode: nextMode,
+  });
+
+  if (error) {
+    redirect(
+      `/app/leagues/${leagueSlug}/draft?message=${encodeMessage(error.message)}`,
+    );
+  }
+
+  revalidatePath(`/app/leagues/${leagueSlug}`);
+  revalidatePath(`/app/leagues/${leagueSlug}/draft`);
+  revalidatePath("/app/leagues");
+  redirect(
+    `/app/leagues/${leagueSlug}/draft?message=${encodeMessage(
+      (data === "autopick" ? "Autopick" : "Manual") + " control enabled.",
+    )}`,
+  );
+}
+
 export async function fillWithBots(formData: FormData) {
   const leagueId = String(formData.get("league_id") ?? "");
   const leagueSlug = String(formData.get("league_slug") ?? "");
@@ -295,7 +322,7 @@ export async function submitDraftPick(formData: FormData) {
         : error.message === "It is not your turn to pick."
           ? "The draft moved before your pick was submitted. The room has been refreshed."
           : error.message === "You are currently on autopick. Reclaim control before making a manual pick."
-            ? "You are on autopick right now. Reclaim manual control first, then make your pick."
+            ? "You are on autopick right now. Switch back to Manual first, then make your pick."
             : error.message;
 
     revalidatePath(`/app/leagues/${leagueSlug}/draft`);

@@ -22,36 +22,37 @@ export function PageShell({
   children: React.ReactNode;
 }) {
   return (
-    <main className="min-h-screen bg-[radial-gradient(circle_at_top,#1c4838_0%,#102117_42%,#09120e_100%)] text-stone-50">
-      <div className="mx-auto flex min-h-screen w-full max-w-6xl flex-col px-6 py-8 sm:px-8">
-        <header className="flex flex-col gap-6 border-b border-white/10 pb-8 lg:flex-row lg:items-center lg:justify-between">
-          <div>
-            <p className="font-mono text-xs uppercase tracking-[0.32em] text-[#f2bf5e]">
-              {eyebrow}
-            </p>
-            <h1 className="mt-3 text-4xl font-semibold sm:text-5xl">{title}</h1>
-            <p className="mt-4 max-w-2xl text-sm leading-7 text-stone-300 sm:text-base">
-              {description}
-            </p>
-          </div>
+    <main className="app-shell text-stone-50">
+      <div className="app-shell__grid" />
+      <div className="mx-auto flex min-h-screen w-full max-w-7xl flex-col px-5 py-6 sm:px-8 lg:px-10">
+        <header className="app-frame relative overflow-hidden rounded-[2rem] px-5 py-6 sm:px-8 sm:py-7">
+          <div className="relative z-10 flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
+            <div>
+              <p className="app-kicker text-[0.68rem] text-[#87a9ff] sm:text-xs">{eyebrow}</p>
+              <h1 className="app-title mt-3 text-4xl font-semibold sm:text-5xl lg:text-6xl">{title}</h1>
+              <p className="mt-3 max-w-3xl text-sm leading-7 text-stone-300 sm:text-base">
+                {description}
+              </p>
+            </div>
 
-          <nav className="flex flex-wrap gap-3 text-sm text-stone-300">
-            {navLinks.map((link) => (
-              <Link
-                key={link.href}
-                href={link.href}
-                className="rounded-full border border-white/10 bg-black/20 px-4 py-2 transition-colors hover:bg-white/8"
-              >
-                {link.label}
-              </Link>
-            ))}
-          </nav>
+            <nav className="flex flex-wrap gap-3 text-sm text-stone-300">
+              {navLinks.map((link) => (
+                <Link
+                  key={link.href}
+                  href={link.href}
+                  className="app-nav-pill"
+                >
+                  {link.label}
+                </Link>
+              ))}
+            </nav>
+          </div>
         </header>
 
         <div className="mt-8 flex-1">{children}</div>
 
-        <footer className="mt-10 border-t border-white/10 pt-6 text-sm text-stone-400">
-          {appName} Sprint 1 foundation build
+        <footer className="mt-10 border-t border-[#6e95ff]/16 pt-6 text-sm text-stone-400">
+          {appName} foundation build
         </footer>
       </div>
     </main>

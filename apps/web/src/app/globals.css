@@ -1,14 +1,14 @@
 @import "tailwindcss";
 
 :root {
-  --background: #09120e;
+  --background: #081024;
   --foreground: #f5f2ea;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: "Trebuchet MS", "Avenir Next", "Segoe UI", sans-serif;
+  --font-sans: "Bahnschrift", "Trebuchet MS", "Avenir Next", "Segoe UI", sans-serif;
   --font-mono: "IBM Plex Mono", "Consolas", "Courier New", monospace;
 }
 
@@ -23,10 +23,149 @@ html {
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: "Trebuchet MS", "Avenir Next", "Segoe UI", sans-serif;
+  font-family: "Bahnschrift", "Trebuchet MS", "Avenir Next", "Segoe UI", sans-serif;
 }
 
 a {
   color: inherit;
   text-decoration: none;
+}
+
+.app-shell {
+  position: relative;
+  min-height: 100vh;
+  overflow: hidden;
+  background:
+    radial-gradient(circle at top, rgba(73, 101, 255, 0.16), transparent 24%),
+    linear-gradient(180deg, #0b1230 0%, #081024 60%, #060b18 100%);
+}
+
+.app-shell__grid {
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(83, 126, 255, 0.16) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(83, 126, 255, 0.16) 1px, transparent 1px);
+  background-size: 46px 46px;
+  opacity: 0.35;
+  pointer-events: none;
+}
+
+.app-frame {
+  border: 3px solid rgba(70, 113, 255, 0.5);
+  background:
+    linear-gradient(180deg, rgba(20, 32, 82, 0.96) 0%, rgba(10, 16, 38, 0.96) 100%);
+  box-shadow:
+    0 0 0 8px rgba(20, 43, 116, 0.84),
+    inset 0 0 0 1px rgba(136, 169, 255, 0.1),
+    0 18px 44px rgba(0, 0, 0, 0.34);
+}
+
+.app-frame::before {
+  content: "";
+  position: absolute;
+  inset: 14px;
+  border: 1px solid rgba(115, 149, 255, 0.2);
+  border-radius: 22px;
+  pointer-events: none;
+}
+
+.app-title {
+  letter-spacing: 0.06em;
+  text-shadow: 0 0 18px rgba(255, 255, 255, 0.34);
+}
+
+.app-kicker,
+.draft-console-kicker {
+  font-family: "IBM Plex Mono", "Consolas", monospace;
+  letter-spacing: 0.28em;
+  text-transform: uppercase;
+}
+
+.app-nav-pill {
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(0, 0, 0, 0.24);
+  padding: 0.6rem 1rem;
+  border-radius: 9999px;
+  text-transform: uppercase;
+  letter-spacing: 0.18em;
+  font-size: 0.72rem;
+  transition: background-color 160ms ease, border-color 160ms ease, color 160ms ease;
+}
+
+.app-nav-pill:hover {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(135, 169, 255, 0.24);
+  color: #ffffff;
+}
+
+.draft-console-shell {
+  position: relative;
+  overflow: hidden;
+  border: 3px solid rgba(70, 113, 255, 0.55);
+  border-radius: 34px;
+  background:
+    radial-gradient(circle at top, rgba(46, 88, 220, 0.18), transparent 28%),
+    linear-gradient(180deg, rgba(12, 23, 68, 0.96) 0%, rgba(8, 12, 28, 0.98) 62%, rgba(4, 8, 18, 1) 100%);
+  box-shadow:
+    0 0 0 8px rgba(20, 43, 116, 0.9),
+    inset 0 0 0 2px rgba(120, 164, 255, 0.14),
+    0 22px 60px rgba(0, 0, 0, 0.48);
+}
+
+.draft-console-shell::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(83, 126, 255, 0.18) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(83, 126, 255, 0.18) 1px, transparent 1px);
+  background-size: 30px 30px;
+  opacity: 0.45;
+  pointer-events: none;
+}
+
+.draft-console-inner {
+  position: relative;
+  border-radius: 28px;
+  border: 2px solid rgba(76, 120, 255, 0.42);
+  background: linear-gradient(180deg, rgba(16, 28, 80, 0.9) 0%, rgba(10, 16, 38, 0.96) 100%);
+  box-shadow: inset 0 0 0 2px rgba(157, 188, 255, 0.08);
+}
+
+.draft-console-panel {
+  border-color: rgba(102, 136, 255, 0.24) !important;
+  background:
+    linear-gradient(180deg, rgba(19, 30, 76, 0.92) 0%, rgba(9, 16, 39, 0.94) 100%) !important;
+  box-shadow:
+    inset 0 0 0 1px rgba(136, 169, 255, 0.08),
+    0 14px 34px rgba(0, 0, 0, 0.26);
+}
+
+.draft-console-title {
+  letter-spacing: 0.06em;
+  text-shadow: 0 0 18px rgba(255, 255, 255, 0.36);
+}
+
+.draft-console-outline {
+  position: relative;
+}
+
+.draft-console-outline::after {
+  content: "";
+  position: absolute;
+  inset: 8px;
+  border: 1px solid rgba(115, 149, 255, 0.22);
+  border-radius: 22px;
+  pointer-events: none;
+}
+
+.draft-console-chip {
+  border: 1px solid rgba(111, 147, 255, 0.28);
+  background: rgba(8, 14, 34, 0.7);
+  box-shadow: inset 0 0 0 1px rgba(151, 184, 255, 0.06);
+}
+
+.draft-console-glow {
+  box-shadow: 0 0 20px rgba(123, 157, 255, 0.16);
 }
