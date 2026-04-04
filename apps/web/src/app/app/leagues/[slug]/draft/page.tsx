@@ -8,9 +8,9 @@ import {
   forceAutopickCurrentPick,
   reclaimManualControl,
   resolveTimedOutPick,
-  submitDraftPick,
 } from "../actions";
 import { DraftLiveClient } from "./draft-live-client";
+import { DraftPlayerBrowser } from "./draft-player-browser";
 
 type DraftRoomPick = {
   id: string;
@@ -57,7 +57,9 @@ type DraftablePlayer = {
   receivingTds: number;
 };
 
-const PLAYER_POSITIONS = ["QB", "RB", "WR", "TE"] as const;
+type QueuedPlayer = DraftablePlayer & {
+  queueRank: number;
+};
 
 export default async function DraftRoomPage({
   params,
@@ -96,7 +98,7 @@ export default async function DraftRoomPage({
     });
   }
 
-  const [draftResult, picksResult, participantsResult, myParticipantResult, availablePlayersResult] =
+  const [draftResult, picksResult, participantsResult, myParticipantResult, availablePlayersResult, queuedPlayersResult] =
     await Promise.all([
       supabase
         .from("drafts")
@@ -130,64 +132,26 @@ export default async function DraftRoomPage({
         p_league_id: league.id,
         p_position: null,
       }),
+      supabase.rpc("list_my_draft_queue", {
+        p_league_id: league.id,
+      }),
     ]);
 
   const draft = draftResult.data;
   const draftPicks = (picksResult.data ?? []) as DraftRoomPick[];
   const participantList = (participantsResult.data ?? []) as LeagueParticipant[];
   const myParticipant = myParticipantResult.data as LeagueParticipant | null;
-  const availablePlayers = ((availablePlayersResult.data ?? []) as Array<{
-    player_id: string;
-    player_key: string;
-    full_name: string;
-    short_name: string | null;
-    picked_position: string;
-    nfl_team: string;
-    bye_week: number | null;
-    years_experience: number;
-    age: number | null;
-    college: string | null;
-    fantasy_points_ppr: number;
-    games_played: number;
-    passing_yards: number;
-    passing_tds: number;
-    rushing_yards: number;
-    rushing_tds: number;
-    receptions: number;
-    receiving_yards: number;
-    receiving_tds: number;
-  }>).map((player) => ({
-    id: player.player_id,
-    key: player.player_key,
-    fullName: player.full_name,
-    shortName: player.short_name,
-    position: player.picked_position as DraftablePlayer["position"],
-    nflTeam: player.nfl_team,
-    byeWeek: player.bye_week,
-    yearsExperience: player.years_experience,
-    age: player.age,
-    college: player.college,
-    fantasyPointsPpr: Number(player.fantasy_points_ppr ?? 0),
-    gamesPlayed: Number(player.games_played ?? 0),
-    passingYards: Number(player.passing_yards ?? 0),
-    passingTds: Number(player.passing_tds ?? 0),
-    rushingYards: Number(player.rushing_yards ?? 0),
-    rushingTds: Number(player.rushing_tds ?? 0),
-    receptions: Number(player.receptions ?? 0),
-    receivingYards: Number(player.receiving_yards ?? 0),
-    receivingTds: Number(player.receiving_tds ?? 0),
-  }));
+  const availablePlayers = mapDraftablePlayers(
+    (availablePlayersResult.data ?? []) as PlayerRpcRow[],
+  );
+  const queuedPlayers = mapQueuedPlayers(
+    (queuedPlayersResult.data ?? []) as QueueRpcRow[],
+  );
 
   const participantsById = new Map(
     participantList.map((participant) => [participant.id, participant]),
   );
   const groupedPicks = groupPicksByRound(draftPicks);
-  const availablePlayersByPosition = new Map(
-    PLAYER_POSITIONS.map((position) => [
-      position,
-      availablePlayers.filter((player) => player.position === position),
-    ]),
-  );
 
   const currentPick = draft
     ? draftPicks.find((pick) => pick.pick_number === draft.current_pick_number)
@@ -206,6 +170,7 @@ export default async function DraftRoomPage({
   const canForceAutopick =
     canResolveTimeout && currentParticipant?.draft_control_mode === "manual";
   const isMyAutopickMode = myParticipant?.draft_control_mode === "autopick";
+  const canQueue = myParticipant?.participant_type === "human";
 
   const myRoster = myParticipant
     ? draftPicks.filter(
@@ -223,7 +188,7 @@ export default async function DraftRoomPage({
     <PageShell
       eyebrow="App / Leagues / Draft"
       title={`${league.name} draft room`}
-      description="This room now drafts against a real player model with team, bye-week, and prior-season production context instead of placeholder names."
+      description="The draft room now keeps the live player pool visible at all times, lets users queue targets while others pick, and uses that queue as part of the autopick flow."
     >
       <div className="grid gap-8">
         <Panel
@@ -384,100 +349,25 @@ export default async function DraftRoomPage({
             </Panel>
 
             <Panel
-              title="Pick center"
-              description="Draftables now show the player attributes and prior-season context that matter most during draft decisions."
+              title="Player pool and queue"
+              description="Scout the live pool while others pick, build your queue ahead of time, and still draft directly from the same cards when your turn arrives."
             >
               {isMyTurn && isMyAutopickMode ? (
-                <div className="grid gap-4">
-                  <p className="rounded-2xl border border-sky-300/25 bg-sky-400/10 px-4 py-3 text-sm text-sky-100">
-                    It is your turn, but you are currently in autopick mode. Reclaim manual control first if you want to choose this pick yourself. Otherwise the system or commissioner can let autopick handle it.
-                  </p>
-                  <form action={reclaimManualControl}>
-                    <input type="hidden" name="league_id" value={league.id} />
-                    <input type="hidden" name="league_slug" value={league.slug} />
-                    <button type="submit" className="rounded-full border border-sky-300/30 bg-sky-400/15 px-5 py-3 text-sm text-sky-100">
-                      Reclaim manual control
-                    </button>
-                  </form>
-                </div>
-              ) : isMyTurn ? (
-                <div className="grid gap-5">
-                  <p className="rounded-2xl border border-white/10 bg-white/6 px-4 py-3 text-sm text-stone-300">
-                    This list comes straight from the database now. Historical stats are included for drafting context, while future projections can be layered in later.
-                  </p>
-                  {PLAYER_POSITIONS.map((position) => {
-                    const options = availablePlayersByPosition.get(position) ?? [];
-
-                    return (
-                      <section key={position} className="grid gap-3">
-                        <div>
-                          <h3 className="text-base font-semibold text-stone-100">{position}</h3>
-                          <p className="text-sm text-stone-400">
-                            Available {position}s, sorted by prior-season fantasy production inside this development dataset.
-                          </p>
-                        </div>
-                        <div className="grid gap-3">
-                          {options.length > 0 ? (
-                            options.map((player) => (
-                              <form key={player.id} action={submitDraftPick}>
-                                <input type="hidden" name="league_id" value={league.id} />
-                                <input type="hidden" name="league_slug" value={league.slug} />
-                                <input type="hidden" name="player_id" value={player.id} />
-                                <button
-                                  type="submit"
-                                  className="grid w-full gap-3 rounded-[1.35rem] border border-white/10 bg-white/6 px-4 py-4 text-left transition-colors hover:bg-white/10"
-                                >
-                                  <div className="flex items-start justify-between gap-3">
-                                    <div>
-                                      <p className="text-base font-semibold text-stone-100">{player.fullName}</p>
-                                      <p className="mt-1 text-sm text-stone-400">
-                                        {player.position} | {player.nflTeam} | Bye {player.byeWeek ?? "-"}
-                                      </p>
-                                    </div>
-                                    <div className="text-right">
-                                      <p className="font-mono text-[0.7rem] uppercase tracking-[0.28em] text-stone-500">
-                                        2025 PPR
-                                      </p>
-                                      <p className="mt-1 text-lg font-semibold text-stone-100">
-                                        {player.fantasyPointsPpr.toFixed(1)}
-                                      </p>
-                                    </div>
-                                  </div>
-                                  <div className="grid gap-2 sm:grid-cols-3">
-                                    <StatChip label="Games" value={String(player.gamesPlayed)} />
-                                    <StatChip label="Age" value={player.age ? String(player.age) : "-"} />
-                                    <StatChip label="Exp" value={String(player.yearsExperience)} />
-                                  </div>
-                                  <p className="text-sm text-stone-300">{formatStatSummary(player)}</p>
-                                  <p className="font-mono text-[0.7rem] uppercase tracking-[0.28em] text-stone-500">
-                                    {player.key}{player.college ? ` | ${player.college}` : ""}
-                                  </p>
-                                </button>
-                              </form>
-                            ))
-                          ) : (
-                            <p className="rounded-2xl border border-white/10 bg-black/15 px-4 py-3 text-sm text-stone-400">
-                              No currently available {position} options remain in the live pool.
-                            </p>
-                          )}
-                        </div>
-                      </section>
-                    );
-                  })}
-                </div>
-              ) : (
-                <p className="rounded-2xl border border-white/10 bg-white/6 px-4 py-3 text-sm text-stone-300">
-                  {draft?.status !== "live"
-                    ? "The draft must be live before picks can be submitted."
-                    : currentParticipant?.participant_type === "bot"
-                      ? `${currentParticipant.display_name} is a bot. Its pick will resolve automatically.`
-                      : currentParticipant
-                        ? currentParticipant.draft_control_mode === "autopick"
-                          ? `${currentParticipant.display_name} is on the clock in autopick mode.`
-                          : `${currentParticipant.display_name} is currently on the clock.`
-                        : "Waiting for the current pick to load."}
+                <p className="mb-5 rounded-2xl border border-sky-300/25 bg-sky-400/10 px-4 py-3 text-sm text-sky-100">
+                  It is your turn, but you are currently in autopick mode. Reclaim manual control first if you want to choose this pick yourself. Your queue will still guide autopick until you take control back.
                 </p>
-              )}
+              ) : null}
+
+              <DraftPlayerBrowser
+                leagueId={league.id}
+                leagueSlug={league.slug}
+                draftStatus={draft?.status ?? null}
+                isMyTurn={Boolean(isMyTurn)}
+                isMyAutopickMode={Boolean(isMyAutopickMode)}
+                canQueue={Boolean(canQueue)}
+                availablePlayers={availablePlayers}
+                queuedPlayers={queuedPlayers}
+              />
             </Panel>
 
             <Panel
@@ -513,6 +403,63 @@ export default async function DraftRoomPage({
   );
 }
 
+type PlayerRpcRow = {
+  player_id: string;
+  player_key: string;
+  full_name: string;
+  short_name: string | null;
+  picked_position: string;
+  nfl_team: string;
+  bye_week: number | null;
+  years_experience: number;
+  age: number | null;
+  college: string | null;
+  fantasy_points_ppr: number;
+  games_played: number;
+  passing_yards: number;
+  passing_tds: number;
+  rushing_yards: number;
+  rushing_tds: number;
+  receptions: number;
+  receiving_yards: number;
+  receiving_tds: number;
+};
+
+type QueueRpcRow = PlayerRpcRow & {
+  queue_rank: number;
+};
+
+function mapDraftablePlayers(players: PlayerRpcRow[]): DraftablePlayer[] {
+  return players.map((player) => ({
+    id: player.player_id,
+    key: player.player_key,
+    fullName: player.full_name,
+    shortName: player.short_name,
+    position: player.picked_position as DraftablePlayer["position"],
+    nflTeam: player.nfl_team,
+    byeWeek: player.bye_week,
+    yearsExperience: Number(player.years_experience ?? 0),
+    age: player.age,
+    college: player.college,
+    fantasyPointsPpr: Number(player.fantasy_points_ppr ?? 0),
+    gamesPlayed: Number(player.games_played ?? 0),
+    passingYards: Number(player.passing_yards ?? 0),
+    passingTds: Number(player.passing_tds ?? 0),
+    rushingYards: Number(player.rushing_yards ?? 0),
+    rushingTds: Number(player.rushing_tds ?? 0),
+    receptions: Number(player.receptions ?? 0),
+    receivingYards: Number(player.receiving_yards ?? 0),
+    receivingTds: Number(player.receiving_tds ?? 0),
+  }));
+}
+
+function mapQueuedPlayers(players: QueueRpcRow[]): QueuedPlayer[] {
+  return players.map((player) => ({
+    queueRank: Number(player.queue_rank),
+    ...mapDraftablePlayers([player])[0],
+  }));
+}
+
 function groupPicksByRound(picks: DraftRoomPick[]) {
   const grouped = new Map<number, DraftRoomPick[]>();
 
@@ -523,26 +470,6 @@ function groupPicksByRound(picks: DraftRoomPick[]) {
   }
 
   return Array.from(grouped.entries()).sort((a, b) => a[0] - b[0]);
-}
-
-function formatStatSummary(player: DraftablePlayer) {
-  if (player.position === "QB") {
-    return `${player.passingYards.toLocaleString()} pass yds, ${player.passingTds} pass TD, ${player.rushingYards.toLocaleString()} rush yds`;
-  }
-
-  if (player.position === "RB") {
-    return `${player.rushingYards.toLocaleString()} rush yds, ${player.rushingTds} rush TD, ${player.receptions} rec`;
-  }
-
-  return `${player.receptions} rec, ${player.receivingYards.toLocaleString()} rec yds, ${player.receivingTds} rec TD`;
-}
-
-function StatChip({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="rounded-full border border-white/10 bg-black/15 px-3 py-2 text-xs uppercase tracking-[0.24em] text-stone-300">
-      {label}: {value}
-    </div>
-  );
 }
 
 function InfoRow({ label, value }: { label: string; value: string }) {

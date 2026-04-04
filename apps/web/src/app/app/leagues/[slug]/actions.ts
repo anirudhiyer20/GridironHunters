@@ -188,6 +188,89 @@ export async function removeParticipant(formData: FormData) {
   );
 }
 
+export async function queueDraftPlayer(formData: FormData) {
+  const leagueId = String(formData.get("league_id") ?? "");
+  const leagueSlug = String(formData.get("league_slug") ?? "");
+  const playerId = String(formData.get("player_id") ?? "");
+
+  const supabase = await createClient();
+  const { data, error } = await supabase.rpc("queue_draft_player", {
+    p_league_id: leagueId,
+    p_player_id: playerId,
+  });
+
+  if (error) {
+    redirect(
+      `/app/leagues/${leagueSlug}/draft?message=${encodeMessage(error.message)}`,
+    );
+  }
+
+  const result = Array.isArray(data) ? data[0] : data;
+
+  revalidatePath(`/app/leagues/${leagueSlug}/draft`);
+  redirect(
+    `/app/leagues/${leagueSlug}/draft?message=${encodeMessage(
+      `${result?.player_name ?? "Player"} added to your queue at #${result?.queue_rank ?? "?"}.`,
+    )}`,
+  );
+}
+
+export async function unqueueDraftPlayer(formData: FormData) {
+  const leagueId = String(formData.get("league_id") ?? "");
+  const leagueSlug = String(formData.get("league_slug") ?? "");
+  const playerId = String(formData.get("player_id") ?? "");
+
+  const supabase = await createClient();
+  const { data, error } = await supabase.rpc("unqueue_draft_player", {
+    p_league_id: leagueId,
+    p_player_id: playerId,
+  });
+
+  if (error) {
+    redirect(
+      `/app/leagues/${leagueSlug}/draft?message=${encodeMessage(error.message)}`,
+    );
+  }
+
+  const result = Array.isArray(data) ? data[0] : data;
+
+  revalidatePath(`/app/leagues/${leagueSlug}/draft`);
+  redirect(
+    `/app/leagues/${leagueSlug}/draft?message=${encodeMessage(
+      result?.removed_count
+        ? `${result.player_name ?? "Player"} removed from your queue.`
+        : `${result?.player_name ?? "Player"} was not in your queue.`,
+    )}`,
+  );
+}
+
+export async function clearDraftQueue(formData: FormData) {
+  const leagueId = String(formData.get("league_id") ?? "");
+  const leagueSlug = String(formData.get("league_slug") ?? "");
+
+  const supabase = await createClient();
+  const { data, error } = await supabase.rpc("clear_my_draft_queue", {
+    p_league_id: leagueId,
+  });
+
+  if (error) {
+    redirect(
+      `/app/leagues/${leagueSlug}/draft?message=${encodeMessage(error.message)}`,
+    );
+  }
+
+  const clearedCount = Array.isArray(data) ? data[0] : data;
+
+  revalidatePath(`/app/leagues/${leagueSlug}/draft`);
+  redirect(
+    `/app/leagues/${leagueSlug}/draft?message=${encodeMessage(
+      clearedCount
+        ? `Cleared ${clearedCount} queued player(s).`
+        : "Your queue was already empty.",
+    )}`,
+  );
+}
+
 export async function submitDraftPick(formData: FormData) {
   const leagueId = String(formData.get("league_id") ?? "");
   const leagueSlug = String(formData.get("league_slug") ?? "");
