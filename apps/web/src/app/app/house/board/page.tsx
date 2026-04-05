@@ -5,7 +5,12 @@ import { PageShell } from "@/components/page-shell";
 import { Panel } from "@/components/panel";
 import { createClient } from "@/lib/supabase/server";
 
-export default async function GuildBoardPage() {
+function prettifyStatus(status: string | null | undefined) {
+  if (!status) return "Unclaimed";
+  return status.replaceAll("_", " ").replace(/\b\w/g, (match) => match.toUpperCase());
+}
+
+export default async function StrategyCenterPage() {
   const supabase = await createClient();
   const {
     data: { user },
@@ -26,45 +31,91 @@ export default async function GuildBoardPage() {
     : null;
 
   const guildRole = memberships?.[0]?.role === "commissioner" ? FANTASY_TERMS.commissioner : FANTASY_TERMS.member;
+  const weeklyWarnings = [
+    { label: "Arena Lineup", value: "Not Set", warning: true },
+    { label: "Dungeon Lineup", value: "Not Set", warning: true },
+    { label: "League Record", value: "No Record Posted Yet", warning: false },
+    { label: "Current Game Score", value: "No Live Duel Posted", warning: false },
+  ];
+  const sigils = [
+    { title: "Storm Sigil", status: "Not Earned", body: "Earned through tribe-focused progress later in the season." },
+    { title: "Arena Crest", status: "Locked", body: "Reserved for strong Arena streaks and House performance." },
+    { title: "Guild Banner", status: currentGuild ? "Bound" : "Unclaimed", body: "Tied to the current Guild identity of the House." },
+  ];
 
   return (
     <PageShell
-      eyebrow="House / Guild Board"
-      title="Guild Board"
-      description="The blackboard is the House-facing summary of Guild movement: who you belong to, where Draft stands, and which chamber matters next."
+      eyebrow="House / Strategy Center"
+      title="Strategy Center"
+      description="A wooden planning board pinned with papers, scouting scraps, and weekly reminders. This is the House-facing hub for current-week activity."
     >
-      <div className="grid gap-8 lg:grid-cols-[0.95fr_1.05fr]">
-        <Panel title="Current Guild" description="This is the first useful version of the blackboard: short, readable, and clearly tied to the House rather than buried inside a generic dashboard.">
-          <div className="grid gap-3">
+      <div className="grid gap-8 xl:grid-cols-[0.9fr_1.1fr]">
+        <Panel title="Board Identity" description="The Strategy Center replaces the simpler Guild Board as the weekly command surface inside the House.">
+          <div className="grid gap-3 sm:grid-cols-2">
             <InfoCard label={FANTASY_TERMS.league} value={currentGuild?.name ?? "No Guild Yet"} />
             <InfoCard label="House Role" value={guildRole ?? "Free Wanderer"} />
             <InfoCard label="Season" value={currentGuild ? String(currentGuild.season) : "Unclaimed"} />
-            <InfoCard label="State" value={currentGuild?.status?.replaceAll("_", " ") ?? "No Guild Yet"} />
+            <InfoCard label="State" value={prettifyStatus(currentGuild?.status)} />
+          </div>
+          <div className="mt-5 rounded-[1.4rem] border border-[#9e8455]/18 bg-[#2b1d11]/80 p-4 text-sm leading-7 text-[#eadbbd]">
+            <p className="fantasy-kicker text-[0.68rem] text-[#d0b37d]">Mythic Alternate Name</p>
+            <p className="mt-2">If you want a more dramatic fantasy label later, <span className="font-semibold text-[#fff0cf]">War Table</span> is the strongest alternate name for this room.</p>
           </div>
         </Panel>
 
-        <Panel title="Board Notices" description="This is where House-facing activity can grow into a richer log later. For now it gives the House the most important current truths.">
-          <div className="grid gap-4">
-            <NoticeCard
-              title="Draft Clock"
-              body={currentGuild?.draft_starts_at ? `Draft is set for ${new Date(currentGuild.draft_starts_at).toLocaleString()}.` : "Draft time has not been set yet."}
-            />
-            <NoticeCard
-              title="Guild Route"
-              body={currentGuild ? `Open ${currentGuild.name} to manage Guildmates, invite codes, and the current Draft flow.` : "Found or join a Guild to unlock the Draft and season loop."}
-            />
-            <NoticeCard
-              title="World Shell"
-              body="The House Board now acts as the lightweight activity surface while the Guild Hall, Dungeon, and Arena take over the larger feature spaces."
-            />
-          </div>
+        <section className="rounded-[2rem] border border-[#7c5229] bg-[linear-gradient(180deg,#6a4321_0%,#4e3018_100%)] p-4 shadow-[0_18px_36px_rgba(0,0,0,0.28),inset_0_0_0_2px_rgba(243,214,158,0.06)]">
+          <div className="rounded-[1.6rem] border border-[#8f6437] bg-[repeating-linear-gradient(90deg,rgba(168,116,63,0.18)_0_26px,rgba(118,76,38,0.18)_26px_52px),linear-gradient(180deg,#5b381c_0%,#3f2613_100%)] p-5">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <div>
+                <p className="fantasy-kicker text-[0.68rem] text-[#f0d39b]">Pinned Papers</p>
+                <h2 className="fantasy-title mt-2 text-3xl text-[#fff2d2]">This Week&apos;s Board</h2>
+              </div>
+              <span className="rounded-full border border-[#dfc18a]/25 bg-black/20 px-4 py-2 text-[0.68rem] uppercase tracking-[0.18em] text-[#f2ddb0]">
+                House Weekly Hub
+              </span>
+            </div>
 
-          <div className="mt-6 flex flex-wrap gap-3">
-            <HeroLink href="/app/guild">Enter Guild Hall</HeroLink>
-            <HeroLink href="/app/leagues" tone="secondary">Open Guild Ledger</HeroLink>
-            <HeroLink href="/app" tone="secondary">Return Home</HeroLink>
+            <div className="mt-5 grid gap-4 lg:grid-cols-[1.05fr_0.95fr]">
+              <PinnedPaper title="Lineup Warnings" tone="warning">
+                <div className="grid gap-3">
+                  {weeklyWarnings.slice(0, 2).map((item) => (
+                    <PaperRow key={item.label} label={item.label} value={item.value} warning={item.warning} />
+                  ))}
+                </div>
+              </PinnedPaper>
+
+              <PinnedPaper title="Guild Sheet">
+                <div className="grid gap-3">
+                  <PaperRow label="League Record" value="No Record Posted Yet" />
+                  <PaperRow label="Current Game Score" value="No Live Duel Posted" />
+                  <PaperRow label="Next Route" value={currentGuild ? "Guild Hall" : "Join A Guild"} />
+                </div>
+              </PinnedPaper>
+
+              <PinnedPaper title="Sigil Notes">
+                <div className="grid gap-3">
+                  {sigils.map((sigil) => (
+                    <div key={sigil.title} className="rounded-[1rem] border border-[#caa86f]/18 bg-black/8 px-3 py-3">
+                      <div className="flex items-center justify-between gap-3">
+                        <p className="fantasy-title text-lg text-[#3f2512]">{sigil.title}</p>
+                        <span className="text-[0.68rem] uppercase tracking-[0.16em] text-[#8a6132]">{sigil.status}</span>
+                      </div>
+                      <p className="mt-2 text-sm leading-6 text-[#4e331a]">{sigil.body}</p>
+                    </div>
+                  ))}
+                </div>
+              </PinnedPaper>
+
+              <PinnedPaper title="Action Slips">
+                <div className="flex flex-wrap gap-3">
+                  <HeroLink href="/app/guild">Enter Guild Hall</HeroLink>
+                  <HeroLink href="/app/arena" tone="secondary">Open Arena</HeroLink>
+                  <HeroLink href="/app" tone="secondary">Return Home</HeroLink>
+                </div>
+              </PinnedPaper>
+            </div>
           </div>
-        </Panel>
+        </section>
       </div>
     </PageShell>
   );
@@ -79,11 +130,21 @@ function InfoCard({ label, value }: { label: string; value: string }) {
   );
 }
 
-function NoticeCard({ title, body }: { title: string; body: string }) {
+function PinnedPaper({ title, children, tone = "base" }: { title: string; children: React.ReactNode; tone?: "base" | "warning" }) {
   return (
-    <div className="rounded-[1.4rem] border border-[#9e8455]/18 bg-black/20 px-4 py-4">
-      <p className="fantasy-title text-xl text-[#fff4d8]">{title}</p>
-      <p className="mt-2 text-sm leading-7 text-[#efe2c9]">{body}</p>
+    <div className={`relative rounded-[1.45rem] border p-4 shadow-[0_10px_18px_rgba(0,0,0,0.18)] ${tone === "warning" ? "border-[#c48e70]/26 bg-[linear-gradient(180deg,#ead6b5_0%,#d8bc90_100%)]" : "border-[#c9a86e]/22 bg-[linear-gradient(180deg,#efddbc_0%,#e0c79e_100%)]"}`}>
+      <div className="absolute left-5 top-3 h-3 w-3 rounded-full border border-[#8f6437]/35 bg-[#b64b3d]" />
+      <p className="fantasy-title pl-5 text-xl text-[#3f2512]">{title}</p>
+      <div className="mt-4">{children}</div>
+    </div>
+  );
+}
+
+function PaperRow({ label, value, warning = false }: { label: string; value: string; warning?: boolean }) {
+  return (
+    <div className="flex items-center justify-between gap-4 rounded-[1rem] border border-[#caa86f]/18 bg-black/8 px-3 py-3">
+      <p className="text-sm uppercase tracking-[0.14em] text-[#7e582d]">{label}</p>
+      <p className={`text-sm font-semibold ${warning ? "text-[#9c3f2c]" : "text-[#3b2413]"}`}>{value}</p>
     </div>
   );
 }

@@ -69,6 +69,7 @@ export function RoomScene({
     : selectedHotspot?.href
       ? [{ href: selectedHotspot.href, label: selectedHotspot.actionLabel ?? `Enter ${selectedHotspot.label}`, tone: "gold" as const }]
       : [];
+  const selectedKindLabel = selectedHotspot?.kind === "door" ? "Doorway" : "Object";
 
   function moveAvatarTo(x: number, y: number) {
     setAvatarPosition({
@@ -145,7 +146,14 @@ export function RoomScene({
       </div>
 
       <aside className="fantasy-panel fantasy-panel--stone h-full rounded-[1.8rem] p-5">
-        <p className="fantasy-kicker">Featured Object</p>
+        <div className="flex flex-wrap items-center gap-3">
+          <p className="fantasy-kicker">Featured Object</p>
+          {selectedHotspot ? (
+            <span className="rounded-full border border-[#9e8455]/22 bg-black/20 px-3 py-1 text-[0.68rem] uppercase tracking-[0.2em] text-[#d6bf90]">
+              {selectedKindLabel}
+            </span>
+          ) : null}
+        </div>
         <h3 className="fantasy-title mt-3 text-3xl">{selectedHotspot?.label ?? "Idle"}</h3>
         <p className="mt-4 text-sm leading-7 text-[#efe2c9]">
           {selectedHotspot?.flavor ?? "Walk your avatar through the room and open the objects that matter to your House."}
@@ -187,11 +195,19 @@ export function RoomScene({
           </div>
         ) : null}
 
-        <div className="mt-6 rounded-[1.4rem] border border-[#9e8455]/25 bg-black/20 p-4 text-sm text-[#e7d7ba]">
-          <p className="fantasy-kicker text-[0.7rem]">Room Guidance</p>
-          <p className="mt-3 leading-7">
-            Click anywhere on the floor to move. Click an object to inspect it. Doors carry your House into the next chamber.
-          </p>
+        <div className="mt-6 grid gap-3 sm:grid-cols-3">
+          <div className="rounded-[1.2rem] border border-[#9e8455]/18 bg-black/20 px-4 py-3 text-sm text-[#e7d7ba]">
+            <p className="fantasy-kicker text-[0.66rem]">Move</p>
+            <p className="mt-2 leading-6">Click the floor.</p>
+          </div>
+          <div className="rounded-[1.2rem] border border-[#9e8455]/18 bg-black/20 px-4 py-3 text-sm text-[#e7d7ba]">
+            <p className="fantasy-kicker text-[0.66rem]">Inspect</p>
+            <p className="mt-2 leading-6">Select an object.</p>
+          </div>
+          <div className="rounded-[1.2rem] border border-[#9e8455]/18 bg-black/20 px-4 py-3 text-sm text-[#e7d7ba]">
+            <p className="fantasy-kicker text-[0.66rem]">Travel</p>
+            <p className="mt-2 leading-6">Use the door actions.</p>
+          </div>
         </div>
       </aside>
     </div>
