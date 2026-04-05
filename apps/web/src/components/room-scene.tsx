@@ -4,6 +4,17 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 
+export type RoomHotspotAction = {
+  href: string;
+  label: string;
+  tone?: "gold" | "stone";
+};
+
+export type RoomHotspotStat = {
+  label: string;
+  value: string;
+};
+
 export type RoomHotspot = {
   id: string;
   label: string;
@@ -16,6 +27,9 @@ export type RoomHotspot = {
   tone?: "warm" | "stone" | "ember" | "forest";
   href?: string;
   actionLabel?: string;
+  stats?: RoomHotspotStat[];
+  notes?: string[];
+  actions?: RoomHotspotAction[];
 };
 
 export function RoomScene({
@@ -50,6 +64,11 @@ export function RoomScene({
   const [activeDoorId, setActiveDoorId] = useState<string | null>(null);
 
   const selectedHotspot = hotspots.find((hotspot) => hotspot.id === selectedHotspotId) ?? null;
+  const selectedActions = selectedHotspot?.actions?.length
+    ? selectedHotspot.actions
+    : selectedHotspot?.href
+      ? [{ href: selectedHotspot.href, label: selectedHotspot.actionLabel ?? `Enter ${selectedHotspot.label}`, tone: "gold" as const }]
+      : [];
 
   function moveAvatarTo(x: number, y: number) {
     setAvatarPosition({
@@ -132,11 +151,39 @@ export function RoomScene({
           {selectedHotspot?.flavor ?? "Walk your avatar through the room and open the objects that matter to your House."}
         </p>
 
-        {selectedHotspot?.href ? (
+        {selectedHotspot?.stats?.length ? (
+          <div className="mt-6 grid gap-3 sm:grid-cols-2">
+            {selectedHotspot.stats.map((stat) => (
+              <div key={stat.label} className="rounded-[1.2rem] border border-[#9e8455]/20 bg-black/20 px-4 py-3">
+                <p className="fantasy-kicker text-[0.68rem] text-[#c6ad7d]">{stat.label}</p>
+                <p className="mt-2 text-base font-semibold text-[#fff4d8]">{stat.value}</p>
+              </div>
+            ))}
+          </div>
+        ) : null}
+
+        {selectedActions.length ? (
           <div className="mt-6 flex flex-wrap gap-3">
-            <Link href={selectedHotspot.href} className="fantasy-button fantasy-button--gold">
-              {selectedHotspot.actionLabel ?? `Enter ${selectedHotspot.label}`}
-            </Link>
+            {selectedActions.map((action) => (
+              <Link
+                key={`${selectedHotspot?.id ?? "idle"}-${action.href}-${action.label}`}
+                href={action.href}
+                className={`fantasy-button ${action.tone === "stone" ? "fantasy-button--stone" : "fantasy-button--gold"}`}
+              >
+                {action.label}
+              </Link>
+            ))}
+          </div>
+        ) : null}
+
+        {selectedHotspot?.notes?.length ? (
+          <div className="mt-6 rounded-[1.4rem] border border-[#9e8455]/25 bg-black/20 p-4 text-sm text-[#e7d7ba]">
+            <p className="fantasy-kicker text-[0.7rem]">Object Notes</p>
+            <ul className="mt-3 grid gap-3 leading-7">
+              {selectedHotspot.notes.map((note) => (
+                <li key={note}>{note}</li>
+              ))}
+            </ul>
           </div>
         ) : null}
 

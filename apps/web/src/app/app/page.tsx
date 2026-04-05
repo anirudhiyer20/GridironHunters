@@ -63,39 +63,65 @@ export default async function AppHomePage() {
           {
             id: "wardrobe",
             label: "Wardrobe",
-            flavor: "A carved oak wardrobe for future avatar tailoring. In the first pass, this room establishes where appearance and House identity will live.",
+            flavor: "A carved oak wardrobe for House identity, visual kits, and the longer-term avatar system that will grow out of this chamber.",
             kind: "object",
             tone: "warm",
             x: 12,
             y: 28,
             width: 16,
             height: 20,
+            href: "/app/house/wardrobe",
+            actionLabel: "Open Wardrobe",
+            stats: [
+              { label: "House Style", value: "Lantern Warden" },
+              { label: "Customization", value: "Early Access" },
+            ],
+            notes: [
+              "Use this room to define how a House looks and feels before multiplayer or cosmetic systems deepen.",
+              "The first pass favors readable silhouettes over dense customization menus.",
+            ],
           },
           {
             id: "blackboard",
             label: "Guild Board",
-            flavor: "The blackboard tracks Guild activity, invites, and season movement. Use it as the House-facing window into shared progress.",
+            flavor: "The blackboard tracks Guild activity, Draft timing, and the next meaningful route for your House.",
             kind: "object",
             tone: "warm",
             x: 40,
             y: 24,
             width: 20,
             height: 16,
-            href: "/app/guild",
+            href: "/app/house/board",
             actionLabel: "Read Guild Board",
+            stats: [
+              { label: "Guilds", value: String(guildCount) },
+              { label: "House Role", value: guildRole },
+            ],
+            notes: [
+              "The Guild Board is the lightweight activity surface of the House.",
+              "The deeper communal systems still live beyond the Guild Door.",
+            ],
           },
           {
             id: "chest",
             label: "Party Chest",
-            flavor: "Your Party lives here. Open the chest to manage the House roster, inspect pickups, and eventually sort your creatures and equipment.",
+            flavor: "Your Party lives here. Open the chest to inspect the House roster, check Draft gains, and eventually manage creature loadouts.",
             kind: "object",
             tone: "warm",
             x: 66,
             y: 60,
             width: 16,
             height: 14,
-            href: "/app/guild",
+            href: "/app/house/party",
             actionLabel: "Open Party Chest",
+            stats: [
+              { label: "Party State", value: "Gathering" },
+              { label: "Guild Count", value: String(guildCount) },
+            ],
+            notes: [
+              "The first Party Chest reads from Draft results in the active Guild.",
+              "Later it can absorb loadout, drops, and creature management without changing the House fantasy.",
+            ],
           },
           {
             id: "guild-door",
@@ -108,6 +134,10 @@ export default async function AppHomePage() {
             width: 16,
             height: 18,
             href: "/app/guild",
+            stats: [
+              { label: "Destination", value: "Guild Hall" },
+              { label: "Purpose", value: "Draft + Guilds" },
+            ],
           },
           {
             id: "dungeon-door",
@@ -120,6 +150,10 @@ export default async function AppHomePage() {
             width: 16,
             height: 18,
             href: "/app/dungeon",
+            stats: [
+              { label: "Destination", value: "Dungeon" },
+              { label: "Purpose", value: "Hunts" },
+            ],
           },
           {
             id: "arena-door",
@@ -132,6 +166,10 @@ export default async function AppHomePage() {
             width: 16,
             height: 18,
             href: "/app/arena",
+            stats: [
+              { label: "Destination", value: "Arena" },
+              { label: "Purpose", value: "Duels + Results" },
+            ],
           },
         ]}
       />
@@ -145,20 +183,20 @@ export default async function AppHomePage() {
           </div>
         </Panel>
 
+        <Panel title="House Objects" description="These are now real House surfaces instead of only decorative props.">
+          <div className="flex flex-wrap gap-3">
+            <HeroLink href="/app/house/party">Open Party Chest</HeroLink>
+            <HeroLink href="/app/house/board" tone="secondary">Read Guild Board</HeroLink>
+            <HeroLink href="/app/house/wardrobe" tone="secondary">Visit Wardrobe</HeroLink>
+          </div>
+        </Panel>
+
         <Panel title="Fast Travel" description="If you want to move without walking the room first, use these direct entries.">
           <div className="flex flex-wrap gap-3">
             <HeroLink href="/app/guild">Enter Guild</HeroLink>
             <HeroLink href="/app/dungeon" tone="secondary">Enter Dungeon</HeroLink>
             <HeroLink href="/app/arena" tone="secondary">Enter Arena</HeroLink>
           </div>
-        </Panel>
-
-        <Panel title="House Notes" description="The first overhaul pass focuses on themed navigation and strong room identity, while keeping the deeper systems behind their current routes.">
-          <ul className="grid gap-3 text-sm leading-6 text-[#efe2c9]">
-            <li>Use the Guild for Draft, membership, and Guild management.</li>
-            <li>Use the Dungeon to choose a Tribe chamber for future Hunts.</li>
-            <li>Use the Arena for duels, standings, and results.</li>
-          </ul>
         </Panel>
       </div>
     </PageShell>
