@@ -1,20 +1,9 @@
-import { TRIBE_NAMES } from "@gridiron/shared";
+import { FANTASY_TERMS, TRIBE_DETAILS, TRIBE_NAMES } from "@gridiron/shared";
 
 import { HeroLink } from "@/components/hero-link";
 import { PageShell } from "@/components/page-shell";
 import { Panel } from "@/components/panel";
 import { RoomScene } from "@/components/room-scene";
-
-const tribeTones: Record<(typeof TRIBE_NAMES)[number], "warm" | "stone" | "ember" | "forest"> = {
-  Combat: "ember",
-  Forge: "warm",
-  Storm: "stone",
-  Tundra: "stone",
-  Halo: "warm",
-  Blaze: "ember",
-  Shroud: "forest",
-  Prowl: "forest",
-};
 
 export default function DungeonPage() {
   return (
@@ -41,17 +30,27 @@ export default function DungeonPage() {
             width: 14,
             height: 18,
             href: "/app",
+            stats: [
+              { label: "Destination", value: "House" },
+              { label: "Purpose", value: "Regroup" },
+            ],
           },
           ...TRIBE_NAMES.map((tribe, index) => ({
-            id: `${tribe.toLowerCase()}-door`,
+            id: `${TRIBE_DETAILS[tribe].slug}-door`,
             label: `${tribe} Door`,
-            flavor: `${tribe} is one of the eight Tribes. This chamber will hold Wild Player discovery, Hunt targeting, and tribe-facing strategy when capture systems land in the themed shell.`,
+            flavor: `${TRIBE_DETAILS[tribe].summary} Open this chamber to inspect the Tribe board and stage future Hunts there.`,
             kind: "door" as const,
-            tone: tribeTones[tribe],
+            tone: TRIBE_DETAILS[tribe].tone,
             x: 22 + (index % 4) * 17,
             y: index < 4 ? 26 : 54,
             width: 12,
             height: 14,
+            href: `/app/dungeon/${TRIBE_DETAILS[tribe].slug}`,
+            actionLabel: `Enter ${tribe} Chamber`,
+            stats: [
+              { label: FANTASY_TERMS.type, value: tribe },
+              { label: "Teams", value: String(TRIBE_DETAILS[tribe].teams.length) },
+            ],
           })),
           {
             id: "guild-door",
@@ -64,24 +63,31 @@ export default function DungeonPage() {
             width: 14,
             height: 18,
             href: "/app/guild",
+            stats: [
+              { label: "Destination", value: "Guild Hall" },
+              { label: "Purpose", value: "Draft + Notices" },
+            ],
           },
         ]}
       />
 
       <div className="mt-8 grid gap-6 lg:grid-cols-[1fr_0.9fr]">
-        <Panel title="Tribe Doors" description="The first Dungeon pass emphasizes the room structure now so Hunts can drop into the right shape later.">
+        <Panel title="Tribe Doors" description="The Dungeon hub now routes into actual Tribe chambers, so the Hunt branch has the right structure before real Wild Player boards land.">
           <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
             {TRIBE_NAMES.map((tribe) => (
               <div key={tribe} className="rounded-[1.4rem] border border-[#7a8d80]/22 bg-black/20 px-4 py-4">
-                <p className="fantasy-kicker text-[0.68rem] text-[#9ec2af]">Tribe Door</p>
+                <p className="fantasy-kicker text-[0.68rem] text-[#9ec2af]">Tribe Chamber</p>
                 <p className="mt-2 text-lg font-semibold text-[#f7efd5]">{tribe}</p>
-                <p className="mt-2 text-sm leading-6 text-[#d8d4c8]">Wild Player targeting for this Tribe will appear here as the Hunt loop lands.</p>
+                <p className="mt-2 text-sm leading-6 text-[#d8d4c8]">{TRIBE_DETAILS[tribe].summary}</p>
+                <div className="mt-4">
+                  <HeroLink href={`/app/dungeon/${TRIBE_DETAILS[tribe].slug}`} tone="secondary">Open Chamber</HeroLink>
+                </div>
               </div>
             ))}
           </div>
         </Panel>
 
-        <Panel title="Dungeon Links" description="Until the Hunt systems arrive, use the shell to establish the right navigation mental model.">
+        <Panel title="Dungeon Links" description="The shell now supports the Hunt branch more explicitly: hub first, then chamber, then future target boards and Wild Player actions.">
           <div className="flex flex-wrap gap-3">
             <HeroLink href="/app">Return Home</HeroLink>
             <HeroLink href="/app/guild" tone="secondary">Enter Guild</HeroLink>

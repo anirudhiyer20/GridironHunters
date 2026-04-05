@@ -43,6 +43,71 @@ export const TRIBE_NAMES = [
   "Prowl",
 ] as const;
 
+export const TRIBE_DETAILS = {
+  Combat: {
+    slug: "combat",
+    teams: ["Chiefs", "Raiders", "Commanders", "Titans"],
+    tone: "ember",
+    chamberTitle: "Combat Chamber",
+    summary: "A red-bannered hall for blunt-force lineups, bruising tempo, and Houses that want their Hunts to feel aggressive from the start.",
+  },
+  Forge: {
+    slug: "forge",
+    teams: ["Steelers", "Colts", "49ers", "Jets"],
+    tone: "warm",
+    chamberTitle: "Forge Chamber",
+    summary: "A brass-lit forge hall built for steady steel, defensive grit, and sturdy Party construction.",
+  },
+  Storm: {
+    slug: "storm",
+    teams: ["Falcons", "Seahawks", "Eagles", "Cardinals"],
+    tone: "stone",
+    chamberTitle: "Storm Chamber",
+    summary: "A crackling chamber for fast skies, sharp bursts, and the kind of Wild Players that can swing a week in a heartbeat.",
+  },
+  Tundra: {
+    slug: "tundra",
+    teams: ["Packers", "Vikings", "Bills", "Patriots"],
+    tone: "stone",
+    chamberTitle: "Tundra Chamber",
+    summary: "A cold stone wing where disciplined Parties search for resilient Wild Players with winter-hardened upside.",
+  },
+  Halo: {
+    slug: "halo",
+    teams: ["Cowboys", "Rams", "Saints", "Chargers"],
+    tone: "warm",
+    chamberTitle: "Halo Chamber",
+    summary: "A bright sanctum for polished skill players, clean edges, and Houses chasing elegant point spikes.",
+  },
+  Blaze: {
+    slug: "blaze",
+    teams: ["Browns", "Broncos", "Dolphins", "Giants"],
+    tone: "ember",
+    chamberTitle: "Blaze Chamber",
+    summary: "An ember-lit chamber for volatility, heat checks, and the most explosive Hunt routes in the Dungeon.",
+  },
+  Shroud: {
+    slug: "shroud",
+    teams: ["Ravens", "Texans", "Buccaneers", "Panthers"],
+    tone: "forest",
+    chamberTitle: "Shroud Chamber",
+    summary: "A shadowy vault for deceptive edges, hidden value, and Wild Players that thrive in murkier matchups.",
+  },
+  Prowl: {
+    slug: "prowl",
+    teams: ["Bengals", "Lions", "Bears", "Jaguars"],
+    tone: "forest",
+    chamberTitle: "Prowl Chamber",
+    summary: "A hunt-focused corridor for prowling offenses, opportunistic ceilings, and Houses that like stalking upside.",
+  },
+} as const satisfies Record<(typeof TRIBE_NAMES)[number], {
+  slug: string;
+  teams: readonly string[];
+  tone: "warm" | "stone" | "ember" | "forest";
+  chamberTitle: string;
+  summary: string;
+}>;
+
 export const WORLD_ROOMS = ["house", "guild", "dungeon", "arena"] as const;
 
 export const FANTASY_TERMS = {
