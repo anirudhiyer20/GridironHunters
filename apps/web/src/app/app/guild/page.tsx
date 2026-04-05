@@ -21,6 +21,14 @@ export default async function GuildPage() {
     .eq("user_id", user?.id ?? "")
     .order("joined_at", { ascending: false });
 
+  const guildCount = memberships?.length ?? 0;
+  const currentGuild = memberships?.[0]
+    ? Array.isArray(memberships[0].leagues)
+      ? memberships[0].leagues[0]
+      : memberships[0].leagues
+    : null;
+  const guildRole = memberships?.[0]?.role === "commissioner" ? FANTASY_TERMS.commissioner : FANTASY_TERMS.member;
+
   return (
     <PageShell
       eyebrow="Guild / Hall"
@@ -44,21 +52,54 @@ export default async function GuildPage() {
             y: 36,
             width: 24,
             height: 14,
-            href: "/app/leagues",
+            href: "/app/guild/ledger",
             actionLabel: "Open Guild Ledger",
+            stats: [
+              { label: "Guilds", value: String(guildCount) },
+              { label: "Current Role", value: guildRole ?? "Free Wanderer" },
+            ],
+            notes: [
+              "Use the Guild Table for records, membership context, and the practical ledger of the season.",
+              "This is the clearest room surface for found/join flows and Guild-by-Guild inspection.",
+            ],
           },
           {
             id: "draft-banner",
             label: "Draft Banner",
-            flavor: "Draft still keeps its name in this world. The banner leads toward preparation, Draft controls, and the current Draft Room for a Guild.",
+            flavor: "Draft still keeps its name in this world. The banner leads toward preparation, Draft controls, and the live Draft Room for each Guild.",
             kind: "object",
             tone: "forest",
             x: 69,
             y: 20,
             width: 15,
             height: 26,
-            href: "/app/leagues",
-            actionLabel: "Review Drafts",
+            href: "/app/guild/drafts",
+            actionLabel: "Open Draft Command",
+            stats: [
+              { label: "Current Guild", value: currentGuild?.name ?? "No Guild Yet" },
+              { label: "Draft State", value: currentGuild?.status?.replaceAll("_", " ") ?? "Awaiting Guild" },
+            ],
+            notes: [
+              "This room should become the strategic preface to the Draft Room, not a replacement for it.",
+              "Later it can also absorb Draft history and broader preparation context.",
+            ],
+          },
+          {
+            id: "notice-board",
+            label: "Hall Board",
+            flavor: "A large board for communal notices, season state, and Guild-facing reminders that should not live in the House alone.",
+            kind: "object",
+            tone: "warm",
+            x: 14,
+            y: 18,
+            width: 16,
+            height: 18,
+            href: "/app/guild/board",
+            actionLabel: "Read Hall Board",
+            stats: [
+              { label: "Current Guild", value: currentGuild?.name ?? "No Guild Yet" },
+              { label: "Season", value: currentGuild ? String(currentGuild.season) : "Unclaimed" },
+            ],
           },
           {
             id: "house-door",
@@ -71,6 +112,10 @@ export default async function GuildPage() {
             width: 16,
             height: 18,
             href: "/app",
+            stats: [
+              { label: "Destination", value: "House" },
+              { label: "Purpose", value: "Party + Identity" },
+            ],
           },
           {
             id: "dungeon-door",
@@ -83,6 +128,10 @@ export default async function GuildPage() {
             width: 16,
             height: 18,
             href: "/app/dungeon",
+            stats: [
+              { label: "Destination", value: "Dungeon" },
+              { label: "Purpose", value: "Hunts" },
+            ],
           },
           {
             id: "arena-door",
@@ -95,12 +144,16 @@ export default async function GuildPage() {
             width: 16,
             height: 18,
             href: "/app/arena",
+            stats: [
+              { label: "Destination", value: "Arena" },
+              { label: "Purpose", value: "Duels + Results" },
+            ],
           },
         ]}
       />
 
       <div className="mt-8 grid gap-8 lg:grid-cols-[1.1fr_0.9fr]">
-        <Panel title="Your Guilds" description="The existing Guild data now lives behind the Guild Hall rather than a generic app workspace.">
+        <Panel title="Your Guilds" description="The Guild Hall now gives each object a distinct purpose while still keeping the underlying Guild data easy to reach.">
           {error ? (
             <p className="rounded-[1.4rem] border border-amber-400/20 bg-amber-400/10 px-4 py-3 text-sm text-amber-100">
               Unable to load guilds: {error.message}
@@ -143,11 +196,11 @@ export default async function GuildPage() {
           )}
         </Panel>
 
-        <Panel title="Guild Actions" description="Existing guild-management flows stay intact, but are now entered from the hall.">
+        <Panel title="Guild Routes" description="Use the hall objects when you want the more thematic version of these routes, or quick-jump from here when you already know where you are headed.">
           <div className="flex flex-wrap gap-3">
-            <HeroLink href="/app/leagues/create">Found a Guild</HeroLink>
-            <HeroLink href="/app/leagues/join" tone="secondary">Join with Code</HeroLink>
-            <HeroLink href="/app/leagues" tone="secondary">Open Guild Ledger</HeroLink>
+            <HeroLink href="/app/guild/ledger">Open Guild Ledger</HeroLink>
+            <HeroLink href="/app/guild/drafts" tone="secondary">Open Draft Command</HeroLink>
+            <HeroLink href="/app/guild/board" tone="secondary">Read Hall Board</HeroLink>
           </div>
         </Panel>
       </div>
