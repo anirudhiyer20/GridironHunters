@@ -23,25 +23,65 @@ export default async function ArenaPage() {
     <PageShell
       eyebrow="Arena / Competitive Wing"
       title="Arena Gate"
-      description="The Arena frames matchups, standings, and season results as the competitive wing of the world shell."
+      description="The Arena frames duels, standings, and results as the competitive wing of the world shell."
     >
       <RoomScene
         roomName="Arena Gate"
         roomMood="This stone court leads toward duels, records, and the score-driven pulse of the Guild season."
         avatarName="Arena Navigation"
         sceneClassName="room-scene--arena"
-        defaultSelectedHotspotId="results-board"
+        defaultSelectedHotspotId="duel-dais"
         hotspots={[
+          {
+            id: "duel-dais",
+            label: "Duel Dais",
+            flavor: "The central dais is where Houses should step when they want the most immediate competitive view: live duels, matchup pressure, and weekly conflict.",
+            kind: "object",
+            tone: "ember",
+            x: 40,
+            y: 28,
+            width: 18,
+            height: 14,
+            href: "/app/arena/duels",
+            actionLabel: "Enter Duel Grounds",
+            stats: [
+              { label: "Current Guild", value: guild?.name ?? "No Guild Yet" },
+              { label: "Focus", value: "Weekly Duels" },
+            ],
+          },
+          {
+            id: "standings-plaque",
+            label: "Standings Plaque",
+            flavor: "The plaque tracks the long season: rank, pressure, and how close each House is to climbing into a stronger postseason position.",
+            kind: "object",
+            tone: "warm",
+            x: 18,
+            y: 20,
+            width: 16,
+            height: 18,
+            href: "/app/arena/standings",
+            actionLabel: "Open Standings Hall",
+            stats: [
+              { label: "Season", value: guild ? String(guild.season) : "Unclaimed" },
+              { label: "State", value: guild?.status?.replaceAll("_", " ") ?? "Awaiting Guild" },
+            ],
+          },
           {
             id: "results-board",
             label: "Results Board",
-            flavor: "The results board will become the clearest single place to understand Arena outcomes, standings, and championship movement.",
+            flavor: "The results board is where the Arena becomes memory instead of tension: weekly outcomes, recap value, and the running story of the season.",
             kind: "object",
-            tone: "ember",
-            x: 38,
-            y: 26,
-            width: 24,
-            height: 16,
+            tone: "stone",
+            x: 68,
+            y: 18,
+            width: 16,
+            height: 18,
+            href: "/app/arena/results",
+            actionLabel: "Open Results Archive",
+            stats: [
+              { label: "Archive", value: "Weekly Outcomes" },
+              { label: "Purpose", value: "Recall + Review" },
+            ],
           },
           {
             id: "guild-door",
@@ -54,6 +94,10 @@ export default async function ArenaPage() {
             width: 16,
             height: 18,
             href: "/app/guild",
+            stats: [
+              { label: "Destination", value: "Guild Hall" },
+              { label: "Purpose", value: "Planning" },
+            ],
           },
           {
             id: "house-door",
@@ -66,13 +110,18 @@ export default async function ArenaPage() {
             width: 16,
             height: 18,
             href: "/app",
+            stats: [
+              { label: "Destination", value: "House" },
+              { label: "Purpose", value: "Reset Route" },
+            ],
           },
         ]}
       />
 
       <div className="mt-8 grid gap-6 lg:grid-cols-[1fr_0.9fr]">
-        <Panel title="Arena Focus" description="The Arena is now the long-term home for matchups, results, and standings even before every competitive system is fully implemented.">
-          <div className="grid gap-3 sm:grid-cols-2">
+        <Panel title="Arena Focus" description="The Arena now has distinct competitive surfaces instead of a single holding room. Each object maps to a different way a House reads the season."
+        >
+          <div className="grid gap-3 sm:grid-cols-3">
             <div className="rounded-[1.4rem] border border-[#a86a56]/24 bg-black/20 px-4 py-4">
               <p className="fantasy-kicker text-[0.68rem] text-[#d0a697]">Current Guild</p>
               <p className="mt-2 text-lg font-semibold text-[#fff4d8]">{guild?.name ?? "No Guild Yet"}</p>
@@ -81,14 +130,18 @@ export default async function ArenaPage() {
               <p className="fantasy-kicker text-[0.68rem] text-[#d0a697]">Season State</p>
               <p className="mt-2 text-lg font-semibold text-[#fff4d8]">{guild?.status?.replaceAll("_", " ") ?? "Awaiting Guild"}</p>
             </div>
+            <div className="rounded-[1.4rem] border border-[#a86a56]/24 bg-black/20 px-4 py-4">
+              <p className="fantasy-kicker text-[0.68rem] text-[#d0a697]">Wing Focus</p>
+              <p className="mt-2 text-lg font-semibold text-[#fff4d8]">Duels + Results</p>
+            </div>
           </div>
         </Panel>
 
-        <Panel title="Arena Links" description="Arena-specific competitive screens will land here as gauntlet and playoff systems deepen. For now, use the shell to establish the right home for those views.">
+        <Panel title="Arena Routes" description="Use the object you need in the gate itself, or quick-jump here if you already know which competitive view you want.">
           <div className="flex flex-wrap gap-3">
-            <HeroLink href="/app/guild">Open Guild Hall</HeroLink>
-            <HeroLink href="/app/leagues" tone="secondary">View Guild Ledger</HeroLink>
-            <HeroLink href="/app" tone="secondary">Return Home</HeroLink>
+            <HeroLink href="/app/arena/duels">Enter Duel Grounds</HeroLink>
+            <HeroLink href="/app/arena/standings" tone="secondary">Open Standings Hall</HeroLink>
+            <HeroLink href="/app/arena/results" tone="secondary">Open Results Archive</HeroLink>
           </div>
         </Panel>
       </div>
