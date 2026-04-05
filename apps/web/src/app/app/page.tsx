@@ -104,10 +104,11 @@ export default async function AppHomePage() {
             flavor: "A stout wooden wardrobe for House identity, starter outfits, and the future avatar system that will grow from this chamber.",
             kind: "object",
             tone: "warm",
-            x: 11,
-            y: 26,
+            displayStyle: "wardrobe",
+            x: 10,
+            y: 25,
             width: 15,
-            height: 22,
+            height: 24,
             href: "/app/house/wardrobe",
             actionLabel: "Open Wardrobe",
             stats: [
@@ -125,10 +126,11 @@ export default async function AppHomePage() {
             flavor: "A wooden planning board covered in pinned papers, match notes, and Guild scraps. This is the House hub for current-week activity.",
             kind: "object",
             tone: "warm",
-            x: 39,
-            y: 22,
-            width: 21,
-            height: 17,
+            displayStyle: "board",
+            x: 36,
+            y: 21,
+            width: 24,
+            height: 18,
             href: "/app/house/board",
             actionLabel: "Open Strategy Center",
             stats: [
@@ -137,19 +139,20 @@ export default async function AppHomePage() {
             ],
             notes: [
               "This board replaces the simpler Guild Board as the House-facing weekly surface.",
-              "A good mythic alternate name for it is the War Table if you want a more dramatic tone later.",
+              "A stronger mythic alternate name for it is War Table if you want a more dramatic tone later.",
             ],
           },
           {
             id: "trophies",
             label: "Trophy Cabinet",
-            flavor: "A glass-front cabinet for sigils, rival-duel achievements, rare captures, and old Guild championships.",
+            flavor: "A glass-front cabinet for rival-duel achievements, rare captures, and old Guild championships.",
             kind: "object",
             tone: "warm",
-            x: 69,
-            y: 23,
-            width: 14,
-            height: 22,
+            displayStyle: "cabinet",
+            x: 67,
+            y: 22,
+            width: 15,
+            height: 23,
             href: "/app/house/trophies",
             actionLabel: "Open Trophy Cabinet",
             stats: [
@@ -158,18 +161,19 @@ export default async function AppHomePage() {
             ],
             notes: [
               "This object gives the House long-term memory instead of making achievement history feel abstract.",
-              "It can hold both achievement-style badges and full Guild trophies over time.",
+              "It can hold both achievement-style honors and full Guild trophies over time.",
             ],
           },
           {
             id: "chest",
             label: "Party Chest",
-            flavor: "Your Party lives here. Open the chest to inspect the House roster, check Draft gains, and eventually manage creature loadouts.",
+            flavor: "Your Party lives here. Open the chest to inspect the House roster, check Draft gains, and manage lineup readiness.",
             kind: "object",
             tone: "warm",
-            x: 64,
-            y: 61,
-            width: 17,
+            displayStyle: "chest",
+            x: 63,
+            y: 60,
+            width: 18,
             height: 14,
             href: "/app/house/party",
             actionLabel: "Open Party Chest",
@@ -188,7 +192,8 @@ export default async function AppHomePage() {
             flavor: "Beyond this door lies the Guild Hall, where Houses gather, Draft plans are made, and Guild affairs are settled.",
             kind: "door",
             tone: "forest",
-            x: 16,
+            displayStyle: "door",
+            x: 14,
             y: 66,
             width: 16,
             height: 18,
@@ -204,7 +209,8 @@ export default async function AppHomePage() {
             flavor: "The Dungeon waits below the stone stairs. Step through to choose a Tribe chamber and begin your next Hunt.",
             kind: "door",
             tone: "stone",
-            x: 42,
+            displayStyle: "door",
+            x: 39,
             y: 66,
             width: 16,
             height: 18,
@@ -220,7 +226,8 @@ export default async function AppHomePage() {
             flavor: "The Arena is where Houses test their Parties in duels, standings, and the season's fiercest competitive moments.",
             kind: "door",
             tone: "ember",
-            x: 68,
+            displayStyle: "door",
+            x: 64,
             y: 66,
             width: 16,
             height: 18,
@@ -244,10 +251,10 @@ export default async function AppHomePage() {
 
         <Panel title="House Objects" description="The House should now feel like a loop of real objects, not just room dressing.">
           <div className="grid gap-3">
-            <ObjectRouteCard title="Party Chest" body="Inspect the current Party, see what Draft has already yielded, and prepare future loadouts." href="/app/house/party" />
             <ObjectRouteCard title="Strategy Center" body="Use the wooden planning board as the current-week hub for lineups, score awareness, and Guild signals." href="/app/house/board" />
-            <ObjectRouteCard title="Wardrobe" body="Shape House identity through a more tactile pixel-wood wardrobe and starter fits." href="/app/house/wardrobe" />
             <ObjectRouteCard title="Trophy Cabinet" body="Track old honors, achievement-style milestones, and future championship trophies." href="/app/house/trophies" />
+            <ObjectRouteCard title="Wardrobe" body="Shape House identity through a more tactile pixel-wood wardrobe and starter fits." href="/app/house/wardrobe" />
+            <ObjectRouteCard title="Party Chest" body="Inspect the current Party, see what Draft has already yielded, and prepare weekly assignments." href="/app/house/party" />
           </div>
         </Panel>
 

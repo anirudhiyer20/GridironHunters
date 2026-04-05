@@ -25,6 +25,7 @@ export type RoomHotspot = {
   height: number;
   kind: "door" | "object";
   tone?: "warm" | "stone" | "ember" | "forest";
+  displayStyle?: "board" | "wardrobe" | "cabinet" | "chest" | "door";
   href?: string;
   actionLabel?: string;
   stats?: RoomHotspotStat[];
@@ -121,7 +122,7 @@ export function RoomScene({
                   event.stopPropagation();
                   handleHotspotClick(hotspot);
                 }}
-                className={`room-hotspot room-hotspot--${hotspot.kind} room-hotspot--${hotspot.tone ?? "warm"} ${selectedHotspotId === hotspot.id ? "room-hotspot--selected" : ""} ${activeDoorId === hotspot.id ? "room-hotspot--active" : ""}`}
+                className={`room-hotspot room-hotspot--${hotspot.kind} room-hotspot--${hotspot.tone ?? "warm"} room-hotspot--${hotspot.displayStyle ?? (hotspot.kind === "door" ? "door" : "board")} ${selectedHotspotId === hotspot.id ? "room-hotspot--selected" : ""} ${activeDoorId === hotspot.id ? "room-hotspot--active" : ""}`}
                 style={{
                   left: `${hotspot.x}%`,
                   top: `${hotspot.y}%`,
