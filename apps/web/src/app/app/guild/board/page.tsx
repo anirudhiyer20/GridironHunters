@@ -2,7 +2,6 @@ import { FANTASY_TERMS } from "@gridiron/shared";
 
 import { HeroLink } from "@/components/hero-link";
 import { PageShell } from "@/components/page-shell";
-import { Panel } from "@/components/panel";
 import { createClient } from "@/lib/supabase/server";
 
 export default async function GuildBoardPage() {
@@ -31,9 +30,21 @@ export default async function GuildBoardPage() {
       title="Guild Board"
       description="The Guild Board is the communal layer of the hall: notices, season state, and the quickest explanation of what the Guild should care about right now."
     >
-      <div className="grid gap-8 lg:grid-cols-[0.95fr_1.05fr]">
-        <Panel title="Current Notices" description="This starts simple, but it gives the hall a meaningful board object now instead of forcing all information through the same ledger route.">
-          <div className="grid gap-4">
+      <section className="rounded-[2rem] border border-[#7c5229] bg-[linear-gradient(180deg,#6a4321_0%,#4e3018_100%)] p-4 shadow-[0_18px_36px_rgba(0,0,0,0.28),inset_0_0_0_2px_rgba(243,214,158,0.06)]">
+        <div className="rounded-[1.6rem] border border-[#8f6437] bg-[repeating-linear-gradient(90deg,rgba(168,116,63,0.18)_0_26px,rgba(118,76,38,0.18)_26px_52px),linear-gradient(180deg,#5b381c_0%,#3f2613_100%)] p-5">
+          <div className="flex flex-wrap items-center justify-between gap-4">
+            <div>
+              <p className="fantasy-kicker text-[0.68rem] text-[#f0d39b]">Hall Notices</p>
+              <h2 className="fantasy-title mt-2 text-3xl text-[#fff2d2]">Current Notices</h2>
+            </div>
+            <div className="flex flex-wrap gap-3">
+              <HeroLink href="/app/guild/ledger">Open Guild Ledger</HeroLink>
+              <HeroLink href="/app/guild/drafts" tone="secondary">Open Draft Command</HeroLink>
+              <HeroLink href="/app/guild" tone="secondary">Return to Guild Hall</HeroLink>
+            </div>
+          </div>
+
+          <div className="mt-5 grid gap-4">
             <NoticeCard
               title="Guild State"
               body={currentGuild ? `${currentGuild.name} is currently ${currentGuild.status.replaceAll("_", " ")}.` : "No Guild notice is posted because your House has not joined a Guild yet."}
@@ -47,16 +58,8 @@ export default async function GuildBoardPage() {
               body={`Use the ${FANTASY_TERMS.league} Hall for membership, invites, and Draft routes. Use the House Board for the more personal House-facing summary.`}
             />
           </div>
-        </Panel>
-
-        <Panel title="Guild Routes" description="The board now acts as a clean orientation surface for the hall.">
-          <div className="flex flex-wrap gap-3">
-            <HeroLink href="/app/guild/ledger">Open Guild Ledger</HeroLink>
-            <HeroLink href="/app/guild/drafts" tone="secondary">Open Draft Command</HeroLink>
-            <HeroLink href="/app/guild" tone="secondary">Return to Guild Hall</HeroLink>
-          </div>
-        </Panel>
-      </div>
+        </div>
+      </section>
     </PageShell>
   );
 }

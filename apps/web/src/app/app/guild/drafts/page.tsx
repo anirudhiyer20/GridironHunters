@@ -1,6 +1,5 @@
 import { HeroLink } from "@/components/hero-link";
 import { PageShell } from "@/components/page-shell";
-import { Panel } from "@/components/panel";
 import { createClient } from "@/lib/supabase/server";
 
 export default async function GuildDraftsPage() {
@@ -28,8 +27,19 @@ export default async function GuildDraftsPage() {
       title="Draft Command"
       description="This chamber is where the Guild Hall points Houses when they want the strategic side of Draft access rather than the broader Guild ledger."
     >
-      <div className="grid gap-8 lg:grid-cols-[1fr_0.95fr]">
-        <Panel title="Guild Draft Access" description="Every Guild still has its own Draft state, but the hall now gives that system a clearer home.">
+      <section className="fantasy-panel fantasy-panel--stone rounded-[1.9rem] p-5">
+        <div className="flex flex-wrap items-center justify-between gap-4">
+          <div>
+            <p className="fantasy-kicker text-[0.68rem] text-[#d1b481]">Draft Routes</p>
+            <h2 className="fantasy-title mt-2 text-3xl text-[#fff4d8]">Guild Draft Access</h2>
+          </div>
+          <div className="flex flex-wrap gap-3">
+            <HeroLink href="/app/guild">Return to Guild Hall</HeroLink>
+            <HeroLink href="/app/guild/ledger" tone="secondary">Open Guild Ledger</HeroLink>
+          </div>
+        </div>
+
+        <div className="mt-5">
           {guilds.length > 0 ? (
             <div className="grid gap-4">
               {guilds.map(({ role, guild }) => (
@@ -56,20 +66,8 @@ export default async function GuildDraftsPage() {
               Your House needs a Guild before the Draft chamber can do anything useful.
             </div>
           )}
-        </Panel>
-
-        <Panel title="Draft Notes" description="Draft keeps its name in the fantasy shell. This room exists to make the route toward Draft feel intentional and easier to discover.">
-          <ul className="grid gap-3 text-sm leading-7 text-[#efe2c9]">
-            <li>Use the Guild detail view for preparation, invite control, and Draft readiness.</li>
-            <li>Use the Draft Room for live picks, queue, clock, and the snake board.</li>
-            <li>Later, this chamber can also host Draft history and league-wide preparation summaries.</li>
-          </ul>
-          <div className="mt-6 flex flex-wrap gap-3">
-            <HeroLink href="/app/guild">Return to Guild Hall</HeroLink>
-            <HeroLink href="/app/guild/ledger" tone="secondary">Open Guild Ledger</HeroLink>
-          </div>
-        </Panel>
-      </div>
+        </div>
+      </section>
     </PageShell>
   );
 }

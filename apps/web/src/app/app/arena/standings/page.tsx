@@ -1,6 +1,5 @@
 import { HeroLink } from "@/components/hero-link";
 import { PageShell } from "@/components/page-shell";
-import { Panel } from "@/components/panel";
 import { createClient } from "@/lib/supabase/server";
 
 export default async function ArenaStandingsPage() {
@@ -25,8 +24,20 @@ export default async function ArenaStandingsPage() {
       title="Standings Hall"
       description="The Standings Hall is the record room of the Arena: ranking, pressure, and momentum should eventually feel visible here at a glance."
     >
-      <div className="grid gap-8 lg:grid-cols-[1fr_0.95fr]">
-        <Panel title="Guild Ranking Boards" description="Until the full gauntlet standings system lands, this room establishes where long-season competitive posture belongs.">
+      <section className="fantasy-panel fantasy-panel--arena rounded-[1.9rem] p-5">
+        <div className="flex flex-wrap items-center justify-between gap-4">
+          <div>
+            <p className="fantasy-kicker text-[0.68rem] text-[#d0a697]">Season Ranking</p>
+            <h2 className="fantasy-title mt-2 text-3xl text-[#fff4d8]">Guild Ranking Boards</h2>
+          </div>
+          <div className="flex flex-wrap gap-3">
+            <HeroLink href="/app/arena">Return to Arena</HeroLink>
+            <HeroLink href="/app/arena/duels" tone="secondary">Open Duel Grounds</HeroLink>
+            <HeroLink href="/app/arena/results" tone="secondary">Open Results Archive</HeroLink>
+          </div>
+        </div>
+
+        <div className="mt-5">
           {guilds.length > 0 ? (
             <div className="grid gap-4">
               {guilds.map((guild, index) => (
@@ -47,16 +58,8 @@ export default async function ArenaStandingsPage() {
               Your House needs a Guild before standings can mean anything.
             </div>
           )}
-        </Panel>
-
-        <Panel title="Standings Notes" description="This room should eventually become the cleanest way to understand seasonal positioning, playoff pressure, and tie-break stakes.">
-          <div className="flex flex-wrap gap-3">
-            <HeroLink href="/app/arena">Return to Arena</HeroLink>
-            <HeroLink href="/app/arena/duels" tone="secondary">Open Duel Grounds</HeroLink>
-            <HeroLink href="/app/arena/results" tone="secondary">Open Results Archive</HeroLink>
-          </div>
-        </Panel>
-      </div>
+        </div>
+      </section>
     </PageShell>
   );
 }

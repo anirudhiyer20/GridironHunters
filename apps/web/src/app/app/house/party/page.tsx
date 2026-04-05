@@ -2,7 +2,6 @@ import { FANTASY_TERMS, MVP_DRAFT_ROSTER_SIZE, MVP_REQUIRED_POSITION_COUNTS } fr
 
 import { HeroLink } from "@/components/hero-link";
 import { PageShell } from "@/components/page-shell";
-import { Panel } from "@/components/panel";
 import { createClient } from "@/lib/supabase/server";
 
 function houseNameFromEmail(email: string | null | undefined) {
@@ -89,22 +88,23 @@ export default async function PartyChestPage() {
       title="Party Chest"
       description="The Party Chest should feel like a chest inventory first: gathered players, lineup readiness, and dungeon assignments all in one place."
     >
-      <div className="grid gap-8 xl:grid-cols-[0.92fr_1.08fr]">
-        <div className="grid gap-6">
-          <Panel title="Chest Summary" description="A quick read on how far this House has progressed from Draft into an actual Party.">
-            <div className="grid gap-3 sm:grid-cols-2">
-              <InfoCard label="House" value={houseName} />
-              <InfoCard label={FANTASY_TERMS.league} value={currentGuild?.name ?? "No Guild Yet"} />
-              <InfoCard label={FANTASY_TERMS.roster} value={`${party.length} / ${MVP_DRAFT_ROSTER_SIZE}`} />
-              <InfoCard label="Needed Roles" value={uncoveredRequiredPositions.length ? uncoveredRequiredPositions.join(", ") : "Core Set Covered"} />
-            </div>
-            <div className="mt-6 flex flex-wrap gap-3">
-              <HeroLink href="/app">Return Home</HeroLink>
-              <HeroLink href="/app/guild" tone="secondary">Open Guild Hall</HeroLink>
-            </div>
-          </Panel>
+      <div className="grid gap-6">
+        <div className="flex flex-wrap gap-3">
+          <InfoCard label="House" value={houseName} />
+          <InfoCard label={FANTASY_TERMS.league} value={currentGuild?.name ?? "No Guild Yet"} />
+          <InfoCard label={FANTASY_TERMS.roster} value={`${party.length} / ${MVP_DRAFT_ROSTER_SIZE}`} />
+          <InfoCard label="Needed Roles" value={uncoveredRequiredPositions.length ? uncoveredRequiredPositions.join(", ") : "Core Set Covered"} />
+        </div>
 
-          <Panel title="Current Lineup" description="This is the weekly Arena-facing lineup surface. If the House has not set a lineup yet, make that obvious and actionable.">
+        <div className="grid gap-6 xl:grid-cols-[0.92fr_1.08fr]">
+          <section className="fantasy-panel fantasy-panel--stone rounded-[1.9rem] p-5">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <div>
+                <p className="fantasy-kicker text-[0.68rem] text-[#d1b481]">House Loadout</p>
+                <h2 className="fantasy-title mt-2 text-3xl text-[#fff4d8]">Current Lineup</h2>
+              </div>
+              <HeroLink href="/app/arena">Set Arena Lineup</HeroLink>
+            </div>
             <div className="grid gap-3 sm:grid-cols-2">
               {lineup.map((slot) => (
                 <div key={slot.position} className="rounded-[1.4rem] border border-[#9e8455]/18 bg-black/20 px-4 py-4">
@@ -123,12 +123,16 @@ export default async function PartyChestPage() {
                 ? "Your Arena lineup has a player in each core slot. Use the Arena to refine this once weekly duel management is built out."
                 : "Your Arena lineup is not fully set for the week. The Arena will be the place to finalize this."}
             </div>
-            <div className="mt-5">
-              <HeroLink href="/app/arena">Set Arena Lineup</HeroLink>
-            </div>
-          </Panel>
+          </section>
 
-          <Panel title="Dungeon Assignment" description="Choose which fighters the House is sending into the Dungeon branch.">
+          <section className="fantasy-panel fantasy-panel--dungeon rounded-[1.9rem] p-5">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <div>
+                <p className="fantasy-kicker text-[0.68rem] text-[#b6d2c6]">Dungeon Branch</p>
+                <h2 className="fantasy-title mt-2 text-3xl text-[#f0f7f3]">Dungeon Assignment</h2>
+              </div>
+              <HeroLink href="/app/dungeon" tone="secondary">Assign Dungeon Fighters</HeroLink>
+            </div>
             <div className="grid gap-3 sm:grid-cols-3">
               {Array.from({ length: 3 }, (_, index) => dungeonParty[index] ?? null).map((pick, index) => (
                 <div key={`dungeon-slot-${index}`} className="rounded-[1.4rem] border border-[#7a8d80]/24 bg-black/20 px-4 py-4">
@@ -143,14 +147,22 @@ export default async function PartyChestPage() {
                 ? "The Dungeon assignment is a light MVP preview for now. The Dungeon gate is still the best route for tribe chambers and future hunt setup."
                 : "No Dungeon fighters have been assigned yet. Send your House into the Dungeon once hunt selection deepens."}
             </div>
-            <div className="mt-5">
-              <HeroLink href="/app/dungeon" tone="secondary">Assign Dungeon Fighters</HeroLink>
-            </div>
-          </Panel>
+          </section>
         </div>
 
-        <Panel title="Chest Inventory" description="The Party inventory should feel like a real chest: slot-based, sortable by position, and easy to scan at a glance.">
-          <div className="flex flex-wrap gap-3">
+        <section className="fantasy-panel fantasy-panel--stone rounded-[1.9rem] p-5">
+          <div className="flex flex-wrap items-center justify-between gap-4">
+            <div>
+              <p className="fantasy-kicker text-[0.68rem] text-[#d1b481]">Inventory Grid</p>
+              <h2 className="fantasy-title mt-2 text-3xl text-[#fff4d8]">Chest Inventory</h2>
+            </div>
+            <div className="flex flex-wrap gap-3">
+              <HeroLink href="/app">Return Home</HeroLink>
+              <HeroLink href="/app/guild" tone="secondary">Open Guild Hall</HeroLink>
+            </div>
+          </div>
+
+          <div className="mt-5 flex flex-wrap gap-3">
             <FilterChip label="All Party" active />
             {lineupOrder.map((position) => (
               <FilterChip key={position} label={position} />
@@ -197,7 +209,7 @@ export default async function PartyChestPage() {
               </section>
             ))}
           </div>
-        </Panel>
+        </section>
       </div>
     </PageShell>
   );

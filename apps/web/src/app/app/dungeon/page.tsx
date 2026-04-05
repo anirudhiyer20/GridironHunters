@@ -1,6 +1,5 @@
 import { FANTASY_TERMS, TRIBE_DETAILS, TRIBE_NAMES } from "@gridiron/shared";
 
-import { HeroLink } from "@/components/hero-link";
 import { PageShell } from "@/components/page-shell";
 import { Panel } from "@/components/panel";
 import { RoomScene } from "@/components/room-scene";
@@ -71,27 +70,16 @@ export default function DungeonPage() {
         ]}
       />
 
-      <div className="mt-8 grid gap-6 lg:grid-cols-[1fr_0.9fr]">
-        <Panel title="Tribe Doors" description="The Dungeon hub now routes into actual Tribe chambers, so the Hunt branch has the right structure before real Wild Player boards land.">
+      <div className="mt-8">
+        <Panel title="Tribe Legend" description="The Dungeon doors above are the real navigation. This legend stays only to remind the House what each Tribe chamber represents.">
           <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
             {TRIBE_NAMES.map((tribe) => (
               <div key={tribe} className="rounded-[1.4rem] border border-[#7a8d80]/22 bg-black/20 px-4 py-4">
-                <p className="fantasy-kicker text-[0.68rem] text-[#9ec2af]">Tribe Chamber</p>
+                <p className="fantasy-kicker text-[0.68rem] text-[#9ec2af]">Tribe</p>
                 <p className="mt-2 text-lg font-semibold text-[#f7efd5]">{tribe}</p>
                 <p className="mt-2 text-sm leading-6 text-[#d8d4c8]">{TRIBE_DETAILS[tribe].summary}</p>
-                <div className="mt-4">
-                  <HeroLink href={`/app/dungeon/${TRIBE_DETAILS[tribe].slug}`} tone="secondary">Open Chamber</HeroLink>
-                </div>
               </div>
             ))}
-          </div>
-        </Panel>
-
-        <Panel title="Dungeon Links" description="The shell now supports the Hunt branch more explicitly: hub first, then chamber, then future target boards and Wild Player actions.">
-          <div className="flex flex-wrap gap-3">
-            <HeroLink href="/app">Return Home</HeroLink>
-            <HeroLink href="/app/guild" tone="secondary">Enter Guild</HeroLink>
-            <HeroLink href="/app/arena" tone="secondary">Enter Arena</HeroLink>
           </div>
         </Panel>
       </div>

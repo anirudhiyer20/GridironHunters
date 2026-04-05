@@ -18,6 +18,7 @@ export type RoomHotspotStat = {
 export type RoomHotspot = {
   id: string;
   label: string;
+  displayLabel?: string;
   flavor: string;
   x: number;
   y: number;
@@ -28,14 +29,13 @@ export type RoomHotspot = {
   displayStyle?: "board" | "wardrobe" | "cabinet" | "chest" | "door";
   href?: string;
   actionLabel?: string;
+  interactionMode?: "modal" | "direct";
   stats?: RoomHotspotStat[];
   notes?: string[];
   actions?: RoomHotspotAction[];
 };
 
 export function RoomScene({
-  roomName,
-  roomMood,
   avatarName,
   sceneClassName,
   hotspots,
@@ -48,7 +48,6 @@ export function RoomScene({
   hotspots: RoomHotspot[];
   defaultSelectedHotspotId?: string;
 }) {
-  const router = useRouter();
   const defaultHotspot = useMemo(
     () => hotspots.find((hotspot) => hotspot.id === defaultSelectedHotspotId) ?? hotspots[0] ?? null,
     [defaultSelectedHotspotId, hotspots],
@@ -60,9 +59,9 @@ export function RoomScene({
     }),
     [defaultHotspot],
   );
-  const [selectedHotspotId, setSelectedHotspotId] = useState<string | null>(defaultHotspot?.id ?? null);
+  const [selectedHotspotId, setSelectedHotspotId] = useState<string | null>(null);
   const [avatarPosition, setAvatarPosition] = useState(initialAvatarPosition);
-  const [activeDoorId, setActiveDoorId] = useState<string | null>(null);
+  const router = useRouter();
 
   const selectedHotspot = hotspots.find((hotspot) => hotspot.id === selectedHotspotId) ?? null;
   const selectedActions = selectedHotspot?.actions?.length
@@ -80,137 +79,127 @@ export function RoomScene({
   }
 
   function handleHotspotClick(hotspot: RoomHotspot) {
-    setSelectedHotspotId(hotspot.id);
     moveAvatarTo(hotspot.x + hotspot.width / 2, hotspot.y + hotspot.height + 10);
 
-    if (hotspot.kind === "door" && hotspot.href) {
-      setActiveDoorId(hotspot.id);
-      window.setTimeout(() => {
-        router.push(hotspot.href!);
-      }, 420);
+    const interactionMode = hotspot.interactionMode ?? (hotspot.kind === "door" ? "direct" : "modal");
+
+    if (interactionMode === "direct" && hotspot.href) {
+      setSelectedHotspotId(null);
+      router.push(hotspot.href);
+      return;
     }
+
+    setSelectedHotspotId(hotspot.id);
   }
 
   return (
-    <div className="grid gap-6 xl:grid-cols-[1.2fr_0.8fr]">
-      <div>
-        <div
-          className={`room-scene ${sceneClassName ?? "room-scene--house"}`}
-          onClick={(event) => {
-            const target = event.currentTarget;
-            const rect = target.getBoundingClientRect();
-            const clickX = ((event.clientX - rect.left) / rect.width) * 100;
-            const clickY = ((event.clientY - rect.top) / rect.height) * 100;
-            moveAvatarTo(clickX, clickY);
-          }}
+    <div className="relative">
+      <div
+        className={`room-scene ${sceneClassName ?? "room-scene--house"}`}
+        onClick={(event) => {
+          const target = event.currentTarget;
+          const rect = target.getBoundingClientRect();
+          const clickX = ((event.clientX - rect.left) / rect.width) * 100;
+          const clickY = ((event.clientY - rect.top) / rect.height) * 100;
+          moveAvatarTo(clickX, clickY);
+        }}
         >
           <div className="room-scene__hud">
-            <div>
-              <p className="room-scene__eyebrow">{roomName}</p>
-              <h2 className="room-scene__title">{avatarName}</h2>
-            </div>
-            <p className="room-scene__mood">{roomMood}</p>
+            <h2 className="room-scene__title">{avatarName}</h2>
           </div>
 
-          <div className="room-scene__playfield">
-            {hotspots.map((hotspot) => (
-              <button
-                key={hotspot.id}
-                type="button"
-                aria-label={hotspot.label}
-                onClick={(event) => {
-                  event.stopPropagation();
-                  handleHotspotClick(hotspot);
-                }}
-                className={`room-hotspot room-hotspot--${hotspot.kind} room-hotspot--${hotspot.tone ?? "warm"} room-hotspot--${hotspot.displayStyle ?? (hotspot.kind === "door" ? "door" : "board")} ${selectedHotspotId === hotspot.id ? "room-hotspot--selected" : ""} ${activeDoorId === hotspot.id ? "room-hotspot--active" : ""}`}
-                style={{
-                  left: `${hotspot.x}%`,
-                  top: `${hotspot.y}%`,
-                  width: `${hotspot.width}%`,
-                  height: `${hotspot.height}%`,
-                }}
-              >
-                <span>{hotspot.label}</span>
-              </button>
-            ))}
-
-            <div
-              className={`room-avatar ${activeDoorId ? "room-avatar--walking" : ""}`}
-              style={{ left: `${avatarPosition.x}%`, top: `${avatarPosition.y}%` }}
+        <div className="room-scene__playfield">
+          {hotspots.map((hotspot) => (
+            <button
+              key={hotspot.id}
+              type="button"
+              aria-label={hotspot.label}
+              onClick={(event) => {
+                event.stopPropagation();
+                handleHotspotClick(hotspot);
+              }}
+              className={`room-hotspot room-hotspot--${hotspot.kind} room-hotspot--${hotspot.tone ?? "warm"} room-hotspot--${hotspot.displayStyle ?? (hotspot.kind === "door" ? "door" : "board")} ${selectedHotspotId === hotspot.id ? "room-hotspot--selected" : ""}`}
+              style={{
+                left: `${hotspot.x}%`,
+                top: `${hotspot.y}%`,
+                width: `${hotspot.width}%`,
+                height: `${hotspot.height}%`,
+              }}
             >
-              <div className="room-avatar__head" />
-              <div className="room-avatar__body" />
-              <div className="room-avatar__shadow" />
-            </div>
+              <span className="room-hotspot__label">{hotspot.displayLabel ?? hotspot.label}</span>
+              <span className="room-hotspot__hover-label">{hotspot.label}</span>
+            </button>
+          ))}
+
+          <div className="room-avatar" style={{ left: `${avatarPosition.x}%`, top: `${avatarPosition.y}%` }}>
+            <div className="room-avatar__head" />
+            <div className="room-avatar__body" />
+            <div className="room-avatar__shadow" />
           </div>
         </div>
       </div>
 
-      <aside className="fantasy-panel fantasy-panel--stone h-full rounded-[1.8rem] p-5">
-        <div className="flex flex-wrap items-center gap-3">
-          <p className="fantasy-kicker">Featured Object</p>
-          {selectedHotspot ? (
-            <span className="rounded-full border border-[#9e8455]/22 bg-black/20 px-3 py-1 text-[0.68rem] uppercase tracking-[0.2em] text-[#d6bf90]">
-              {selectedKindLabel}
-            </span>
-          ) : null}
-        </div>
-        <h3 className="fantasy-title mt-3 text-3xl">{selectedHotspot?.label ?? "Idle"}</h3>
-        <p className="mt-4 text-sm leading-7 text-[#efe2c9]">
-          {selectedHotspot?.flavor ?? "Walk your avatar through the room and open the objects that matter to your House."}
-        </p>
-
-        {selectedHotspot?.stats?.length ? (
-          <div className="mt-6 grid gap-3 sm:grid-cols-2">
-            {selectedHotspot.stats.map((stat) => (
-              <div key={stat.label} className="rounded-[1.2rem] border border-[#9e8455]/20 bg-black/20 px-4 py-3">
-                <p className="fantasy-kicker text-[0.68rem] text-[#c6ad7d]">{stat.label}</p>
-                <p className="mt-2 text-base font-semibold text-[#fff4d8]">{stat.value}</p>
+      {selectedHotspot ? (
+        <div className="room-scene-modal" onClick={() => setSelectedHotspotId(null)}>
+          <div className="room-scene-modal__backdrop" />
+          <div
+            className="room-scene-modal__panel fantasy-panel fantasy-panel--stone"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <div className="flex flex-wrap items-center gap-3">
+                  <p className="fantasy-kicker">Featured Object</p>
+                  <span className="rounded-full border border-[#9e8455]/22 bg-black/20 px-3 py-1 text-[0.68rem] uppercase tracking-[0.2em] text-[#d6bf90]">
+                    {selectedKindLabel}
+                  </span>
+                </div>
+                <h3 className="fantasy-title mt-3 text-3xl">{selectedHotspot.label}</h3>
               </div>
-            ))}
-          </div>
-        ) : null}
+              <button type="button" className="room-scene-modal__close" onClick={() => setSelectedHotspotId(null)}>
+                Close
+              </button>
+            </div>
 
-        {selectedActions.length ? (
-          <div className="mt-6 flex flex-wrap gap-3">
-            {selectedActions.map((action) => (
-              <Link
-                key={`${selectedHotspot?.id ?? "idle"}-${action.href}-${action.label}`}
-                href={action.href}
-                className={`fantasy-button ${action.tone === "stone" ? "fantasy-button--stone" : "fantasy-button--gold"}`}
-              >
-                {action.label}
-              </Link>
-            ))}
-          </div>
-        ) : null}
+            <p className="mt-4 text-sm leading-7 text-[#efe2c9]">{selectedHotspot.flavor}</p>
 
-        {selectedHotspot?.notes?.length ? (
-          <div className="mt-6 rounded-[1.4rem] border border-[#9e8455]/25 bg-black/20 p-4 text-sm text-[#e7d7ba]">
-            <p className="fantasy-kicker text-[0.7rem]">Object Notes</p>
-            <ul className="mt-3 grid gap-3 leading-7">
-              {selectedHotspot.notes.map((note) => (
-                <li key={note}>{note}</li>
-              ))}
-            </ul>
-          </div>
-        ) : null}
+            {selectedHotspot.stats?.length ? (
+              <div className="mt-6 grid gap-3 sm:grid-cols-2">
+                {selectedHotspot.stats.map((stat) => (
+                  <div key={stat.label} className="rounded-[1.2rem] border border-[#9e8455]/20 bg-black/20 px-4 py-3">
+                    <p className="fantasy-kicker text-[0.68rem] text-[#c6ad7d]">{stat.label}</p>
+                    <p className="mt-2 text-base font-semibold text-[#fff4d8]">{stat.value}</p>
+                  </div>
+                ))}
+              </div>
+            ) : null}
 
-        <div className="mt-6 grid gap-3 sm:grid-cols-3">
-          <div className="rounded-[1.2rem] border border-[#9e8455]/18 bg-black/20 px-4 py-3 text-sm text-[#e7d7ba]">
-            <p className="fantasy-kicker text-[0.66rem]">Move</p>
-            <p className="mt-2 leading-6">Click the floor.</p>
-          </div>
-          <div className="rounded-[1.2rem] border border-[#9e8455]/18 bg-black/20 px-4 py-3 text-sm text-[#e7d7ba]">
-            <p className="fantasy-kicker text-[0.66rem]">Inspect</p>
-            <p className="mt-2 leading-6">Select an object.</p>
-          </div>
-          <div className="rounded-[1.2rem] border border-[#9e8455]/18 bg-black/20 px-4 py-3 text-sm text-[#e7d7ba]">
-            <p className="fantasy-kicker text-[0.66rem]">Travel</p>
-            <p className="mt-2 leading-6">Use the door actions.</p>
+            {selectedHotspot.notes?.length ? (
+              <div className="mt-6 rounded-[1.4rem] border border-[#9e8455]/25 bg-black/20 p-4 text-sm text-[#e7d7ba]">
+                <ul className="grid gap-3 leading-7">
+                  {selectedHotspot.notes.map((note) => (
+                    <li key={note}>{note}</li>
+                  ))}
+                </ul>
+              </div>
+            ) : null}
+
+            {selectedActions.length ? (
+              <div className="mt-6 flex flex-wrap gap-3">
+                {selectedActions.map((action) => (
+                  <Link
+                    key={`${selectedHotspot.id}-${action.href}-${action.label}`}
+                    href={action.href}
+                    className={`fantasy-button ${action.tone === "stone" ? "fantasy-button--stone" : "fantasy-button--gold"}`}
+                  >
+                    {action.label}
+                  </Link>
+                ))}
+              </div>
+            ) : null}
           </div>
         </div>
-      </aside>
+      ) : null}
     </div>
   );
 }

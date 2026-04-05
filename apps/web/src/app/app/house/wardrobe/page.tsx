@@ -1,6 +1,5 @@
 import { HeroLink } from "@/components/hero-link";
 import { PageShell } from "@/components/page-shell";
-import { Panel } from "@/components/panel";
 
 const styleSets = [
   {
@@ -26,21 +25,6 @@ const styleSets = [
   },
 ];
 
-const wardrobeStations = [
-  {
-    title: "Mirror Stand",
-    body: "Preview the House silhouette and make sure the base sprite still reads clearly inside every room.",
-  },
-  {
-    title: "Crest Hooks",
-    body: "Swap between starter banners and house markings before a durable heraldry system exists.",
-  },
-  {
-    title: "Travel Cloak Rack",
-    body: "Plan how the House should feel in warmer home scenes versus darker Dungeon and Arena spaces.",
-  },
-];
-
 export default function WardrobePage() {
   return (
     <PageShell
@@ -49,11 +33,21 @@ export default function WardrobePage() {
       description="The Wardrobe should feel like a physical piece of the House: sturdy wood, brass fittings, and just enough pixel-art style to imply a real identity chamber without becoming cluttered."
     >
       <div className="grid gap-8 xl:grid-cols-[0.92fr_1.08fr]">
-        <div className="grid gap-6">
-          <Panel title="Pixel Wardrobe" description="This is the kind of visual direction that feels strong for MVP: recognizable furniture, readable silhouettes, and a few bold details instead of a giant customization grid.">
-            <div className="rounded-[1.7rem] border border-[#9e8455]/18 bg-black/20 px-6 py-6">
-              <div className="mx-auto w-full max-w-[20rem] rounded-[1.4rem] border border-[#5f3917] bg-[#20150d] p-4 shadow-[inset_0_0_0_2px_rgba(234,205,150,0.06)]">
-                <div className="rounded-[1rem] border border-[#7b4d22] bg-[#4c2d13] p-3 shadow-[inset_0_0_0_2px_rgba(255,225,173,0.04)]">
+        <section className="fantasy-panel fantasy-panel--stone rounded-[1.9rem] p-5">
+          <div className="flex flex-wrap items-center justify-between gap-4">
+            <div>
+              <p className="fantasy-kicker text-[0.68rem] text-[#d1b481]">House Identity</p>
+              <h2 className="fantasy-title mt-2 text-3xl text-[#fff4d8]">Pixel Wardrobe</h2>
+            </div>
+            <div className="flex flex-wrap gap-3">
+              <HeroLink href="/app">Return Home</HeroLink>
+              <HeroLink href="/app/house/party" tone="secondary">Open Party Chest</HeroLink>
+            </div>
+          </div>
+
+          <div className="mt-5 rounded-[1.7rem] border border-[#9e8455]/18 bg-black/20 px-6 py-6">
+            <div className="mx-auto w-full max-w-[20rem] rounded-[1.4rem] border border-[#5f3917] bg-[#20150d] p-4 shadow-[inset_0_0_0_2px_rgba(234,205,150,0.06)]">
+              <div className="rounded-[1rem] border border-[#7b4d22] bg-[#4c2d13] p-3 shadow-[inset_0_0_0_2px_rgba(255,225,173,0.04)]">
                   <div className="grid grid-cols-[1fr_auto_1fr] items-stretch gap-3">
                     <div className="rounded-[0.8rem] border border-[#8d5f30] bg-[linear-gradient(180deg,#8a572a_0%,#603718_100%)] px-3 py-4">
                       <div className="h-full rounded-[0.5rem] border border-[#9d7347]/40 bg-[repeating-linear-gradient(180deg,rgba(255,220,167,0.06)_0_8px,rgba(0,0,0,0)_8px_16px)]" />
@@ -72,28 +66,16 @@ export default function WardrobePage() {
                     <span>Brass</span>
                     <span>Pixel Readable</span>
                   </div>
-                </div>
               </div>
             </div>
-            <div className="mt-6 flex flex-wrap gap-3">
-              <HeroLink href="/app">Return Home</HeroLink>
-              <HeroLink href="/app/house/party" tone="secondary">Open Party Chest</HeroLink>
-            </div>
-          </Panel>
+          </div>
+        </section>
 
-          <Panel title="Wardrobe Stations" description="Think of these as the first interactable surfaces inside the Wardrobe before deeper avatar controls arrive.">
-            <div className="grid gap-3">
-              {wardrobeStations.map((station) => (
-                <div key={station.title} className="rounded-[1.4rem] border border-[#9e8455]/18 bg-black/20 px-4 py-4">
-                  <p className="fantasy-title text-xl text-[#fff4d8]">{station.title}</p>
-                  <p className="mt-2 text-sm leading-7 text-[#e8d8ba]">{station.body}</p>
-                </div>
-              ))}
-            </div>
-          </Panel>
-        </div>
-
-        <Panel title="Starter House Fits" description="These kits are still conceptual, but the presentation should feel closer to furniture and costume planning than a generic settings page.">
+        <section className="fantasy-panel fantasy-panel--stone rounded-[1.9rem] p-5">
+          <div>
+            <p className="fantasy-kicker text-[0.68rem] text-[#d1b481]">Starter Fits</p>
+            <h2 className="fantasy-title mt-2 text-3xl text-[#fff4d8]">Starter House Fits</h2>
+          </div>
           <div className="grid gap-4 xl:grid-cols-3">
             {styleSets.map((styleSet) => (
               <div key={styleSet.name} className="rounded-[1.5rem] border border-[#9e8455]/18 bg-black/20 px-4 py-5">
@@ -122,7 +104,7 @@ export default function WardrobePage() {
               </div>
             ))}
           </div>
-        </Panel>
+        </section>
       </div>
     </PageShell>
   );

@@ -1,4 +1,3 @@
-import { HeroLink } from "@/components/hero-link";
 import { PageShell } from "@/components/page-shell";
 import { Panel } from "@/components/panel";
 import { RoomScene } from "@/components/room-scene";
@@ -118,9 +117,8 @@ export default async function ArenaPage() {
         ]}
       />
 
-      <div className="mt-8 grid gap-6 lg:grid-cols-[1fr_0.9fr]">
-        <Panel title="Arena Focus" description="The Arena now has distinct competitive surfaces instead of a single holding room. Each object maps to a different way a House reads the season."
-        >
+      <div className="mt-8">
+        <Panel title="Arena Focus" description="A small amount of season context is enough here. The Arena objects above should do the real navigation work.">
           <div className="grid gap-3 sm:grid-cols-3">
             <div className="rounded-[1.4rem] border border-[#a86a56]/24 bg-black/20 px-4 py-4">
               <p className="fantasy-kicker text-[0.68rem] text-[#d0a697]">Current Guild</p>
@@ -134,14 +132,6 @@ export default async function ArenaPage() {
               <p className="fantasy-kicker text-[0.68rem] text-[#d0a697]">Wing Focus</p>
               <p className="mt-2 text-lg font-semibold text-[#fff4d8]">Duels + Results</p>
             </div>
-          </div>
-        </Panel>
-
-        <Panel title="Arena Routes" description="Use the object you need in the gate itself, or quick-jump here if you already know which competitive view you want.">
-          <div className="flex flex-wrap gap-3">
-            <HeroLink href="/app/arena/duels">Enter Duel Grounds</HeroLink>
-            <HeroLink href="/app/arena/standings" tone="secondary">Open Standings Hall</HeroLink>
-            <HeroLink href="/app/arena/results" tone="secondary">Open Results Archive</HeroLink>
           </div>
         </Panel>
       </div>

@@ -3,7 +3,6 @@ import Link from "next/link";
 
 import { HeroLink } from "@/components/hero-link";
 import { PageShell } from "@/components/page-shell";
-import { Panel } from "@/components/panel";
 import { createClient } from "@/lib/supabase/server";
 
 export default async function GuildLedgerPage() {
@@ -26,11 +25,20 @@ export default async function GuildLedgerPage() {
       title="Guild Ledger"
       description="The Guild Ledger is the most direct record of every Guild your House currently belongs to. It stays practical while the hall around it carries the fantasy shell."
     >
-      <div className="grid gap-8 lg:grid-cols-[1.15fr_0.85fr]">
-        <Panel
-          title="Your Guilds"
-          description="These are the Guilds your House currently belongs to. Open one to manage pre-Draft membership, invites, and the existing Draft flow."
-        >
+      <section className="fantasy-panel fantasy-panel--stone rounded-[1.9rem] p-5">
+        <div className="flex flex-wrap items-center justify-between gap-4">
+          <div>
+            <p className="fantasy-kicker text-[0.68rem] text-[#d1b481]">Guild Record</p>
+            <h2 className="fantasy-title mt-2 text-3xl text-[#fff4d8]">Your Guilds</h2>
+          </div>
+          <div className="flex flex-wrap gap-3">
+            <HeroLink href="/app/leagues/create">Found a Guild</HeroLink>
+            <HeroLink href="/app/leagues/join" tone="secondary">Join with Code</HeroLink>
+            <HeroLink href="/app/guild" tone="secondary">Return to Guild Hall</HeroLink>
+          </div>
+        </div>
+
+        <div className="mt-5">
           {error ? (
             <p className="rounded-[1.4rem] border border-amber-400/20 bg-amber-400/10 px-4 py-3 text-sm text-amber-100">
               Unable to load guilds: {error.message}
@@ -73,17 +81,8 @@ export default async function GuildLedgerPage() {
               Your House is not in a Guild yet. Found one or join with a code to begin the season loop.
             </div>
           )}
-        </Panel>
-
-        <Panel title="Ledger Actions" description="These are the same account-backed flows, now grouped as explicit Guild actions."
-        >
-          <div className="flex flex-wrap gap-3">
-            <HeroLink href="/app/leagues/create">Found a Guild</HeroLink>
-            <HeroLink href="/app/leagues/join" tone="secondary">Join with Code</HeroLink>
-            <HeroLink href="/app/guild" tone="secondary">Return to Guild Hall</HeroLink>
-          </div>
-        </Panel>
-      </div>
+        </div>
+      </section>
     </PageShell>
   );
 }

@@ -3,7 +3,6 @@ import { FANTASY_TERMS } from "@gridiron/shared";
 import { HeroLink } from "@/components/hero-link";
 import { LogoutButton } from "@/components/logout-button";
 import { PageShell } from "@/components/page-shell";
-import { Panel } from "@/components/panel";
 import { RoomScene } from "@/components/room-scene";
 import { createClient } from "@/lib/supabase/server";
 
@@ -106,9 +105,9 @@ export default async function AppHomePage() {
             tone: "warm",
             displayStyle: "wardrobe",
             x: 10,
-            y: 25,
-            width: 15,
-            height: 24,
+            y: 22,
+            width: 12,
+            height: 23,
             href: "/app/house/wardrobe",
             actionLabel: "Open Wardrobe",
             stats: [
@@ -127,10 +126,11 @@ export default async function AppHomePage() {
             kind: "object",
             tone: "warm",
             displayStyle: "board",
-            x: 36,
-            y: 21,
-            width: 24,
-            height: 18,
+            interactionMode: "direct",
+            x: 41,
+            y: 22,
+            width: 18,
+            height: 13,
             href: "/app/house/board",
             actionLabel: "Open Strategy Center",
             stats: [
@@ -144,15 +144,16 @@ export default async function AppHomePage() {
           },
           {
             id: "trophies",
-            label: "Trophy Cabinet",
+            label: "Trophies",
             flavor: "A glass-front cabinet for rival-duel achievements, rare captures, and old Guild championships.",
             kind: "object",
             tone: "warm",
             displayStyle: "cabinet",
-            x: 67,
-            y: 22,
-            width: 15,
-            height: 23,
+            interactionMode: "direct",
+            x: 77,
+            y: 21,
+            width: 10,
+            height: 25,
             href: "/app/house/trophies",
             actionLabel: "Open Trophy Cabinet",
             stats: [
@@ -171,10 +172,11 @@ export default async function AppHomePage() {
             kind: "object",
             tone: "warm",
             displayStyle: "chest",
-            x: 63,
-            y: 60,
-            width: 18,
-            height: 14,
+            interactionMode: "direct",
+            x: 10,
+            y: 50,
+            width: 12,
+            height: 10,
             href: "/app/house/party",
             actionLabel: "Open Party Chest",
             stats: [
@@ -189,13 +191,14 @@ export default async function AppHomePage() {
           {
             id: "guild-door",
             label: "Guild Door",
+            displayLabel: "Guild",
             flavor: "Beyond this door lies the Guild Hall, where Houses gather, Draft plans are made, and Guild affairs are settled.",
             kind: "door",
             tone: "forest",
             displayStyle: "door",
-            x: 14,
-            y: 66,
-            width: 16,
+            x: 23,
+            y: 73,
+            width: 11,
             height: 18,
             href: "/app/guild",
             stats: [
@@ -206,13 +209,14 @@ export default async function AppHomePage() {
           {
             id: "dungeon-door",
             label: "Dungeon Door",
+            displayLabel: "Dungeon",
             flavor: "The Dungeon waits below the stone stairs. Step through to choose a Tribe chamber and begin your next Hunt.",
             kind: "door",
             tone: "stone",
             displayStyle: "door",
-            x: 39,
-            y: 66,
-            width: 16,
+            x: 44.5,
+            y: 73,
+            width: 11,
             height: 18,
             href: "/app/dungeon",
             stats: [
@@ -223,13 +227,14 @@ export default async function AppHomePage() {
           {
             id: "arena-door",
             label: "Arena Door",
+            displayLabel: "Arena",
             flavor: "The Arena is where Houses test their Parties in duels, standings, and the season's fiercest competitive moments.",
             kind: "door",
             tone: "ember",
             displayStyle: "door",
-            x: 64,
-            y: 66,
-            width: 16,
+            x: 66,
+            y: 73,
+            width: 11,
             height: 18,
             href: "/app/arena",
             stats: [
@@ -239,33 +244,6 @@ export default async function AppHomePage() {
           },
         ]}
       />
-
-      <div className="mt-8 grid gap-6 lg:grid-cols-[1.05fr_0.95fr_1fr]">
-        <Panel title="House Ledger" description="A quick pulse on where this House stands before the deeper creature-management systems arrive.">
-          <div className="grid gap-3">
-            <StatusCard label="Guilds" value={String(guildCount)} />
-            <StatusCard label="House Role" value={guildRole} />
-            <StatusCard label="Season" value={activeGuild ? String(activeGuild.season) : "Unclaimed"} />
-          </div>
-        </Panel>
-
-        <Panel title="House Objects" description="The House should now feel like a loop of real objects, not just room dressing.">
-          <div className="grid gap-3">
-            <ObjectRouteCard title="Strategy Center" body="Use the wooden planning board as the current-week hub for lineups, score awareness, and Guild signals." href="/app/house/board" />
-            <ObjectRouteCard title="Trophy Cabinet" body="Track old honors, achievement-style milestones, and future championship trophies." href="/app/house/trophies" />
-            <ObjectRouteCard title="Wardrobe" body="Shape House identity through a more tactile pixel-wood wardrobe and starter fits." href="/app/house/wardrobe" />
-            <ObjectRouteCard title="Party Chest" body="Inspect the current Party, see what Draft has already yielded, and prepare weekly assignments." href="/app/house/party" />
-          </div>
-        </Panel>
-
-        <Panel title="Travel Doors" description="Use these direct entries if you want to move fast without walking the room first.">
-          <div className="flex flex-wrap gap-3">
-            <HeroLink href="/app/guild">Enter Guild</HeroLink>
-            <HeroLink href="/app/dungeon" tone="secondary">Enter Dungeon</HeroLink>
-            <HeroLink href="/app/arena" tone="secondary">Enter Arena</HeroLink>
-          </div>
-        </Panel>
-      </div>
     </PageShell>
   );
 }
@@ -275,18 +253,6 @@ function StatusCard({ label, value }: { label: string; value: string }) {
     <div className="rounded-[1.4rem] border border-[#9e8455]/18 bg-black/20 px-4 py-4">
       <p className="fantasy-kicker text-[0.7rem] text-[#c6ad7d]">{label}</p>
       <p className="mt-2 break-all text-base font-medium text-[#fff4d8]">{value}</p>
-    </div>
-  );
-}
-
-function ObjectRouteCard({ title, body, href }: { title: string; body: string; href: string }) {
-  return (
-    <div className="rounded-[1.4rem] border border-[#9e8455]/18 bg-black/20 px-4 py-4">
-      <p className="fantasy-title text-xl text-[#fff4d8]">{title}</p>
-      <p className="mt-2 text-sm leading-7 text-[#e9dbbd]">{body}</p>
-      <div className="mt-4">
-        <HeroLink href={href} tone="secondary">Open {title}</HeroLink>
-      </div>
     </div>
   );
 }

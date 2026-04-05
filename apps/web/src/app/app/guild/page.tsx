@@ -1,7 +1,6 @@
 import Link from "next/link";
 import { FANTASY_TERMS } from "@gridiron/shared";
 
-import { HeroLink } from "@/components/hero-link";
 import { PageShell } from "@/components/page-shell";
 import { Panel } from "@/components/panel";
 import { RoomScene } from "@/components/room-scene";
@@ -152,8 +151,8 @@ export default async function GuildPage() {
         ]}
       />
 
-      <div className="mt-8 grid gap-8 lg:grid-cols-[1.1fr_0.9fr]">
-        <Panel title="Your Guilds" description="The Guild Hall now gives each object a distinct purpose while still keeping the underlying Guild data easy to reach.">
+      <div className="mt-8">
+        <Panel title="Your Guilds" description="The room handles the navigation now. This ledger stays only to show which Guilds this House is currently bound to.">
           {error ? (
             <p className="rounded-[1.4rem] border border-amber-400/20 bg-amber-400/10 px-4 py-3 text-sm text-amber-100">
               Unable to load guilds: {error.message}
@@ -194,14 +193,6 @@ export default async function GuildPage() {
               Your House has not joined a Guild yet. Found one, or claim a new hall and invite Guildmates.
             </div>
           )}
-        </Panel>
-
-        <Panel title="Guild Routes" description="Use the hall objects when you want the more thematic version of these routes, or quick-jump from here when you already know where you are headed.">
-          <div className="flex flex-wrap gap-3">
-            <HeroLink href="/app/guild/ledger">Open Guild Ledger</HeroLink>
-            <HeroLink href="/app/guild/drafts" tone="secondary">Open Draft Command</HeroLink>
-            <HeroLink href="/app/guild/board" tone="secondary">Read Hall Board</HeroLink>
-          </div>
         </Panel>
       </div>
     </PageShell>
