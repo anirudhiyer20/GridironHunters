@@ -19,6 +19,7 @@ import {
 
 type DraftablePlayer = {
   id: string;
+  source: string;
   key: string;
   fullName: string;
   shortName: string | null;
@@ -28,6 +29,9 @@ type DraftablePlayer = {
   yearsExperience: number;
   age: number | null;
   college: string | null;
+  providerValue: number | null;
+  providerOverallRank: number | null;
+  providerPositionRank: number | null;
   fantasyPointsPpr: number;
   gamesPlayed: number;
   passingYards: number;
@@ -59,6 +63,7 @@ type DraftPlayerBrowserProps = {
 
 const POSITION_OPTIONS = ["ALL", ...DRAFT_POSITIONS] as const;
 type SortOption = "recommended" | "best" | "alphabetical" | "bye" | "age";
+type SourceOption = "ALL" | "seed" | "fantasycalc";
 
 type PlayerInsight = {
   score: number;
@@ -80,6 +85,7 @@ export function DraftPlayerBrowser({
 }: DraftPlayerBrowserProps) {
   const [search, setSearch] = useState("");
   const [position, setPosition] = useState<(typeof POSITION_OPTIONS)[number]>("ALL");
+  const [source, setSource] = useState<SourceOption>("ALL");
   const [team, setTeam] = useState("ALL");
   const [sort, setSort] = useState<SortOption>("recommended");
   const deferredSearch = useDeferredValue(search.trim().toLowerCase());
@@ -113,6 +119,10 @@ export function DraftPlayerBrowser({
         return false;
       }
 
+      if (source !== "ALL" && player.source !== source) {
+        return false;
+      }
+
       if (!deferredSearch) {
         return true;
       }
@@ -135,7 +145,11 @@ export function DraftPlayerBrowser({
       const bInsight = playerInsights.get(b.id)!;
 
       if (sort === "recommended") {
-        return bInsight.score - aInsight.score || b.fantasyPointsPpr - a.fantasyPointsPpr;
+        return (
+          bInsight.score - aInsight.score ||
+          getPlayerBoardScore(b) - getPlayerBoardScore(a) ||
+          a.fullName.localeCompare(b.fullName)
+        );
       }
 
       if (sort === "alphabetical") {
@@ -143,14 +157,20 @@ export function DraftPlayerBrowser({
       }
 
       if (sort === "bye") {
-        return (a.byeWeek ?? 99) - (b.byeWeek ?? 99) || b.fantasyPointsPpr - a.fantasyPointsPpr;
+        return (
+          (a.byeWeek ?? 99) - (b.byeWeek ?? 99) ||
+          getPlayerBoardScore(b) - getPlayerBoardScore(a)
+        );
       }
 
       if (sort === "age") {
-        return (a.age ?? 99) - (b.age ?? 99) || b.fantasyPointsPpr - a.fantasyPointsPpr;
+        return (
+          (a.age ?? 99) - (b.age ?? 99) ||
+          getPlayerBoardScore(b) - getPlayerBoardScore(a)
+        );
       }
 
-      return b.fantasyPointsPpr - a.fantasyPointsPpr || a.fullName.localeCompare(b.fullName);
+      return getPlayerBoardScore(b) - getPlayerBoardScore(a) || a.fullName.localeCompare(b.fullName);
     });
 
   const topRecommendations = filteredPlayers.slice(0, 3);
@@ -221,7 +241,7 @@ export function DraftPlayerBrowser({
                     </div>
                   </div>
                   <div className="mt-4 grid gap-2 sm:grid-cols-3">
-                    <StatChip label="2025 PPR" value={player.fantasyPointsPpr.toFixed(1)} />
+                    <StatChip label="Draft Value" value={formatDraftValue(player)} />
                     <StatChip label="Age" value={player.age ? String(player.age) : "-"} />
                     <StatChip label="Exp" value={String(player.yearsExperience)} />
                   </div>
@@ -256,7 +276,7 @@ export function DraftPlayerBrowser({
               <p className="draft-console-kicker text-[0.68rem] text-[#f2bf5e]">Guidance layer</p>
               <h4 className="draft-console-title mt-2 text-xl text-white">Recommendation snapshot</h4>
               <p className="mt-2 max-w-xl text-sm leading-7 text-stone-300">
-                This first-pass guidance is purely rules-based: it weights roster needs against last season&apos;s fantasy production.
+                This first-pass guidance is rules-based: it weights roster needs against imported market value, then falls back to last season&apos;s production when needed.
               </p>
             </div>
             <div className="draft-console-chip rounded-full px-4 py-2 text-xs uppercase tracking-[0.24em] text-stone-300">
@@ -281,7 +301,7 @@ export function DraftPlayerBrowser({
           ) : null}
         </div>
 
-        <div className="grid gap-3 lg:grid-cols-[1.25fr_0.75fr_0.75fr_0.75fr]">
+        <div className="grid gap-3 lg:grid-cols-[1.2fr_0.7fr_0.7fr_0.7fr_0.7fr]">
           <label className="grid gap-2 text-sm text-stone-300">
             Search
             <input
@@ -303,6 +323,18 @@ export function DraftPlayerBrowser({
                   {option}
                 </option>
               ))}
+            </select>
+          </label>
+          <label className="grid gap-2 text-sm text-stone-300">
+            Source
+            <select
+              value={source}
+              onChange={(event) => setSource(event.target.value as SourceOption)}
+              className="rounded-[1.15rem] border border-[#6e95ff]/16 bg-black/25 px-4 py-3 text-sm text-stone-100 outline-none transition-colors focus:border-[#f2bf5e]/40"
+            >
+              <option value="ALL">ALL</option>
+              <option value="seed">Seed</option>
+              <option value="fantasycalc">FantasyCalc</option>
             </select>
           </label>
           <label className="grid gap-2 text-sm text-stone-300">
@@ -359,18 +391,22 @@ export function DraftPlayerBrowser({
                       </p>
                     </div>
                     <div className="text-right">
-                      <p className="draft-console-kicker text-[0.68rem] text-stone-500">2025 PPR</p>
-                      <p className="mt-1 text-xl font-semibold text-stone-100">{player.fantasyPointsPpr.toFixed(1)}</p>
+                      <p className="draft-console-kicker text-[0.68rem] text-stone-500">Draft Value</p>
+                      <p className="mt-1 text-xl font-semibold text-stone-100">{formatDraftValue(player)}</p>
                     </div>
                   </div>
 
                   <div className="flex flex-wrap gap-2">
                     <TagChip tone={insight.isLegalNow ? "emerald" : "stone"}>{insight.recommendationLabel}</TagChip>
                     {isQueued ? <TagChip tone="sky">Queued</TagChip> : null}
+                    <TagChip tone="stone">{formatSourceLabel(player.source)}</TagChip>
                   </div>
 
                   <div className="grid gap-2 sm:grid-cols-4">
-                    <StatChip label="Games" value={String(player.gamesPlayed)} />
+                    <StatChip
+                      label="Rank"
+                      value={player.providerOverallRank ? `#${player.providerOverallRank}` : "-"}
+                    />
                     <StatChip label="Age" value={player.age ? String(player.age) : "-"} />
                     <StatChip label="Exp" value={String(player.yearsExperience)} />
                     <StatChip label="Fit" value={insight.isLegalNow ? "Legal" : "Blocked"} />
@@ -470,7 +506,7 @@ function evaluatePlayer(
   const wouldFinishRequirement =
     neededNow && nextCounts[player.position] >= MVP_REQUIRED_POSITION_COUNTS[player.position];
 
-  let score = player.fantasyPointsPpr;
+  let score = getPlayerBoardScore(player);
   if (neededNow) score += 120;
   if (wouldFinishRequirement) score += 40;
   if (player.position === "QB" && rosterCounts.QB === 1) score += 10;
@@ -503,12 +539,12 @@ function evaluatePlayer(
     };
   }
 
-  if (player.fantasyPointsPpr >= 250) {
+  if (player.providerOverallRank !== null && player.providerOverallRank <= 24) {
     return {
       score,
       isLegalNow,
-      recommendationLabel: "Best available",
-      reason: `Your required slots are covered enough to chase raw value here, and ${player.fullName} is one of the strongest remaining fantasy producers.`,
+      recommendationLabel: "Power pick",
+      reason: `Your required slots are covered enough to chase raw value here, and ${player.fullName} is one of the strongest remaining players on the imported board.`,
     };
   }
 
@@ -521,6 +557,10 @@ function evaluatePlayer(
 }
 
 function formatStatSummary(player: DraftablePlayer) {
+  if (player.gamesPlayed === 0 && player.providerOverallRank !== null) {
+    return `Overall rank #${player.providerOverallRank}, position rank #${player.providerPositionRank ?? "-"}, imported from FantasyCalc market data.`;
+  }
+
   if (player.position === "QB") {
     return `${player.passingYards.toLocaleString()} pass yds, ${player.passingTds} pass TD, ${player.rushingYards.toLocaleString()} rush yds`;
   }
@@ -530,6 +570,34 @@ function formatStatSummary(player: DraftablePlayer) {
   }
 
   return `${player.receptions} rec, ${player.receivingYards.toLocaleString()} rec yds, ${player.receivingTds} rec TD`;
+}
+
+function getPlayerBoardScore(player: DraftablePlayer) {
+  if (player.providerValue !== null && player.providerValue > 0) {
+    return player.providerValue;
+  }
+
+  return player.fantasyPointsPpr;
+}
+
+function formatDraftValue(player: DraftablePlayer) {
+  if (player.providerValue !== null && player.providerValue > 0) {
+    return player.providerValue.toLocaleString();
+  }
+
+  return player.fantasyPointsPpr.toFixed(1);
+}
+
+function formatSourceLabel(source: string) {
+  if (source === "fantasycalc") {
+    return "FantasyCalc";
+  }
+
+  if (source === "seed") {
+    return "Seed";
+  }
+
+  return source;
 }
 
 function StatChip({ label, value }: { label: string; value: string }) {

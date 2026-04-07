@@ -47,6 +47,7 @@ type LeagueParticipant = {
 
 type DraftablePlayer = {
   id: string;
+  source: string;
   key: string;
   fullName: string;
   shortName: string | null;
@@ -56,6 +57,9 @@ type DraftablePlayer = {
   yearsExperience: number;
   age: number | null;
   college: string | null;
+  providerValue: number | null;
+  providerOverallRank: number | null;
+  providerPositionRank: number | null;
   fantasyPointsPpr: number;
   gamesPlayed: number;
   passingYards: number;
@@ -453,6 +457,7 @@ export default async function DraftRoomPage({
 
 type PlayerRpcRow = {
   player_id: string;
+  source: string;
   player_key: string;
   full_name: string;
   short_name: string | null;
@@ -462,6 +467,9 @@ type PlayerRpcRow = {
   years_experience: number;
   age: number | null;
   college: string | null;
+  provider_value: number | null;
+  provider_overall_rank: number | null;
+  provider_position_rank: number | null;
   fantasy_points_ppr: number;
   games_played: number;
   passing_yards: number;
@@ -480,6 +488,7 @@ type QueueRpcRow = PlayerRpcRow & {
 function mapDraftablePlayers(players: PlayerRpcRow[]): DraftablePlayer[] {
   return players.map((player) => ({
     id: player.player_id,
+    source: player.source,
     key: player.player_key,
     fullName: player.full_name,
     shortName: player.short_name,
@@ -489,6 +498,18 @@ function mapDraftablePlayers(players: PlayerRpcRow[]): DraftablePlayer[] {
     yearsExperience: Number(player.years_experience ?? 0),
     age: player.age,
     college: player.college,
+    providerValue:
+      player.provider_value === null || player.provider_value === undefined
+        ? null
+        : Number(player.provider_value),
+    providerOverallRank:
+      player.provider_overall_rank === null || player.provider_overall_rank === undefined
+        ? null
+        : Number(player.provider_overall_rank),
+    providerPositionRank:
+      player.provider_position_rank === null || player.provider_position_rank === undefined
+        ? null
+        : Number(player.provider_position_rank),
     fantasyPointsPpr: Number(player.fantasy_points_ppr ?? 0),
     gamesPlayed: Number(player.games_played ?? 0),
     passingYards: Number(player.passing_yards ?? 0),
