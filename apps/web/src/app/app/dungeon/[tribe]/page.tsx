@@ -1,12 +1,58 @@
-import { FANTASY_TERMS, TRIBE_DETAILS, TRIBE_NAMES, type TribeName } from "@gridiron/shared";
+import { TRIBE_DETAILS, TRIBE_NAMES, type DraftPosition, type TribeName } from "@gridiron/shared";
 import { notFound } from "next/navigation";
 
-import { HeroLink } from "@/components/hero-link";
 import { PageShell } from "@/components/page-shell";
+import { createClient } from "@/lib/supabase/server";
+
+import {
+  HuntBoardClient,
+  type HuntChallengerCandidate,
+  type HuntTargetPlayer,
+  type QueuedHuntChallenger,
+  type QueuedHuntTarget,
+} from "./hunt-board-client";
 
 const tribeBySlug = Object.fromEntries(
   TRIBE_NAMES.map((tribe) => [TRIBE_DETAILS[tribe].slug, tribe]),
 ) as Record<string, TribeName>;
+
+type PartyAssignment = {
+  assignment_type: "arena" | "dungeon";
+  slot_key: string;
+  draft_pick_id: string;
+};
+
+type DraftPickRow = {
+  id: string;
+  picked_player_id: string | null;
+  picked_player_name: string | null;
+  picked_position: string | null;
+};
+
+type PlayerRow = {
+  id: string;
+  full_name?: string | null;
+  position?: DraftPosition | string | null;
+  nfl_team: string | null;
+  tribe: TribeName | "Unclaimed" | null;
+  provider_value?: number | null;
+  provider_overall_rank?: number | null;
+};
+
+type HuntQueueRow = {
+  id: string;
+  queue_rank: number;
+  target_player_id: string;
+};
+
+type HuntChallengerRow = {
+  id: string;
+  hunt_queue_entry_id: string;
+  challenger_draft_pick_id: string;
+  challenger_slot: 1 | 2;
+};
+
+const BATTLE_KEY_TOTAL = 12;
 
 export function generateStaticParams() {
   return TRIBE_NAMES.map((tribe) => ({ tribe: TRIBE_DETAILS[tribe].slug }));
@@ -14,10 +60,13 @@ export function generateStaticParams() {
 
 export default async function DungeonTribePage({
   params,
+  searchParams,
 }: {
   params: Promise<{ tribe: string }>;
+  searchParams?: Promise<{ message?: string }>;
 }) {
   const { tribe: tribeSlug } = await params;
+  const { message } = searchParams ? await searchParams : {};
   const tribe = tribeBySlug[tribeSlug];
 
   if (!tribe) {
@@ -25,77 +74,217 @@ export default async function DungeonTribePage({
   }
 
   const details = TRIBE_DETAILS[tribe];
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  const { data: memberships } = await supabase
+    .from("league_members")
+    .select("joined_at, leagues!inner(id, name, slug, season, status)")
+    .eq("user_id", user?.id ?? "")
+    .order("joined_at", { ascending: false });
+  const currentGuild = memberships?.[0]
+    ? Array.isArray(memberships[0].leagues)
+      ? memberships[0].leagues[0]
+      : memberships[0].leagues
+    : null;
+  const { data: participant } = currentGuild
+    ? await supabase
+        .from("league_participants")
+        .select("id")
+        .eq("league_id", currentGuild.id)
+        .eq("user_id", user?.id ?? "")
+        .maybeSingle()
+    : { data: null };
+
+  const { data: partyPickRows } = participant?.id
+    ? await supabase
+        .from("draft_picks")
+        .select("id, picked_player_id, picked_player_name, picked_position")
+        .eq("participant_id", participant.id)
+        .in("status", ["made", "autopicked"])
+    : { data: [] };
+  const partyPicks = (partyPickRows ?? []) as DraftPickRow[];
+  const partyPlayerIds = partyPicks
+    .map((pick) => pick.picked_player_id)
+    .filter((id): id is string => Boolean(id));
+  const { data: partyPlayerRows } = partyPlayerIds.length
+    ? await supabase.from("players").select("id, nfl_team, tribe").in("id", partyPlayerIds)
+    : { data: [] };
+  const partyPlayersById = new Map((partyPlayerRows ?? []).map((player) => [player.id, player as PlayerRow]));
+  const { data: assignmentRows } = participant?.id
+    ? await supabase
+        .from("party_assignments")
+        .select("assignment_type, slot_key, draft_pick_id")
+        .eq("participant_id", participant.id)
+    : { data: [] };
+  const arenaDraftPickIds = new Set(
+    ((assignmentRows ?? []) as PartyAssignment[])
+      .filter((assignment) => assignment.assignment_type === "arena")
+      .map((assignment) => assignment.draft_pick_id),
+  );
+  const challengerCandidates = partyPicks
+    .map((pick): HuntChallengerCandidate | null => {
+      if (!isDraftPosition(pick.picked_position)) return null;
+
+      const player = pick.picked_player_id ? partyPlayersById.get(pick.picked_player_id) : null;
+
+      return {
+        draftPickId: pick.id,
+        name: pick.picked_player_name ?? "Unknown Player",
+        position: pick.picked_position,
+        nflTeam: player?.nfl_team ?? "Unknown",
+        tribe: player?.tribe ?? "Unclaimed",
+        isInArenaLineup: arenaDraftPickIds.has(pick.id),
+      };
+    })
+    .filter((candidate): candidate is HuntChallengerCandidate => Boolean(candidate));
+
+  const { data: draftedRows } = currentGuild?.id
+    ? await supabase
+        .from("draft_picks")
+        .select("picked_player_id")
+        .eq("league_id", currentGuild.id)
+        .not("picked_player_id", "is", null)
+    : { data: [] };
+  const ownedPlayerIds = new Set(
+    (draftedRows ?? [])
+      .map((row) => row.picked_player_id)
+      .filter((id): id is string => Boolean(id)),
+  );
+  const { data: targetPlayerRows } = await supabase
+    .from("players")
+    .select("id, full_name, position, nfl_team, tribe, provider_value, provider_overall_rank")
+    .eq("is_active", true)
+    .eq("tribe", tribe)
+    .in("position", ["QB", "RB", "WR", "TE"])
+    .order("provider_overall_rank", { ascending: true, nullsFirst: false })
+    .order("provider_value", { ascending: false, nullsFirst: false })
+    .order("full_name", { ascending: true })
+    .limit(120);
+  const availableTargets = (targetPlayerRows ?? [])
+    .filter((player) => !ownedPlayerIds.has(player.id))
+    .map(mapTargetPlayer)
+    .filter((player): player is HuntTargetPlayer => Boolean(player));
+
+  const { data: huntQueueRows } = participant?.id && currentGuild?.id
+    ? await supabase
+        .from("hunt_queue_entries")
+        .select("id, queue_rank, target_player_id")
+        .eq("league_id", currentGuild.id)
+        .eq("participant_id", participant.id)
+        .eq("target_tribe", tribe)
+        .order("queue_rank", { ascending: true })
+    : { data: [] };
+  const queuedRows = (huntQueueRows ?? []) as HuntQueueRow[];
+  const queuedPlayerIds = queuedRows.map((row) => row.target_player_id);
+  const { data: queuedPlayerRows } = queuedPlayerIds.length
+    ? await supabase
+        .from("players")
+        .select("id, full_name, position, nfl_team, tribe, provider_value, provider_overall_rank")
+        .in("id", queuedPlayerIds)
+    : { data: [] };
+  const queuedPlayersById = new Map((queuedPlayerRows ?? []).map((player) => [player.id, player as PlayerRow]));
+  const queueEntryIds = queuedRows.map((row) => row.id);
+  const { data: huntChallengerRows } = queueEntryIds.length
+    ? await supabase
+        .from("hunt_challengers")
+        .select("id, hunt_queue_entry_id, challenger_draft_pick_id, challenger_slot")
+        .in("hunt_queue_entry_id", queueEntryIds)
+        .order("challenger_slot", { ascending: true })
+    : { data: [] };
+  const challengerRows = (huntChallengerRows ?? []) as HuntChallengerRow[];
+  const challengerDraftPickIds = challengerRows.map((row) => row.challenger_draft_pick_id);
+  const { data: challengerDraftPickRows } = challengerDraftPickIds.length
+    ? await supabase
+        .from("draft_picks")
+        .select("id, picked_player_id, picked_player_name, picked_position")
+        .in("id", challengerDraftPickIds)
+    : { data: [] };
+  const challengerDraftPicksById = new Map((challengerDraftPickRows ?? []).map((pick) => [pick.id, pick as DraftPickRow]));
+  const challengerPlayerIds = (challengerDraftPickRows ?? [])
+    .map((pick) => pick.picked_player_id)
+    .filter((id): id is string => Boolean(id));
+  const { data: challengerPlayerRows } = challengerPlayerIds.length
+    ? await supabase.from("players").select("id, nfl_team, tribe").in("id", challengerPlayerIds)
+    : { data: [] };
+  const challengerPlayersById = new Map((challengerPlayerRows ?? []).map((player) => [player.id, player as PlayerRow]));
+  const challengersByQueueEntryId = challengerRows.reduce<Record<string, Array<QueuedHuntChallenger | null>>>((acc, row) => {
+    const pick = challengerDraftPicksById.get(row.challenger_draft_pick_id);
+
+    if (!pick || !isDraftPosition(pick.picked_position)) {
+      return acc;
+    }
+
+    const player = pick.picked_player_id ? challengerPlayersById.get(pick.picked_player_id) : null;
+    acc[row.hunt_queue_entry_id] ??= [null, null];
+    acc[row.hunt_queue_entry_id][row.challenger_slot - 1] = {
+      queueChallengerId: row.id,
+      challengerSlot: row.challenger_slot,
+      draftPickId: pick.id,
+      name: pick.picked_player_name ?? "Unknown Player",
+      position: pick.picked_position,
+      nflTeam: player?.nfl_team ?? "Unknown",
+    };
+
+    return acc;
+  }, {});
+  const queuedTargets = queuedRows
+    .map((row): QueuedHuntTarget | null => {
+      const player = mapTargetPlayer(queuedPlayersById.get(row.target_player_id));
+
+      if (!player) return null;
+
+      return {
+        ...player,
+        queueEntryId: row.id,
+        queueRank: row.queue_rank,
+        challengers: challengersByQueueEntryId[row.id] ?? [null, null],
+      };
+    })
+    .filter((target): target is QueuedHuntTarget => Boolean(target));
 
   return (
     <PageShell
       eyebrow={`Dungeon / ${tribe}`}
       title={details.chamberTitle}
-      description={`${details.summary} This is the first real tribe-chamber destination, designed so Hunt-specific content can plug in here without reshaping the Dungeon later.`}
+      description="Pick a target Tribe, queue available Wild Players, then choose challengers and Battle Keys in the next Hunt step."
     >
-      <section className="fantasy-panel fantasy-panel--dungeon rounded-[1.9rem] p-5">
-        <div className="flex flex-wrap items-center justify-between gap-4">
-          <div>
-            <p className="fantasy-kicker text-[0.68rem] text-[#9ec2af]">Tribe Chamber</p>
-            <h2 className="fantasy-title mt-2 text-3xl text-[#f2f7f4]">{tribe} Hunt Board</h2>
-          </div>
-          <div className="flex flex-wrap gap-3">
-            <HeroLink href="/app/dungeon">Return to Dungeon</HeroLink>
-            <HeroLink href="/app/guild" tone="secondary">Enter Guild</HeroLink>
-            <HeroLink href="/app/arena" tone="secondary">Enter Arena</HeroLink>
-          </div>
-        </div>
-
-        <div className="mt-5 flex flex-wrap gap-3">
-          <InfoCard label="Tribe" value={tribe} />
-          <InfoCard label="Door Tone" value={toTitleCase(details.tone)} />
-          <InfoCard label="Current Role" value="Hunt Entry" />
-          <InfoCard label="Status" value="Shell Ready" />
-        </div>
-
-        <div className="mt-5 rounded-[1.4rem] border border-[#7a8d80]/22 bg-black/20 px-4 py-4">
-          <p className="fantasy-kicker text-[0.68rem] text-[#9ec2af]">Mapped Teams</p>
-          <div className="mt-3 flex flex-wrap gap-2">
-            {details.teams.map((team) => (
-              <span key={team} className="rounded-full border border-[#9e8455]/18 bg-white/6 px-3 py-2 text-sm text-[#f7efd5]">
-                {team}
-              </span>
-            ))}
-          </div>
-        </div>
-
-        <div className="mt-5 grid gap-4">
-          <NoticeCard
-            title="Wild Player Board"
-            body={`Wild Player discovery for the ${tribe} Tribe will live here. This board should eventually show available targets, mythology weight, and challenge-ready Hunt cards.`}
-          />
-          <NoticeCard
-            title="Next Build Step"
-            body={`The next Dungeon pass should connect tribe chambers like this one to real ${FANTASY_TERMS.captureBattle.toLowerCase()} selection, battle keys, and Wild Player detail views.`}
-          />
-        </div>
-      </section>
+      <HuntBoardClient
+        tribe={tribe}
+        mappedTeams={details.teams}
+        leagueId={currentGuild?.id ?? null}
+        participantId={participant?.id ?? null}
+        message={message}
+        availableTargets={availableTargets}
+        queuedTargets={queuedTargets}
+        challengerCandidates={challengerCandidates}
+        battleKeyTotal={BATTLE_KEY_TOTAL}
+      />
     </PageShell>
   );
 }
 
-function InfoCard({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="rounded-[1.4rem] border border-[#7a8d80]/22 bg-black/20 px-4 py-4">
-      <p className="fantasy-kicker text-[0.68rem] text-[#9ec2af]">{label}</p>
-      <p className="mt-2 text-base font-semibold text-[#fff4d8]">{value}</p>
-    </div>
-  );
+function mapTargetPlayer(player: PlayerRow | null | undefined): HuntTargetPlayer | null {
+  if (!player || !player.full_name || !isDraftPosition(player.position) || !isTribeName(player.tribe)) {
+    return null;
+  }
+
+  return {
+    id: player.id,
+    fullName: player.full_name,
+    position: player.position,
+    nflTeam: player.nfl_team ?? "FA",
+    tribe: player.tribe,
+    providerValue: player.provider_value ?? null,
+    providerOverallRank: player.provider_overall_rank ?? null,
+  };
 }
 
-function NoticeCard({ title, body }: { title: string; body: string }) {
-  return (
-    <div className="rounded-[1.4rem] border border-[#7a8d80]/22 bg-black/20 px-4 py-4">
-      <p className="fantasy-title text-xl text-[#fff4d8]">{title}</p>
-      <p className="mt-2 text-sm leading-7 text-[#efe2c9]">{body}</p>
-    </div>
-  );
+function isDraftPosition(position: string | null | undefined): position is DraftPosition {
+  return position === "QB" || position === "RB" || position === "WR" || position === "TE";
 }
 
-function toTitleCase(value: string) {
-  return value.charAt(0).toUpperCase() + value.slice(1).toLowerCase();
+function isTribeName(tribe: string | null | undefined): tribe is TribeName {
+  return TRIBE_NAMES.includes(tribe as TribeName);
 }

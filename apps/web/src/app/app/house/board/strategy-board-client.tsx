@@ -6,6 +6,7 @@ import { useState } from "react";
 type StrategyBoardRow = {
   label: string;
   value: string;
+  previewValue?: string;
   warning?: boolean;
 };
 
@@ -48,13 +49,15 @@ export function StrategyBoardClient({ papers }: StrategyBoardClientProps) {
       <div className="strategy-board-surface">
         {papers.map((paper, index) => {
           const position = PAPER_POSITIONS[index] ?? PAPER_POSITIONS[0];
+          const hasWarnings = paper.rows?.some((row) => row.warning) ?? false;
+          const warningRows = paper.rows?.filter((row) => row.warning).slice(0, 2) ?? [];
 
           return (
             <button
               key={paper.id}
               type="button"
               onClick={() => setSelectedPaperId(paper.id)}
-              className={`strategy-paper strategy-paper--${paper.tone ?? "base"} absolute grid min-h-28 w-44 justify-items-center gap-1 border-2 border-[#5d4125]/25 bg-[#f3ead7] px-3 py-4 text-center text-[#3f2512] shadow-[0_10px_16px_rgba(48,25,9,0.26),inset_0_0_0_1px_rgba(255,255,255,0.28)] transition-transform hover:-translate-y-1`}
+              className={`strategy-paper strategy-paper--${paper.tone ?? "base"} ${hasWarnings ? "strategy-paper--has-warning" : ""}`}
               style={{
                 ...position,
                 transform: `rotate(${position.rotate})`,
@@ -62,7 +65,20 @@ export function StrategyBoardClient({ papers }: StrategyBoardClientProps) {
             >
               <span className="strategy-paper__pin" />
               <strong className="font-mono text-[0.95rem] leading-none">{paper.title}</strong>
-              <small className="text-[0.72rem] leading-tight text-[#734c25]">{paper.summary}</small>
+              {warningRows.length ? (
+                <span className="strategy-paper__warnings" aria-label="Needs attention">
+                  {warningRows.map((row) => (
+                    <span key={row.label}>
+                      <span aria-hidden="true">!</span>
+                      {row.previewValue ?? row.value}
+                    </span>
+                  ))}
+                </span>
+              ) : (
+                <small className={hasWarnings ? "text-[0.72rem] leading-tight text-[#9c2f22]" : "text-[0.72rem] leading-tight text-[#734c25]"}>
+                  {paper.summary}
+                </small>
+              )}
             </button>
           );
         })}
@@ -89,7 +105,10 @@ export function StrategyBoardClient({ papers }: StrategyBoardClientProps) {
                 {selectedPaper.rows.map((row) => (
                   <div key={row.label} className="strategy-paper-row">
                     <span>{row.label}</span>
-                    <strong className={row.warning ? "text-[#9c3f2c]" : "text-[#3b2413]"}>{row.value}</strong>
+                    <strong className={row.warning ? "strategy-paper-row__warning" : "text-[#3b2413]"}>
+                      {row.warning ? <span aria-hidden="true">!</span> : null}
+                      {row.value}
+                    </strong>
                   </div>
                 ))}
               </div>

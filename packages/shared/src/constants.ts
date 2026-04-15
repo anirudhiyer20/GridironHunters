@@ -108,6 +108,44 @@ export const TRIBE_DETAILS = {
   summary: string;
 }>;
 
+export const TRIBE_COLORS = {
+  Storm: {
+    background: "#3157d6",
+    text: "#ffffff",
+  },
+  Forge: {
+    background: "#b9b6ee",
+    text: "#111111",
+  },
+  Prowl: {
+    background: "#19d842",
+    text: "#111111",
+  },
+  Combat: {
+    background: "#f08a24",
+    text: "#ffffff",
+  },
+  Shroud: {
+    background: "#4a2a8a",
+    text: "#ffffff",
+  },
+  Halo: {
+    background: "#f4e4ac",
+    text: "#111111",
+  },
+  Tundra: {
+    background: "#22dbea",
+    text: "#111111",
+  },
+  Blaze: {
+    background: "#ef2b24",
+    text: "#ffffff",
+  },
+} as const satisfies Record<(typeof TRIBE_NAMES)[number], {
+  background: string;
+  text: string;
+}>;
+
 export const WORLD_ROOMS = ["house", "guild", "dungeon", "arena"] as const;
 
 export const FANTASY_TERMS = {

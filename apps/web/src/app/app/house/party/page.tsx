@@ -2,16 +2,20 @@ import {
   FANTASY_TERMS,
   MVP_DRAFT_ROSTER_SIZE,
   MVP_REQUIRED_POSITION_COUNTS,
-  TRIBE_DETAILS,
   type DraftPosition,
   type TribeName,
 } from "@gridiron/shared";
 
-import { HeroLink } from "@/components/hero-link";
 import { PageShell } from "@/components/page-shell";
 import { createClient } from "@/lib/supabase/server";
 
-import { PartyChestClient, type PartyChestPlayer } from "./party-chest-client";
+import { PartyChestClient, type HuntAssignment, type PartyChestPlayer } from "./party-chest-client";
+
+type PartyChestPageProps = {
+  searchParams: Promise<{
+    message?: string;
+  }>;
+};
 
 function houseNameFromEmail(email: string | null | undefined) {
   if (!email) return "The Ember House";
@@ -38,11 +42,31 @@ type DraftPick = {
 type PlayerRow = {
   id: string;
   nfl_team: string | null;
+  tribe: TribeName | "Unclaimed" | null;
+};
+
+type PartyAssignment = {
+  assignment_type: "arena" | "dungeon";
+  slot_key: string;
+  draft_pick_id: string;
+};
+
+type HuntChallengerRow = {
+  id: string;
+  hunt_queue_entry_id: string;
+  challenger_draft_pick_id: string;
+};
+
+type HuntQueueRow = {
+  id: string;
+  target_player_id: string;
+  target_tribe: TribeName;
 };
 
 const lineupOrder = ["QB", "RB", "WR", "TE"] as const;
 
-export default async function PartyChestPage() {
+export default async function PartyChestPage({ searchParams }: PartyChestPageProps) {
+  const { message } = await searchParams;
   const supabase = await createClient();
   const {
     data: { user },
@@ -79,13 +103,19 @@ export default async function PartyChestPage() {
         .in("status", ["made", "autopicked"])
         .order("pick_number", { ascending: true })
     : { data: [] };
+  const { data: assignments } = participant?.id
+    ? await supabase
+        .from("party_assignments")
+        .select("assignment_type, slot_key, draft_pick_id")
+        .eq("participant_id", participant.id)
+    : { data: [] };
 
   const partyPicks = (picks ?? []) as DraftPick[];
   const playerIds = partyPicks
     .map((pick) => pick.picked_player_id)
     .filter((id): id is string => Boolean(id));
   const { data: playerRows } = playerIds.length
-    ? await supabase.from("players").select("id, nfl_team").in("id", playerIds)
+    ? await supabase.from("players").select("id, nfl_team, tribe").in("id", playerIds)
     : { data: [] };
   const playersById = new Map((playerRows ?? []).map((player) => [player.id, player as PlayerRow]));
   const party = partyPicks.map((pick): PartyChestPlayer => {
@@ -94,18 +124,25 @@ export default async function PartyChestPage() {
 
     return {
       id: pick.id,
+      draftPickId: pick.id,
       pickNumber: pick.pick_number,
       name: pick.picked_player_name ?? "Unknown Player",
       position: pick.picked_position ?? "Unknown",
       nflTeam,
-      tribe: getTribeForTeam(nflTeam),
+      tribe: player?.tribe ?? "Unclaimed",
     };
   });
+  const partyByPickId = new Map(party.map((player) => [player.draftPickId, player]));
+  const assignmentRows = (assignments ?? []) as PartyAssignment[];
+  const assignmentPlayerBySlot = new Map(
+    assignmentRows
+      .map((assignment) => [
+        `${assignment.assignment_type}:${assignment.slot_key}`,
+        partyByPickId.get(assignment.draft_pick_id) ?? null,
+      ] as const)
+      .filter(([, player]) => Boolean(player)),
+  );
 
-  const groupedByPosition = party.reduce<Record<string, PartyChestPlayer[]>>((acc, player) => {
-    acc[player.position] = [...(acc[player.position] ?? []), player];
-    return acc;
-  }, {});
   const coveredPositions = new Set(party.map((player) => player.position));
   const uncoveredRequiredPositions = (Object.entries(MVP_REQUIRED_POSITION_COUNTS) as Array<[DraftPosition, number]>)
     .filter(([position]) => !coveredPositions.has(position))
@@ -113,16 +150,58 @@ export default async function PartyChestPage() {
   const coreLineup = lineupOrder.map((position) => ({
     id: position.toLowerCase(),
     position,
-    player: (groupedByPosition[position] ?? [])[0] ?? null,
+    player: assignmentPlayerBySlot.get(`arena:${position.toLowerCase()}`) ?? null,
   }));
-  const corePlayerIds = new Set(coreLineup.map((slot) => slot.player?.id).filter(Boolean));
-  const flexPlayers = party.filter((player) => !corePlayerIds.has(player.id)).slice(0, 2);
   const lineup = [
     ...coreLineup,
-    { id: "flex-1", position: "FLEX" as const, player: flexPlayers[0] ?? null },
-    { id: "flex-2", position: "FLEX" as const, player: flexPlayers[1] ?? null },
+    { id: "flex-1", position: "FLEX" as const, player: assignmentPlayerBySlot.get("arena:flex-1") ?? null },
+    { id: "flex-2", position: "FLEX" as const, player: assignmentPlayerBySlot.get("arena:flex-2") ?? null },
   ];
-  const dungeonParty = party.slice(0, 3);
+  const { data: huntChallengerRows } = participant?.id
+    ? await supabase
+        .from("hunt_challengers")
+        .select("id, hunt_queue_entry_id, challenger_draft_pick_id")
+        .eq("participant_id", participant.id)
+    : { data: [] };
+  const huntChallengers = (huntChallengerRows ?? []) as HuntChallengerRow[];
+  const huntQueueEntryIds = huntChallengers.map((row) => row.hunt_queue_entry_id);
+  const { data: huntQueueRows } = huntQueueEntryIds.length
+    ? await supabase
+        .from("hunt_queue_entries")
+        .select("id, target_player_id, target_tribe")
+        .in("id", huntQueueEntryIds)
+    : { data: [] };
+  const huntQueueById = new Map((huntQueueRows ?? []).map((row) => [row.id, row as HuntQueueRow]));
+  const huntTargetPlayerIds = (huntQueueRows ?? []).map((row) => row.target_player_id);
+  const { data: huntTargetRows } = huntTargetPlayerIds.length
+    ? await supabase
+        .from("players")
+        .select("id, full_name, position, nfl_team, tribe")
+        .in("id", huntTargetPlayerIds)
+    : { data: [] };
+  const huntTargetsById = new Map((huntTargetRows ?? []).map((row) => [row.id, row]));
+  const huntAssignments = huntChallengers
+    .map((row): HuntAssignment | null => {
+      const queueEntry = huntQueueById.get(row.hunt_queue_entry_id);
+      const challenger = partyByPickId.get(row.challenger_draft_pick_id);
+      const target = queueEntry ? huntTargetsById.get(queueEntry.target_player_id) : null;
+
+      if (!queueEntry || !challenger || !target || !target.full_name || !isDraftPosition(target.position) || !isTribeName(queueEntry.target_tribe)) {
+        return null;
+      }
+
+      return {
+        id: row.id,
+        challengerName: challenger.name,
+        challengerPosition: challenger.position === "Unknown" ? target.position : challenger.position,
+        challengerTeam: challenger.nflTeam,
+        targetName: target.full_name,
+        targetPosition: target.position,
+        targetTeam: target.nfl_team ?? "FA",
+        targetTribe: queueEntry.target_tribe,
+      };
+    })
+    .filter((assignment): assignment is HuntAssignment => Boolean(assignment));
 
   return (
     <PageShell
@@ -131,31 +210,37 @@ export default async function PartyChestPage() {
       description="A wooden inventory chest for your House Party, Arena lineup, and Dungeon assignments."
     >
       <div className="grid gap-6">
+        {message ? (
+          <p className="rounded-[1.2rem] border border-[#d7b46f]/25 bg-[#d7b46f]/10 px-4 py-3 text-sm text-[#fff4d8]">
+            {message}
+          </p>
+        ) : null}
+
+        <PartyChestClient
+          party={party}
+          lineup={lineup}
+          huntAssignments={huntAssignments}
+          leagueId={currentGuild?.id ?? null}
+          participantId={participant?.id ?? null}
+        />
+
         <div className="flex flex-wrap gap-3">
           <InfoCard label="House" value={houseName} />
           <InfoCard label={FANTASY_TERMS.league} value={currentGuild?.name ?? "No Guild Yet"} />
           <InfoCard label={FANTASY_TERMS.roster} value={`${party.length} / ${MVP_DRAFT_ROSTER_SIZE}`} />
           <InfoCard label="Needed Roles" value={uncoveredRequiredPositions.length ? uncoveredRequiredPositions.join(", ") : "Core Set Covered"} />
         </div>
-
-        <PartyChestClient party={party} lineup={lineup} dungeonParty={dungeonParty} />
-
-        <div className="flex flex-wrap gap-3">
-          <HeroLink href="/app">Return Home</HeroLink>
-          <HeroLink href="/app/guild" tone="secondary">Open Guild Hall</HeroLink>
-        </div>
       </div>
     </PageShell>
   );
 }
 
-function getTribeForTeam(team: string): TribeName | "Unclaimed" {
-  const normalizedTeam = team.trim().toLowerCase();
-  const tribe = Object.entries(TRIBE_DETAILS).find(([, details]) =>
-    details.teams.some((tribeTeam) => tribeTeam.toLowerCase() === normalizedTeam),
-  );
+function isDraftPosition(position: string | null | undefined): position is DraftPosition {
+  return position === "QB" || position === "RB" || position === "WR" || position === "TE";
+}
 
-  return tribe ? (tribe[0] as TribeName) : "Unclaimed";
+function isTribeName(tribe: string | null | undefined): tribe is TribeName {
+  return tribe === "Combat" || tribe === "Forge" || tribe === "Storm" || tribe === "Tundra" || tribe === "Halo" || tribe === "Blaze" || tribe === "Shroud" || tribe === "Prowl";
 }
 
 function InfoCard({ label, value }: { label: string; value: string }) {

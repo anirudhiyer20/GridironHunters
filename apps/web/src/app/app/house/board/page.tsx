@@ -10,6 +10,16 @@ function prettifyStatus(status: string | null | undefined) {
   return status.replaceAll("_", " ").replace(/\b\w/g, (match) => match.toUpperCase());
 }
 
+type PartyAssignment = {
+  assignment_type: "arena" | "dungeon";
+  slot_key: string;
+  draft_pick_id: string;
+};
+
+const ARENA_SLOT_COUNT = 6;
+const DUNGEON_SLOT_COUNT = 3;
+const BATTLE_KEY_TOTAL = 12;
+
 export default async function StrategyCenterPage() {
   const supabase = await createClient();
   const {
@@ -30,20 +40,71 @@ export default async function StrategyCenterPage() {
       : memberships[0].leagues
     : null;
 
+  const { data: participant } = currentGuild
+    ? await supabase
+        .from("league_participants")
+        .select("id")
+        .eq("league_id", currentGuild.id)
+        .eq("user_id", user?.id ?? "")
+        .maybeSingle()
+    : { data: null };
+  const { data: assignmentRows } = participant?.id
+    ? await supabase
+        .from("party_assignments")
+        .select("assignment_type, slot_key, draft_pick_id")
+        .eq("participant_id", participant.id)
+    : { data: [] };
+  const { data: huntQueueRows } = participant?.id
+    ? await supabase
+        .from("hunt_challengers")
+        .select("id")
+        .eq("participant_id", participant.id)
+    : { data: [] };
+  const assignments = (assignmentRows ?? []) as PartyAssignment[];
+  const battleKeysInUse = huntQueueRows?.length ?? 0;
+  const battleKeysUnspent = Math.max(BATTLE_KEY_TOTAL - battleKeysInUse, 0);
+  const arenaAssignments = assignments.filter((assignment) => assignment.assignment_type === "arena");
+  const dungeonAssignments = huntQueueRows ?? [];
+  const assignedPickIds = assignments.map((assignment) => assignment.draft_pick_id);
+  const hasAssignmentConflicts = new Set(assignedPickIds).size !== assignedPickIds.length;
+  const arenaFilledCount = arenaAssignments.length;
+  const dungeonFilledCount = dungeonAssignments.length;
+  const arenaIsReady = arenaFilledCount === ARENA_SLOT_COUNT;
+  const dungeonIsReady = dungeonFilledCount > 0;
+  const setupSummary = hasAssignmentConflicts
+    ? "Assignment conflict"
+    : arenaFilledCount || dungeonFilledCount
+      ? `${arenaFilledCount}/${ARENA_SLOT_COUNT} Arena, ${dungeonFilledCount}/${DUNGEON_SLOT_COUNT} Dungeon`
+      : "No Party assignments";
   const guildRole = memberships?.[0]?.role === "commissioner" ? FANTASY_TERMS.commissioner : FANTASY_TERMS.member;
   const papers: StrategyBoardPaper[] = [
     {
       id: "lineup-warnings",
-      title: "Lineup Warnings",
-      summary: "Arena and Dungeon readiness",
-      tone: "warning",
-      body: "Quick checks for weekly setup. These will become real saved lineup and assignment checks once those systems are built.",
+      title: "Party Readiness",
+      summary: setupSummary,
+      tone: hasAssignmentConflicts || (!arenaIsReady && !dungeonIsReady) ? "warning" : "green",
+      body: "Quick checks for your saved Party Chest assignments. Early weeks can lean Dungeon-heavy, so an incomplete Arena lineup is allowed for now.",
       rows: [
-        { label: "Arena Lineup", value: "Not Set", warning: true },
-        { label: "Dungeon Lineup", value: "Not Set", warning: true },
+        {
+          label: "Arena Lineup",
+          value: `${arenaFilledCount} / ${ARENA_SLOT_COUNT} Slots Set`,
+          previewValue: `${arenaFilledCount} / ${ARENA_SLOT_COUNT} Arena Slots Set`,
+          warning: arenaFilledCount > 0 && !arenaIsReady,
+        },
+        {
+          label: "Dungeon Assignments",
+          value: `${dungeonFilledCount} / ${DUNGEON_SLOT_COUNT} Slots Set`,
+          previewValue: `${dungeonFilledCount} / ${DUNGEON_SLOT_COUNT} Dungeon Slots Set`,
+          warning: !dungeonIsReady,
+        },
+        {
+          label: "Assignment Conflicts",
+          value: hasAssignmentConflicts ? "Needs Cleanup" : "None",
+          warning: hasAssignmentConflicts,
+        },
       ],
       links: [
-        { href: "/app/arena", label: "Open Arena" },
+        { href: "/app/house/party", label: "Open Party Chest" },
         { href: "/app/dungeon", label: "Open Dungeon" },
       ],
     },
@@ -88,14 +149,18 @@ export default async function StrategyCenterPage() {
       links: [{ href: "/app/house/trophies", label: "Open Trophies" }],
     },
     {
-      id: "action-slips",
-      title: "Action Slips",
-      summary: "Quick routes",
-      tone: "base",
-      body: "Fast paths back into the major spaces from the Strategy Center.",
+      id: "battle-keys",
+      title: "Battle Keys",
+      summary: `${battleKeysUnspent} Unspent`,
+      tone: battleKeysUnspent > 0 ? "green" : "warning",
+      body: "Battle Keys are the weekly Dungeon resource used to power Hunts. This is the House-level snapshot for the current week.",
+      rows: [
+        { label: "Battle Key Count", value: String(BATTLE_KEY_TOTAL) },
+        { label: "Battle Keys At Work", value: String(battleKeysInUse) },
+        { label: "Battle Keys To Spend", value: String(battleKeysUnspent), warning: battleKeysUnspent === 0 },
+      ],
       links: [
-        { href: "/app/guild", label: "Enter Guild Hall" },
-        { href: "/app/arena", label: "Open Arena" },
+        { href: "/app/dungeon", label: "Open Dungeon" },
         { href: "/app", label: "Return Home" },
       ],
     },

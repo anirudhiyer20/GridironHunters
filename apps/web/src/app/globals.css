@@ -945,7 +945,33 @@ a {
 
 .party-chest-actions {
   display: flex;
+  flex-wrap: wrap;
+  gap: 0.7rem;
   justify-content: center;
+}
+
+.party-selection-ribbon {
+  display: grid;
+  gap: 0.25rem;
+  border: 2px solid rgba(218, 169, 82, 0.34);
+  border-radius: 1rem;
+  background: rgba(18, 12, 8, 0.5);
+  padding: 0.75rem 0.9rem;
+  text-align: center;
+}
+
+.party-selection-ribbon span {
+  color: #d9bc83;
+  font-family: "Courier New", "Consolas", monospace;
+  font-size: 0.64rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+.party-selection-ribbon strong {
+  color: #fff4d8;
+  font-size: 0.9rem;
+  line-height: 1.25;
 }
 
 .party-lineup-stage {
@@ -962,17 +988,27 @@ a {
 }
 
 .party-lineup-slot {
+  position: relative;
   display: grid;
   align-content: center;
   gap: 0.2rem;
   min-height: 5.1rem;
   border: 3px solid rgba(236, 226, 205, 0.86);
   background: rgba(20, 14, 10, 0.74);
-  padding: 0.55rem;
+  padding: 1.35rem 0.55rem 0.55rem;
   color: #fff4d8;
   font-family: "Courier New", "Consolas", monospace;
   text-transform: uppercase;
   box-shadow: 0 8px 14px rgba(0, 0, 0, 0.24);
+}
+
+.party-lineup-slot form {
+  margin-top: 0.35rem;
+}
+
+.party-lineup-slot form + form,
+.party-dungeon-slot form + form {
+  margin-top: 0.25rem;
 }
 
 .party-lineup-slot span {
@@ -1002,12 +1038,13 @@ a {
 }
 
 .party-dungeon-slot {
+  position: relative;
   display: grid;
   gap: 0.35rem;
   border-radius: 1rem;
   border: 2px solid rgba(99, 117, 98, 0.42);
   background: rgba(25, 36, 29, 0.76);
-  padding: 0.85rem;
+  padding: 1.45rem 0.85rem 0.85rem;
 }
 
 .party-dungeon-slot span,
@@ -1022,6 +1059,86 @@ a {
   color: #fff4d8;
   font-size: 0.9rem;
   line-height: 1.25;
+}
+
+.party-dungeon-slot form {
+  margin-top: 0.25rem;
+}
+
+.party-hunt-summary {
+  display: grid;
+  gap: 0.75rem;
+  border-radius: 1.3rem;
+  border: 2px solid rgba(99, 117, 98, 0.42);
+  background: rgba(25, 36, 29, 0.76);
+  padding: 0.9rem;
+}
+
+.party-hunt-summary__header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.party-hunt-summary__header div {
+  display: grid;
+  gap: 0.2rem;
+}
+
+.party-hunt-summary__header span {
+  color: #b9d1bd;
+  font-family: "Courier New", "Consolas", monospace;
+  font-size: 0.68rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.party-hunt-summary__header strong {
+  color: #fff4d8;
+  font-size: 0.95rem;
+}
+
+.party-hunt-summary__header .fantasy-button {
+  padding: 0.62rem 0.8rem;
+  font-size: 0.58rem;
+}
+
+.party-hunt-summary__list {
+  display: grid;
+  gap: 0.65rem;
+}
+
+.party-hunt-assignment {
+  position: relative;
+  display: grid;
+  gap: 0.25rem;
+  border: 2px solid rgba(116, 145, 108, 0.42);
+  border-radius: 0.9rem;
+  background: rgba(14, 21, 17, 0.76);
+  padding: 1.45rem 0.75rem 0.75rem;
+}
+
+.party-hunt-assignment span {
+  color: #b9d1bd;
+  font-family: "Courier New", "Consolas", monospace;
+  font-size: 0.68rem;
+  font-weight: 900;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.party-hunt-assignment strong {
+  color: #fff4d8;
+  font-size: 0.88rem;
+  line-height: 1.2;
+}
+
+.party-hunt-assignment small {
+  color: #d4d9ce;
+  font-size: 0.72rem;
+  line-height: 1.35;
 }
 
 .party-chest-filter-bar {
@@ -1088,20 +1205,37 @@ a {
 }
 
 .party-inventory-slot {
+  position: relative;
   display: grid;
   align-content: start;
   min-height: 5.6rem;
   border: 2px solid rgba(38, 26, 16, 0.88);
   background: rgba(180, 151, 105, 0.62);
-  padding: 0.45rem;
+  padding: 1.35rem 0.45rem 0.45rem;
   color: rgba(68, 43, 22, 0.6);
   box-shadow: inset 0 0 0 1px rgba(245, 226, 186, 0.18);
+  text-align: left;
+  transition: border-color 140ms ease, filter 140ms ease, transform 140ms ease;
 }
 
 .party-inventory-slot--filled {
   background:
     linear-gradient(180deg, rgba(239, 211, 151, 0.98) 0%, rgba(201, 154, 82, 0.98) 100%);
   color: #4d2d13;
+  cursor: pointer;
+}
+
+.party-inventory-slot--filled:hover,
+.party-inventory-slot--selected {
+  border-color: rgba(255, 239, 188, 0.95);
+  filter: brightness(1.08);
+  transform: translateY(-1px);
+}
+
+.party-inventory-slot--selected {
+  box-shadow:
+    inset 0 0 0 2px rgba(70, 38, 13, 0.45),
+    0 0 0 3px rgba(215, 180, 111, 0.3);
 }
 
 .party-inventory-slot span {
@@ -1130,6 +1264,951 @@ a {
   align-self: center;
   justify-self: center;
   color: rgba(56, 35, 19, 0.34);
+}
+
+.party-tribe-badge {
+  position: absolute;
+  top: 0.3rem;
+  right: 0.3rem;
+  z-index: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 3.15rem;
+  max-width: calc(100% - 0.6rem);
+  border: 1px solid rgba(31, 20, 12, 0.5);
+  border-radius: 0.25rem;
+  padding: 0.12rem 0.34rem;
+  font-family: "Courier New", "Consolas", monospace;
+  font-size: 0.54rem !important;
+  font-weight: 900 !important;
+  line-height: 1.05;
+  letter-spacing: 0.04em !important;
+  text-transform: uppercase;
+  text-shadow: 0 1px 0 rgba(20, 12, 8, 0.45);
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 255, 255, 0.18),
+    0 2px 0 rgba(43, 24, 10, 0.28);
+  white-space: nowrap;
+}
+
+.dungeon-tribe-pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 4.75rem;
+  border: 1px solid rgba(10, 8, 6, 0.5);
+  border-radius: 0.28rem;
+  padding: 0.2rem 0.55rem;
+  font-family: "Courier New", "Consolas", monospace;
+  font-size: 0.72rem;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  line-height: 1.1;
+  text-transform: uppercase;
+  text-shadow: 0 1px 0 rgba(20, 12, 8, 0.34);
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 255, 255, 0.18),
+    0 2px 0 rgba(10, 8, 6, 0.28);
+}
+
+.hunt-board-shell {
+  --hunt-color: #19d842;
+  --hunt-text: #111111;
+  border: 3px solid color-mix(in srgb, var(--hunt-color) 78%, #ffffff 8%);
+  border-radius: 2.2rem;
+  background:
+    radial-gradient(circle at 12% 18%, color-mix(in srgb, var(--hunt-color) 18%, transparent), transparent 22%),
+    radial-gradient(circle at 82% 76%, color-mix(in srgb, var(--hunt-color) 12%, transparent), transparent 26%),
+    linear-gradient(180deg, #0c1010 0%, #050707 100%);
+  box-shadow:
+    0 0 0 9px rgba(0, 0, 0, 0.72),
+    inset 0 0 0 2px color-mix(in srgb, var(--hunt-color) 34%, transparent),
+    0 24px 52px rgba(0, 0, 0, 0.42);
+  padding: clamp(1rem, 2vw, 1.45rem);
+}
+
+.hunt-board-frame {
+  position: relative;
+  overflow: hidden;
+  border: 12px solid var(--hunt-color);
+  border-radius: 1.8rem;
+  background:
+    linear-gradient(rgba(255, 255, 255, 0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.04) 1px, transparent 1px),
+    linear-gradient(180deg, rgba(88, 93, 91, 0.98) 0%, rgba(45, 49, 48, 0.98) 100%);
+  background-size: 18px 18px, 18px 18px, auto;
+  padding: clamp(1rem, 2.2vw, 1.65rem);
+}
+
+.hunt-board-frame::before {
+  content: "";
+  position: absolute;
+  inset: 0.8rem;
+  z-index: 0;
+  border: 2px solid color-mix(in srgb, var(--hunt-color) 68%, #ffffff 12%);
+  border-radius: 1.2rem;
+  pointer-events: none;
+}
+
+.hunt-board-topbar,
+.hunt-board-content,
+.hunt-board-footer,
+.hunt-board-message {
+  position: relative;
+  z-index: 1;
+}
+
+.hunt-board-topbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.hunt-board-title-group {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.hunt-board-title-group .fantasy-kicker {
+  color: color-mix(in srgb, var(--hunt-color) 72%, #ffffff 28%);
+  font-size: 0.7rem;
+}
+
+.hunt-board-title-group h1 {
+  margin-top: 0.2rem;
+  color: color-mix(in srgb, var(--hunt-color) 82%, #ffffff 18%);
+  font-size: clamp(1.65rem, 4vw, 3.15rem);
+  line-height: 1;
+  text-transform: uppercase;
+}
+
+.hunt-board-sigil {
+  display: inline-block;
+  width: clamp(3rem, 7vw, 5.1rem);
+  aspect-ratio: 1;
+  clip-path: polygon(50% 0, 94% 24%, 94% 76%, 50% 100%, 6% 76%, 6% 24%);
+  background:
+    linear-gradient(135deg, transparent 0 28%, color-mix(in srgb, var(--hunt-color) 38%, #000000 18%) 28% 36%, transparent 36% 100%),
+    repeating-linear-gradient(115deg, var(--hunt-color) 0 6px, color-mix(in srgb, var(--hunt-color) 78%, #000000 22%) 6px 12px);
+  box-shadow: inset 0 0 0 0.55rem rgba(0, 0, 0, 0.24);
+}
+
+.hunt-board-message {
+  margin-bottom: 1rem;
+  border: 2px solid color-mix(in srgb, var(--hunt-color) 48%, #000000 20%);
+  border-radius: 0.85rem;
+  background: rgba(5, 7, 7, 0.52);
+  color: #fff8dc;
+  padding: 0.75rem 1rem;
+  font-size: 0.9rem;
+}
+
+.hunt-board-content {
+  display: grid;
+  gap: 1rem;
+}
+
+@media (min-width: 1024px) {
+  .hunt-board-content {
+    grid-template-columns: minmax(12rem, 0.78fr) minmax(24rem, 1.8fr) minmax(12rem, 0.78fr);
+    align-items: stretch;
+  }
+}
+
+.hunt-board-card {
+  border: 3px solid var(--hunt-color);
+  border-radius: 0.95rem;
+  background: rgba(39, 43, 42, 0.84);
+  box-shadow:
+    inset 0 0 0 2px rgba(255, 255, 255, 0.06),
+    0 10px 18px rgba(0, 0, 0, 0.24);
+  padding: 1rem;
+}
+
+.hunt-board-left-rail {
+  display: grid;
+  gap: 1rem;
+  align-content: start;
+}
+
+.hunt-board-card h2 {
+  color: #ffffff;
+  font-family: "Courier New", "Consolas", monospace;
+  font-size: 1.05rem;
+  font-weight: 900;
+  line-height: 1.1;
+  text-transform: uppercase;
+}
+
+.hunt-board-card .fantasy-kicker {
+  margin-bottom: 0.4rem;
+  color: color-mix(in srgb, var(--hunt-color) 76%, #ffffff 24%);
+  font-size: 0.62rem;
+}
+
+.hunt-board-card__copy {
+  margin-top: 0.8rem;
+  color: #ecf0e8;
+  font-size: 0.78rem;
+  line-height: 1.55;
+}
+
+.hunt-board-fighter-list,
+.hunt-board-queue-list,
+.hunt-board-target-list {
+  display: grid;
+  gap: 0.65rem;
+  margin-top: 1rem;
+}
+
+.hunt-board-target-list {
+  max-height: 30rem;
+  overflow-y: auto;
+  padding-right: 0.35rem;
+}
+
+.hunt-board-fighter,
+.hunt-board-queue-item,
+.hunt-board-target {
+  border: 2px solid color-mix(in srgb, var(--hunt-color) 64%, #1d211f 36%);
+  background: rgba(238, 241, 235, 0.84);
+  color: #2d302d;
+}
+
+.hunt-board-fighter {
+  position: relative;
+  display: grid;
+  gap: 0.25rem;
+  min-height: 4.8rem;
+  border-radius: 0.65rem;
+  padding: 1.55rem 0.7rem 0.7rem;
+}
+
+.hunt-board-fighter strong,
+.hunt-board-queue-item strong,
+.hunt-board-target strong {
+  color: #ffffff;
+  font-family: "Courier New", "Consolas", monospace;
+  font-weight: 900;
+  text-shadow: 0 2px 0 rgba(0, 0, 0, 0.28);
+}
+
+.hunt-board-fighter {
+  background: rgba(19, 25, 21, 0.88);
+}
+
+.hunt-board-fighter span:not(.dungeon-tribe-pill) {
+  color: #dbe2d6;
+  font-size: 0.74rem;
+}
+
+.hunt-board-fighter--locked {
+  filter: grayscale(1);
+  opacity: 0.58;
+}
+
+.hunt-board-card--challenger .fantasy-button {
+  width: 100%;
+  margin-top: 1rem;
+  padding: 0.72rem 0.85rem;
+  font-size: 0.62rem;
+}
+
+.hunt-board-sighting-empty {
+  min-height: 7.4rem;
+  margin-top: 1rem;
+  border: 2px dashed color-mix(in srgb, var(--hunt-color) 46%, #ffffff 10%);
+  border-radius: 0.8rem;
+  background:
+    radial-gradient(circle at 50% 42%, color-mix(in srgb, var(--hunt-color) 10%, transparent), transparent 42%),
+    rgba(7, 10, 9, 0.32);
+}
+
+.hunt-board-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+}
+
+.hunt-board-tab {
+  min-width: 4rem;
+  border: 2px solid rgba(255, 255, 255, 0.25);
+  border-radius: 0.35rem;
+  background: rgba(31, 34, 33, 0.74);
+  color: #f8fff8;
+  padding: 0.34rem 0.75rem;
+  font-family: "Courier New", "Consolas", monospace;
+  font-size: 0.76rem;
+  font-weight: 900;
+  line-height: 1;
+  text-transform: uppercase;
+}
+
+.hunt-board-tab--active {
+  border-color: color-mix(in srgb, var(--hunt-color) 82%, #ffffff 18%);
+  background: var(--hunt-color);
+  color: var(--hunt-text);
+}
+
+.hunt-board-search {
+  display: block;
+  margin-top: 0.8rem;
+}
+
+.hunt-board-search input {
+  width: 100%;
+  border: 2px solid color-mix(in srgb, var(--hunt-color) 62%, #000000 14%);
+  border-radius: 0.55rem;
+  background: rgba(244, 247, 241, 0.96);
+  color: #2f322f;
+  padding: 0.7rem 0.95rem;
+  font-size: 0.95rem;
+  outline: none;
+}
+
+.hunt-board-target {
+  display: grid;
+  grid-template-columns: auto auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 0.65rem;
+  min-height: 4.3rem;
+  border-radius: 0.8rem;
+  padding: 0.55rem 0.7rem;
+}
+
+.hunt-board-target form button,
+.hunt-board-queue-item form button {
+  display: inline-grid;
+  width: 2rem;
+  height: 2rem;
+  place-items: center;
+  border: 2px solid rgba(23, 28, 25, 0.42);
+  border-radius: 0.35rem;
+  background: color-mix(in srgb, var(--hunt-color) 78%, #ffffff 8%);
+  color: var(--hunt-text);
+  font-family: "Courier New", "Consolas", monospace;
+  font-size: 1.2rem;
+  font-weight: 900;
+  line-height: 1;
+}
+
+.hunt-board-target form button:disabled {
+  cursor: not-allowed;
+  filter: grayscale(1);
+  opacity: 0.5;
+}
+
+.hunt-board-target__badge {
+  width: 2.55rem;
+  aspect-ratio: 1;
+  clip-path: polygon(50% 0, 96% 26%, 96% 76%, 50% 100%, 4% 76%, 4% 26%);
+  background: var(--hunt-color);
+  box-shadow: inset 0 0 0 0.34rem rgba(255, 255, 255, 0.26);
+}
+
+.hunt-board-target__main {
+  display: grid;
+  gap: 0.2rem;
+  min-width: 0;
+}
+
+.hunt-board-target__main strong {
+  overflow: hidden;
+  color: #ffffff;
+  font-size: 0.95rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.hunt-board-target__main span {
+  color: #f1f2ed;
+  font-size: 0.78rem;
+}
+
+.hunt-board-target dl {
+  display: flex;
+  gap: 1rem;
+  margin: 0;
+  color: #ffffff;
+}
+
+.hunt-board-target dt {
+  color: #ffffff;
+  font-size: 0.66rem;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.hunt-board-target dd {
+  margin: 0.18rem 0 0;
+  color: #ffffff;
+  font-family: "Courier New", "Consolas", monospace;
+  font-size: 0.84rem;
+}
+
+.hunt-board-target--queued {
+  opacity: 0.66;
+}
+
+.hunt-board-queue-item {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 0.65rem;
+  border-radius: 0.65rem;
+  background: rgba(18, 23, 20, 0.88);
+  padding: 0.6rem;
+}
+
+.hunt-board-queue-item > span {
+  display: inline-grid;
+  width: 1.8rem;
+  height: 1.8rem;
+  place-items: center;
+  border-radius: 999px;
+  background: var(--hunt-color);
+  color: var(--hunt-text);
+  font-family: "Courier New", "Consolas", monospace;
+  font-weight: 900;
+}
+
+.hunt-board-queue-item small {
+  display: block;
+  margin-top: 0.15rem;
+  color: #dde5d9;
+  font-size: 0.72rem;
+}
+
+.hunt-board-prepare {
+  width: 100%;
+  margin-top: 1rem;
+  border: 2px solid color-mix(in srgb, var(--hunt-color) 65%, #000000 18%);
+  border-radius: 0.5rem;
+  background: color-mix(in srgb, var(--hunt-color) 82%, #050707 18%);
+  color: var(--hunt-text);
+  padding: 0.8rem 0.9rem;
+  font-family: "Courier New", "Consolas", monospace;
+  font-size: 0.78rem;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.hunt-board-prepare:disabled {
+  cursor: not-allowed;
+  opacity: 0.68;
+}
+
+.hunt-board-empty {
+  border: 2px dashed color-mix(in srgb, var(--hunt-color) 44%, #ffffff 12%);
+  border-radius: 0.7rem;
+  background: rgba(7, 10, 9, 0.44);
+  color: #f4f5ed;
+  padding: 1rem;
+  font-size: 0.82rem;
+  line-height: 1.5;
+}
+
+.hunt-board-empty--wide {
+  min-height: 8rem;
+  display: grid;
+  place-items: center;
+  text-align: center;
+}
+
+.hunt-board-footer {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.55rem;
+  margin-top: 1rem;
+  color: #f7f7ed;
+}
+
+.hunt-board-footer span {
+  color: color-mix(in srgb, var(--hunt-color) 74%, #ffffff 26%);
+  font-family: "Courier New", "Consolas", monospace;
+  font-size: 0.68rem;
+  font-weight: 900;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.hunt-board-footer strong {
+  border: 1px solid color-mix(in srgb, var(--hunt-color) 46%, #ffffff 12%);
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.24);
+  padding: 0.34rem 0.6rem;
+  font-size: 0.76rem;
+}
+
+.hunt-board-footer small {
+  display: none;
+}
+
+.hunt-squad-layout {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  gap: 1rem;
+}
+
+@media (min-width: 1024px) {
+  .hunt-squad-layout {
+    grid-template-columns: minmax(0, 1fr) minmax(12rem, 0.28fr);
+    align-items: start;
+  }
+}
+
+.hunt-squad-card,
+.hunt-key-card {
+  border: 3px solid var(--hunt-color);
+  border-radius: 1rem;
+  background: rgba(38, 106, 38, 0.76);
+  box-shadow:
+    inset 0 0 0 2px rgba(255, 255, 255, 0.07),
+    0 14px 24px rgba(0, 0, 0, 0.28);
+  padding: 1rem;
+}
+
+.hunt-squad-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.hunt-squad-header .hunt-board-title-group h1 {
+  font-size: clamp(1.3rem, 3.5vw, 2.35rem);
+}
+
+.hunt-squad-close {
+  display: inline-grid;
+  width: 2.65rem;
+  height: 2.65rem;
+  place-items: center;
+  border: 0;
+  background: transparent;
+  color: #ffffff;
+  font-family: "Courier New", "Consolas", monospace;
+  font-size: 2.2rem;
+  font-weight: 900;
+  line-height: 1;
+  text-shadow: 0 2px 0 rgba(0, 0, 0, 0.35);
+}
+
+.hunt-squad-table {
+  display: grid;
+  gap: 0.7rem;
+  max-height: 32rem;
+  overflow-y: auto;
+  padding-right: 0.35rem;
+}
+
+.hunt-squad-row {
+  display: grid;
+  grid-template-columns: minmax(3.2rem, 0.22fr) minmax(10rem, 1fr) minmax(4.6rem, 0.34fr) minmax(4.4rem, 0.32fr) minmax(4.6rem, 0.34fr) minmax(14rem, 1.2fr);
+  align-items: center;
+  gap: 0.55rem;
+  border: 2px solid color-mix(in srgb, var(--hunt-color) 72%, #ffffff 10%);
+  border-radius: 0.8rem;
+  background: rgba(236, 240, 232, 0.86);
+  padding: 0.65rem;
+}
+
+.hunt-squad-position {
+  display: inline-grid;
+  min-height: 2.3rem;
+  place-items: center;
+  border: 2px solid rgba(255, 255, 255, 0.82);
+  background: rgba(38, 43, 40, 0.85);
+  color: #ffffff;
+  font-family: "Courier New", "Consolas", monospace;
+  font-size: 1rem;
+  font-weight: 900;
+}
+
+.hunt-squad-target {
+  display: grid;
+  min-width: 0;
+}
+
+.hunt-squad-target strong {
+  overflow: hidden;
+  color: #ffffff;
+  font-family: "Courier New", "Consolas", monospace;
+  font-size: 0.95rem;
+  font-weight: 900;
+  text-overflow: ellipsis;
+  text-shadow: 0 2px 0 rgba(0, 0, 0, 0.32);
+  white-space: nowrap;
+}
+
+.hunt-squad-target span {
+  color: #ffffff;
+  font-size: 0.75rem;
+  text-shadow: 0 1px 0 rgba(0, 0, 0, 0.28);
+}
+
+.hunt-squad-score {
+  display: grid;
+  gap: 0.22rem;
+}
+
+.hunt-squad-score span,
+.hunt-squad-keys span,
+.hunt-squad-challenger-slot span {
+  color: #f4f9ef;
+  font-family: "Courier New", "Consolas", monospace;
+  font-size: 0.55rem;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  text-shadow: 0 1px 0 rgba(0, 0, 0, 0.28);
+}
+
+.hunt-squad-score strong {
+  display: inline-grid;
+  min-height: 1.65rem;
+  place-items: center;
+  border: 2px solid rgba(255, 255, 255, 0.32);
+  border-radius: 0.25rem;
+  background: rgba(92, 92, 96, 0.86);
+  color: #f6f6f3;
+  font-family: "Courier New", "Consolas", monospace;
+  font-size: 0.85rem;
+}
+
+.hunt-squad-keys label,
+.hunt-squad-challenger-slot label {
+  display: grid;
+  gap: 0.22rem;
+}
+
+.hunt-squad-keys select,
+.hunt-squad-challenger-slot select {
+  width: 100%;
+  border: 2px solid rgba(255, 255, 255, 0.32);
+  border-radius: 0.3rem;
+  background: #f1f2ea;
+  color: #252925;
+  padding: 0.35rem 0.45rem;
+  font-family: "Courier New", "Consolas", monospace;
+  font-size: 0.75rem;
+  font-weight: 900;
+}
+
+.hunt-squad-challengers {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.45rem;
+}
+
+.hunt-squad-challenger-slot {
+  min-height: 3.7rem;
+  border: 2px solid rgba(255, 255, 255, 0.52);
+  border-radius: 0.45rem;
+  background: rgba(24, 40, 31, 0.72);
+  padding: 0.45rem;
+}
+
+.hunt-squad-challenger-slot strong {
+  display: block;
+  overflow: hidden;
+  color: #ffffff;
+  font-family: "Courier New", "Consolas", monospace;
+  font-size: 0.75rem;
+  font-weight: 900;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.hunt-squad-challenger-slot button {
+  width: 100%;
+  margin-top: 0.35rem;
+  border: 1px solid rgba(255, 255, 255, 0.32);
+  border-radius: 0.3rem;
+  background: rgba(0, 0, 0, 0.28);
+  color: #ffffff;
+  padding: 0.28rem 0.4rem;
+  font-family: "Courier New", "Consolas", monospace;
+  font-size: 0.6rem;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.hunt-picker-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 80;
+  display: grid;
+  place-items: center;
+  padding: 1rem;
+}
+
+.hunt-picker-modal__backdrop {
+  position: absolute;
+  inset: 0;
+  border: 0;
+  background: rgba(0, 0, 0, 0.72);
+}
+
+.hunt-picker-modal__panel {
+  position: relative;
+  z-index: 1;
+  width: min(52rem, 100%);
+  max-height: min(42rem, 92vh);
+  overflow: hidden;
+  border: 7px solid rgba(255, 255, 255, 0.9);
+  border-radius: 1.7rem;
+  background: linear-gradient(180deg, rgba(82, 86, 86, 0.98) 0%, rgba(54, 57, 57, 0.98) 100%);
+  box-shadow:
+    0 0 0 8px rgba(0, 0, 0, 0.82),
+    0 24px 60px rgba(0, 0, 0, 0.48);
+  padding: 1rem;
+}
+
+.hunt-picker-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 0.9rem;
+}
+
+.hunt-picker-header h2 {
+  color: #ffffff;
+  font-size: clamp(1.35rem, 3vw, 2.1rem);
+  text-transform: uppercase;
+}
+
+.hunt-picker-header button {
+  border: 0;
+  background: transparent;
+  color: #ffffff;
+  font-family: "Courier New", "Consolas", monospace;
+  font-size: 1.8rem;
+  font-weight: 900;
+}
+
+.hunt-picker-body {
+  display: grid;
+  grid-template-columns: minmax(4rem, 0.2fr) minmax(0, 1fr);
+  gap: 0.8rem;
+}
+
+.hunt-picker-tribes {
+  display: grid;
+  align-content: start;
+  gap: 0.25rem;
+  border: 2px solid rgba(255, 255, 255, 0.85);
+  background: #15122b;
+  padding: 0.45rem;
+}
+
+.hunt-picker-tribe {
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 0.2rem;
+  background: #3f3f58;
+  color: #ffffff;
+  padding: 0.22rem 0.35rem;
+  font-family: "Courier New", "Consolas", monospace;
+  font-size: 0.58rem;
+  font-weight: 900;
+  line-height: 1;
+  text-transform: uppercase;
+}
+
+.hunt-picker-tribe--active {
+  outline: 2px solid #ffffff;
+}
+
+.hunt-picker-list {
+  border: 4px solid rgba(255, 255, 255, 0.9);
+  background: #15122b;
+  padding: 0.75rem;
+}
+
+.hunt-picker-list__title {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 0.65rem;
+  color: #ffffff;
+  font-family: "Courier New", "Consolas", monospace;
+  font-size: 0.76rem;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.hunt-picker-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.45rem;
+  max-height: 25rem;
+  overflow-y: auto;
+  padding-right: 0.35rem;
+}
+
+@media (min-width: 760px) {
+  .hunt-picker-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+.hunt-picker-player {
+  position: relative;
+  display: grid;
+  width: 100%;
+  min-height: 3.2rem;
+  align-content: center;
+  gap: 0.15rem;
+  border: 2px solid rgba(255, 255, 255, 0.35);
+  border-radius: 0.35rem;
+  background: rgba(237, 239, 234, 0.88);
+  color: #1c211d;
+  padding: 1.2rem 0.55rem 0.45rem;
+  text-align: left;
+}
+
+.hunt-picker-player strong {
+  overflow: hidden;
+  font-family: "Courier New", "Consolas", monospace;
+  font-size: 0.72rem;
+  font-weight: 900;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.hunt-picker-player span:not(.party-tribe-badge):not(.dungeon-tribe-pill) {
+  font-size: 0.62rem;
+}
+
+.hunt-picker-player--disabled {
+  cursor: not-allowed;
+  filter: grayscale(1);
+  opacity: 0.42;
+}
+
+.hunt-key-card {
+  display: grid;
+  gap: 0.75rem;
+  background: rgba(11, 13, 12, 0.64);
+}
+
+.hunt-key-card .fantasy-kicker {
+  color: color-mix(in srgb, var(--hunt-color) 72%, #ffffff 28%);
+  font-size: 0.62rem;
+}
+
+.hunt-key-card .fantasy-button {
+  width: 100%;
+  margin-top: 0.35rem;
+  padding: 0.75rem 0.7rem;
+  font-size: 0.62rem;
+}
+
+.hunt-key-metric {
+  display: grid;
+  gap: 0.25rem;
+}
+
+.hunt-key-metric span {
+  color: #ffffff;
+  font-size: 0.72rem;
+  font-weight: 900;
+  text-shadow: 0 1px 0 rgba(0, 0, 0, 0.32);
+}
+
+.hunt-key-metric strong {
+  display: inline-grid;
+  min-height: 1.75rem;
+  place-items: center;
+  border-radius: 0.3rem;
+  background: #f1f2ea;
+  color: #262a26;
+  font-family: "Courier New", "Consolas", monospace;
+  font-size: 0.9rem;
+}
+
+@media (max-width: 980px) {
+  .hunt-squad-row {
+    grid-template-columns: minmax(3.2rem, 0.25fr) minmax(10rem, 1fr);
+  }
+
+  .hunt-squad-score,
+  .hunt-squad-keys,
+  .hunt-squad-challengers {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (max-width: 720px) {
+  .hunt-board-target {
+    grid-template-columns: auto auto minmax(0, 1fr);
+  }
+
+  .hunt-board-target dl {
+    grid-column: 3;
+    gap: 0.7rem;
+  }
+}
+
+.party-assign-button {
+  width: 100%;
+  border: 1px solid rgba(215, 180, 111, 0.44);
+  border-radius: 0.6rem;
+  background: rgba(215, 180, 111, 0.14);
+  color: #ffe8b5;
+  padding: 0.35rem 0.45rem;
+  font-family: "Courier New", "Consolas", monospace;
+  font-size: 0.58rem;
+  font-weight: 900;
+  letter-spacing: 0.11em;
+  text-transform: uppercase;
+  transition: background-color 140ms ease, opacity 140ms ease;
+}
+
+.party-assign-button:not(:disabled):hover {
+  background: rgba(215, 180, 111, 0.28);
+}
+
+.party-assign-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.45;
+}
+
+.party-clear-button {
+  width: 100%;
+  border: 1px solid rgba(230, 206, 164, 0.24);
+  border-radius: 0.6rem;
+  background: rgba(17, 10, 6, 0.42);
+  color: #d8c6a7;
+  padding: 0.32rem 0.45rem;
+  font-family: "Courier New", "Consolas", monospace;
+  font-size: 0.56rem;
+  font-weight: 900;
+  letter-spacing: 0.11em;
+  text-transform: uppercase;
+}
+
+.party-clear-button:not(:disabled):hover {
+  background: rgba(17, 10, 6, 0.62);
+  color: #fff4d8;
+}
+
+.party-clear-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.38;
 }
 
 .strategy-board-shell {
@@ -1187,8 +2266,8 @@ a {
   display: grid;
   justify-items: center;
   gap: 0.35rem;
-  width: 10.5rem;
-  min-height: 7rem;
+  width: 13.125rem;
+  min-height: 8.75rem;
   border: 2px solid rgba(93, 65, 37, 0.24);
   background:
     linear-gradient(3deg, transparent 0 92%, rgba(78, 50, 28, 0.18) 92% 100%),
@@ -1220,6 +2299,10 @@ a {
   line-height: 1.25;
 }
 
+.strategy-paper--has-warning {
+  border-color: rgba(156, 47, 34, 0.52);
+}
+
 .strategy-paper__pin {
   position: absolute;
   top: -0.55rem;
@@ -1243,6 +2326,39 @@ a {
 
 .strategy-paper--blue .strategy-paper__pin {
   background: #2673b9;
+}
+
+.strategy-paper__warnings {
+  display: grid;
+  gap: 0.35rem;
+  width: 100%;
+  justify-items: start;
+  margin-top: 0.15rem;
+  color: #9c2f22;
+  font-size: 0.72rem;
+  line-height: 1.15;
+  text-align: left;
+}
+
+.strategy-paper__warnings > span {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.strategy-paper__warnings > span > span {
+  display: inline-grid;
+  flex: 0 0 auto;
+  width: 0.85rem;
+  height: 0.85rem;
+  place-items: center;
+  border-radius: 999px;
+  background: #b53628;
+  color: #fff5dc;
+  font-family: "Courier New", "Consolas", monospace;
+  font-size: 0.58rem;
+  font-weight: 900;
+  line-height: 1;
 }
 
 .strategy-paper--1 {
@@ -1313,14 +2429,21 @@ a {
 }
 
 .strategy-paper-row {
-  display: flex;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
   align-items: center;
-  justify-content: space-between;
-  gap: 1rem;
+  gap: 0.35rem;
   border: 1px solid rgba(126, 88, 45, 0.2);
   border-radius: 0.8rem;
   background: rgba(255, 255, 255, 0.16);
   padding: 0.85rem 1rem;
+}
+
+@media (min-width: 640px) {
+  .strategy-paper-row {
+    grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.2fr);
+    gap: 1rem;
+  }
 }
 
 .strategy-paper-row span {
@@ -1331,8 +2454,36 @@ a {
 }
 
 .strategy-paper-row strong {
-  text-align: right;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.42rem;
+  text-align: left;
   font-size: 0.92rem;
+}
+
+@media (min-width: 640px) {
+  .strategy-paper-row strong {
+    justify-content: flex-end;
+    text-align: right;
+  }
+}
+
+.strategy-paper-row__warning {
+  color: #9c2f22;
+}
+
+.strategy-paper-row__warning span {
+  display: inline-grid;
+  flex: 0 0 auto;
+  width: 1rem;
+  height: 1rem;
+  place-items: center;
+  border-radius: 999px;
+  background: #b53628;
+  color: #fff5dc;
+  font-size: 0.72rem;
+  line-height: 1;
+  letter-spacing: 0;
 }
 
 .wardrobe-preview {
