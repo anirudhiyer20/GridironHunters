@@ -56,7 +56,7 @@ export async function importFantasyCalcPlayers() {
 
   const importResult = await supabase.rpc("import_fantasycalc_players", {
     p_payload: payload,
-    p_deactivate_seed_players: false,
+    p_deactivate_seed_players: true,
   });
 
   if (importResult.error) {
@@ -66,6 +66,7 @@ export async function importFantasyCalcPlayers() {
   const summary = importResult.data?.[0];
   const importedCount = Number(summary?.imported_count ?? 0);
   const deactivatedSeedCount = Number(summary?.deactivated_seed_count ?? 0);
+  const deactivatedProviderCount = Number(summary?.deactivated_provider_count ?? 0);
 
   revalidatePath("/app/admin");
   revalidatePath("/app/leagues");
@@ -74,7 +75,7 @@ export async function importFantasyCalcPlayers() {
   redirect(
     "/app/admin?message=" +
       encodeMessage(
-        `Imported ${importedCount} FantasyCalc players and deactivated ${deactivatedSeedCount} seed players.`,
+        `Imported ${importedCount} FantasyCalc players, deactivated ${deactivatedSeedCount} seed players, and deactivated ${deactivatedProviderCount} stale FantasyCalc players.`,
       ),
   );
 }

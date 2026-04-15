@@ -19,6 +19,7 @@ import {
   setDraftControlMode,
 } from "../actions";
 import { DraftClock } from "./draft-clock";
+import { DraftIntelligenceTabs } from "./draft-intelligence-tabs";
 import { DraftLiveClient } from "./draft-live-client";
 import { DraftPlayerBrowser } from "./draft-player-browser";
 
@@ -60,6 +61,7 @@ type DraftablePlayer = {
   providerValue: number | null;
   providerOverallRank: number | null;
   providerPositionRank: number | null;
+  providerLastSyncedAt: string | null;
   fantasyPointsPpr: number;
   gamesPlayed: number;
   passingYards: number;
@@ -205,6 +207,54 @@ export default async function DraftRoomPage({
     (position) => rosterCounts[position] < MVP_REQUIRED_POSITION_COUNTS[position],
   );
   const hasAdminControls = Boolean(canPauseDraft || canResolveTimeout || canForceAutopick);
+  const snakeBoard = (
+    <div>
+      {groupedPicks.length > 0 ? (
+        <div className="grid gap-5">
+          {groupedPicks.map(([roundNumber, roundPicks]) => (
+            <section key={roundNumber} className="rounded-[1.5rem] border border-[#6e95ff]/18 bg-[#0b1129]/70 px-5 py-5 shadow-[inset_0_0_0_1px_rgba(142,171,255,0.06)]">
+              <div className="mb-4 flex items-center justify-between gap-3 border-b border-[#6e95ff]/16 pb-3">
+                <h2 className="draft-console-title text-xl text-white">Round {roundNumber}</h2>
+                <span className="draft-console-kicker text-[0.68rem] text-[#8eb0ff]">Snake Lane</span>
+              </div>
+              <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5 xl:grid-cols-10">
+                {roundPicks.map((pick) => {
+                  const participant = participantsById.get(pick.participant_id);
+                  const isCurrentPick = draft?.current_pick_number === pick.pick_number && pick.status === "pending";
+                  const isMyPick = pick.participant_id === myParticipant?.id;
+
+                  return (
+                    <div
+                      key={pick.pick_number}
+                      className={`rounded-[1.25rem] border px-3 py-3 transition-colors ${
+                        isCurrentPick
+                          ? "border-[#f2bf5e]/50 bg-[#f2bf5e]/12 shadow-[0_0_24px_rgba(242,191,94,0.12)]"
+                          : isMyPick
+                            ? "border-emerald-300/25 bg-emerald-400/10"
+                            : "border-[#6e95ff]/14 bg-black/25"
+                      }`}
+                    >
+                      <p className="draft-console-kicker text-[0.62rem] text-stone-500">{pick.pick_number}</p>
+                      <p className="mt-2 text-sm font-semibold leading-5 text-stone-100">
+                        {participant?.display_name ?? "Unknown"}
+                      </p>
+                      <p className="mt-2 text-xs leading-5 text-stone-400">
+                        {pick.picked_player_name ? pick.picked_player_name : "Pending"}
+                      </p>
+                    </div>
+                  );
+                })}
+              </div>
+            </section>
+          ))}
+        </div>
+      ) : (
+        <p className="rounded-[1.25rem] border border-white/10 bg-black/20 px-4 py-3 text-sm text-stone-300">
+          Draft order has not been published yet.
+        </p>
+      )}
+    </div>
+  );
 
   return (
     <PageShell
@@ -214,10 +264,6 @@ export default async function DraftRoomPage({
     >
       <div className="draft-console-shell p-4 sm:p-6">
         <div className="draft-console-inner p-4 sm:p-6 lg:p-8">
-          <div className="mb-6 border-b border-[#6e95ff]/20 pb-5">
-            <p className="draft-console-kicker text-xs text-[#7ca2ff]">Draft Command Center</p>
-          </div>
-
           <Panel
             title="Live Draft Flow"
             className="draft-console-panel draft-console-outline"
@@ -300,15 +346,19 @@ export default async function DraftRoomPage({
               className="draft-console-panel draft-console-outline"
               titleClassName="draft-console-title text-2xl"
             >
-              <div className="grid gap-3 sm:grid-cols-2">
-                <ConsoleStat label="Roster Spots" value={String(rosterSlotsRemaining)} accent="gold" />
-                <ConsoleStat
-                  label="Needs"
-                  value={missingRequiredPositions.length > 0 ? missingRequiredPositions.join(", ") : "Covered"}
-                  accent={missingRequiredPositions.length > 0 ? "pink" : "blue"}
-                />
+              <div className="flex flex-wrap items-center justify-between gap-3 rounded-[1.2rem] border border-[#6e95ff]/15 bg-[#0b1129]/70 px-4 py-4">
+                <div>
+                  <p className="draft-console-kicker text-[0.68rem] text-stone-500">Spots Left</p>
+                  <p className="mt-1 text-2xl font-semibold text-stone-100">{rosterSlotsRemaining}</p>
+                </div>
+                <div className="text-left sm:text-right">
+                  <p className="draft-console-kicker text-[0.68rem] text-stone-500">Needs</p>
+                  <p className="mt-1 text-base font-semibold text-stone-100">
+                    {missingRequiredPositions.length > 0 ? missingRequiredPositions.join(", ") : "Covered"}
+                  </p>
+                </div>
               </div>
-              <div className="mt-4 grid gap-3 sm:grid-cols-2">
+              <div className="mt-4 grid gap-2">
                 {DRAFT_POSITIONS.map((position) => {
                   const currentCount = rosterCounts[position];
                   const requiredCount = MVP_REQUIRED_POSITION_COUNTS[position];
@@ -316,15 +366,26 @@ export default async function DraftRoomPage({
                   const remainingNeed = Math.max(0, requiredCount - currentCount);
 
                   return (
-                    <div key={position} className="rounded-[1.2rem] border border-[#6e95ff]/15 bg-[#0b1129]/70 px-4 py-4">
-                      <div className="flex items-center justify-between gap-3">
-                        <p className="draft-console-kicker text-[0.68rem] text-[#8eb0ff]">{position}</p>
-                        <span className={`rounded-full border px-3 py-1 text-[0.68rem] uppercase tracking-[0.24em] ${remainingNeed > 0 ? "border-[#f2bf5e]/30 bg-[#f2bf5e]/10 text-[#f2bf5e]" : "border-emerald-300/25 bg-emerald-400/10 text-emerald-100"}`}>
-                          {remainingNeed > 0 ? `${remainingNeed} Needed` : "Covered"}
-                        </span>
+                    <div
+                      key={position}
+                      className={`grid grid-cols-[3rem_1fr_auto] items-center gap-3 rounded-[1rem] border px-3 py-3 ${
+                        remainingNeed > 0
+                          ? "border-[#f2bf5e]/24 bg-[#f2bf5e]/8"
+                          : "border-emerald-300/18 bg-emerald-400/8"
+                      }`}
+                    >
+                      <p className="draft-console-kicker text-[0.68rem] text-[#8eb0ff]">{position}</p>
+                      <div className="h-2 overflow-hidden rounded-full bg-black/35">
+                        <div
+                          className={`h-full rounded-full ${remainingNeed > 0 ? "bg-[#f2bf5e]" : "bg-emerald-300"}`}
+                          style={{
+                            width: `${Math.min(100, (currentCount / Math.max(requiredCount, currentCount, 1)) * 100)}%`,
+                          }}
+                        />
                       </div>
-                      <p className="mt-3 text-sm text-stone-300">
-                        {currentCount} rostered | min {requiredCount}{maxCount ? ` | max ${maxCount}` : ""}
+                      <p className="text-sm font-semibold text-stone-100">
+                        {currentCount}/{requiredCount}
+                        {maxCount ? ` max ${maxCount}` : ""}
                       </p>
                     </div>
                   );
@@ -335,17 +396,21 @@ export default async function DraftRoomPage({
                 <section>
                   <p className="draft-console-kicker text-[0.68rem] text-[#8eb0ff]">Recent Picks</p>
                   {recentPicks.length > 0 ? (
-                    <div className="mt-3 grid gap-3">
+                    <div className="mt-3 overflow-hidden rounded-[1.15rem] border border-[#6e95ff]/15 bg-[#0b1129]/70">
                       {recentPicks.map((pick) => {
                         const participant = participantsById.get(pick.participant_id);
 
                         return (
-                          <div key={pick.id} className="rounded-[1.2rem] border border-[#6e95ff]/15 bg-[#0b1129]/70 px-4 py-4">
-                            <p className="draft-console-kicker text-[0.68rem] text-stone-500">Pick {pick.pick_number}</p>
-                            <p className="mt-2 text-base font-semibold text-stone-100">{pick.picked_player_name}</p>
-                            <p className="mt-1 text-sm text-stone-400">
-                              {participant?.display_name ?? "Unknown participant"} | {pick.picked_position}
-                            </p>
+                          <div
+                            key={pick.id}
+                            className="grid grid-cols-[3.5rem_1fr_auto] items-center gap-3 border-b border-[#6e95ff]/10 px-3 py-3 last:border-b-0"
+                          >
+                            <p className="draft-console-kicker text-[0.62rem] text-stone-500">#{pick.pick_number}</p>
+                            <div className="min-w-0">
+                              <p className="truncate text-sm font-semibold text-stone-100">{pick.picked_player_name}</p>
+                              <p className="truncate text-xs text-stone-400">{participant?.display_name ?? "Unknown"}</p>
+                            </div>
+                            <p className="text-sm font-semibold text-[#8eb0ff]">{pick.picked_position}</p>
                           </div>
                         );
                       })}
@@ -360,12 +425,15 @@ export default async function DraftRoomPage({
                 <section>
                   <p className="draft-console-kicker text-[0.68rem] text-[#8eb0ff]">Your Roster</p>
                   {myRoster.length > 0 ? (
-                    <div className="mt-3 grid gap-3">
+                    <div className="mt-3 overflow-hidden rounded-[1.15rem] border border-emerald-300/15 bg-emerald-400/8">
                       {myRoster.map((pick) => (
-                        <div key={pick.id} className="rounded-[1.2rem] border border-[#6e95ff]/15 bg-[#0b1129]/70 px-4 py-4">
-                          <p className="draft-console-kicker text-[0.68rem] text-stone-500">Pick {pick.pick_number}</p>
-                          <p className="mt-2 text-base font-semibold text-stone-100">{pick.picked_player_name}</p>
-                          <p className="mt-1 text-sm text-stone-400">{pick.picked_position}</p>
+                        <div
+                          key={pick.id}
+                          className="grid grid-cols-[3rem_1fr_3.5rem] items-center gap-3 border-b border-emerald-300/10 px-3 py-3 last:border-b-0"
+                        >
+                          <p className="text-sm font-semibold text-emerald-100">{pick.picked_position}</p>
+                          <p className="truncate text-sm font-semibold text-stone-100">{pick.picked_player_name}</p>
+                          <p className="draft-console-kicker text-right text-[0.62rem] text-stone-500">#{pick.pick_number}</p>
                         </div>
                       ))}
                     </div>
@@ -379,74 +447,41 @@ export default async function DraftRoomPage({
             </Panel>
 
             <Panel
-              title="Player Intelligence"
+              title="Draft Tools"
               className="draft-console-panel draft-console-outline"
               titleClassName="draft-console-title text-2xl"
             >
-              <DraftPlayerBrowser
-                leagueId={league.id}
-                leagueSlug={league.slug}
-                draftStatus={draft?.status ?? null}
-                isMyTurn={isMyTurn}
-                isMyAutopickMode={currentMode === "autopick"}
-                canQueue={Boolean(canQueue)}
-                availablePlayers={availablePlayers}
-                queuedPlayers={queuedPlayers}
-                rosterCounts={rosterCounts}
+              <DraftIntelligenceTabs
+                board={snakeBoard}
+                players={
+                  <DraftPlayerBrowser
+                    leagueId={league.id}
+                    leagueSlug={league.slug}
+                    draftStatus={draft?.status ?? null}
+                    isMyTurn={isMyTurn}
+                    isMyAutopickMode={currentMode === "autopick"}
+                    canQueue={Boolean(canQueue)}
+                    view="available"
+                    availablePlayers={availablePlayers}
+                    queuedPlayers={queuedPlayers}
+                    rosterCounts={rosterCounts}
+                  />
+                }
+                queue={
+                  <DraftPlayerBrowser
+                    leagueId={league.id}
+                    leagueSlug={league.slug}
+                    draftStatus={draft?.status ?? null}
+                    isMyTurn={isMyTurn}
+                    isMyAutopickMode={currentMode === "autopick"}
+                    canQueue={Boolean(canQueue)}
+                    view="queue"
+                    availablePlayers={availablePlayers}
+                    queuedPlayers={queuedPlayers}
+                    rosterCounts={rosterCounts}
+                  />
+                }
               />
-            </Panel>
-          </div>
-
-          <div className="mt-8">
-            <Panel
-              title="Snake Board"
-              className="draft-console-panel draft-console-outline"
-              titleClassName="draft-console-title text-2xl"
-            >
-              {groupedPicks.length > 0 ? (
-                <div className="grid gap-5">
-                  {groupedPicks.map(([roundNumber, roundPicks]) => (
-                    <section key={roundNumber} className="rounded-[1.5rem] border border-[#6e95ff]/18 bg-[#0b1129]/70 px-5 py-5 shadow-[inset_0_0_0_1px_rgba(142,171,255,0.06)]">
-                      <div className="mb-4 flex items-center justify-between gap-3 border-b border-[#6e95ff]/16 pb-3">
-                        <h2 className="draft-console-title text-xl text-white">Round {roundNumber}</h2>
-                        <span className="draft-console-kicker text-[0.68rem] text-[#8eb0ff]">Snake Lane</span>
-                      </div>
-                      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5 xl:grid-cols-10">
-                        {roundPicks.map((pick) => {
-                          const participant = participantsById.get(pick.participant_id);
-                          const isCurrentPick = draft?.current_pick_number === pick.pick_number && pick.status === "pending";
-                          const isMyPick = pick.participant_id === myParticipant?.id;
-
-                          return (
-                            <div
-                              key={pick.pick_number}
-                              className={`rounded-[1.25rem] border px-3 py-3 transition-colors ${
-                                isCurrentPick
-                                  ? "border-[#f2bf5e]/50 bg-[#f2bf5e]/12 shadow-[0_0_24px_rgba(242,191,94,0.12)]"
-                                  : isMyPick
-                                    ? "border-emerald-300/25 bg-emerald-400/10"
-                                    : "border-[#6e95ff]/14 bg-black/25"
-                              }`}
-                            >
-                              <p className="draft-console-kicker text-[0.62rem] text-stone-500">{pick.pick_number}</p>
-                              <p className="mt-2 text-sm font-semibold leading-5 text-stone-100">
-                                {participant?.display_name ?? "Unknown"}
-                              </p>
-                              <p className="mt-2 text-xs leading-5 text-stone-400">
-                                {pick.picked_player_name ? pick.picked_player_name : "Pending"}
-                              </p>
-                            </div>
-                          );
-                        })}
-                      </div>
-                    </section>
-                  ))}
-                </div>
-              ) : (
-                <p className="rounded-[1.25rem] border border-white/10 bg-black/20 px-4 py-3 text-sm text-stone-300">
-                  Draft order has not been published yet.
-                </p>
-              )}
             </Panel>
           </div>
         </div>
@@ -470,6 +505,7 @@ type PlayerRpcRow = {
   provider_value: number | null;
   provider_overall_rank: number | null;
   provider_position_rank: number | null;
+  provider_last_synced_at: string | null;
   fantasy_points_ppr: number;
   games_played: number;
   passing_yards: number;
@@ -510,6 +546,7 @@ function mapDraftablePlayers(players: PlayerRpcRow[]): DraftablePlayer[] {
       player.provider_position_rank === null || player.provider_position_rank === undefined
         ? null
         : Number(player.provider_position_rank),
+    providerLastSyncedAt: player.provider_last_synced_at,
     fantasyPointsPpr: Number(player.fantasy_points_ppr ?? 0),
     gamesPlayed: Number(player.games_played ?? 0),
     passingYards: Number(player.passing_yards ?? 0),

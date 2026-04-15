@@ -97,6 +97,7 @@ Full season path from Draft through playoffs with cohesive world presentation
 - Move more Draft and guild surfaces behind the Guild shell
 - Build the Dungeon tribe-door flows into real Hunt workflows
 - Bring Arena standings and matchup screens into the new presentation language
+- After real-player imports are stable and no historical Draft records or queues depend on seed rows, completely remove the seed-player pool and related testing assumptions
 
 ## Known Risks
 

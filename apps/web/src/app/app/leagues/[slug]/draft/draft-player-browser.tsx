@@ -32,6 +32,7 @@ type DraftablePlayer = {
   providerValue: number | null;
   providerOverallRank: number | null;
   providerPositionRank: number | null;
+  providerLastSyncedAt: string | null;
   fantasyPointsPpr: number;
   gamesPlayed: number;
   passingYards: number;
@@ -56,14 +57,15 @@ type DraftPlayerBrowserProps = {
   isMyTurn: boolean;
   isMyAutopickMode: boolean;
   canQueue: boolean;
+  view?: "available" | "queue";
   availablePlayers: DraftablePlayer[];
   queuedPlayers: QueuedPlayer[];
   rosterCounts: RosterCounts;
 };
 
 const POSITION_OPTIONS = ["ALL", ...DRAFT_POSITIONS] as const;
-type SortOption = "recommended" | "best" | "alphabetical" | "bye" | "age";
-type SourceOption = "ALL" | "seed" | "fantasycalc";
+type SortOption = "recommended" | "market" | "best" | "positionRank" | "alphabetical" | "bye" | "age";
+type SourceOption = "ALL" | string;
 
 type PlayerInsight = {
   score: number;
@@ -79,6 +81,7 @@ export function DraftPlayerBrowser({
   isMyTurn,
   isMyAutopickMode,
   canQueue,
+  view = "available",
   availablePlayers,
   queuedPlayers,
   rosterCounts,
@@ -92,6 +95,8 @@ export function DraftPlayerBrowser({
 
   const queuedPlayerIds = new Set(queuedPlayers.map((player) => player.id));
   const nflTeams = Array.from(new Set(availablePlayers.map((player) => player.nflTeam))).sort();
+  const sourceOptions = Array.from(new Set(availablePlayers.map((player) => player.source))).sort();
+  const latestProviderSync = getLatestProviderSync(availablePlayers);
   const totalRostered = DRAFT_POSITIONS.reduce(
     (sum, draftPosition) => sum + rosterCounts[draftPosition],
     0,
@@ -156,6 +161,18 @@ export function DraftPlayerBrowser({
         return a.fullName.localeCompare(b.fullName);
       }
 
+      if (sort === "market") {
+        return getMarketSortValue(b) - getMarketSortValue(a) || a.fullName.localeCompare(b.fullName);
+      }
+
+      if (sort === "positionRank") {
+        return (
+          (a.providerPositionRank ?? 9999) - (b.providerPositionRank ?? 9999) ||
+          getPlayerBoardScore(b) - getPlayerBoardScore(a) ||
+          a.fullName.localeCompare(b.fullName)
+        );
+      }
+
       if (sort === "bye") {
         return (
           (a.byeWeek ?? 99) - (b.byeWeek ?? 99) ||
@@ -177,28 +194,30 @@ export function DraftPlayerBrowser({
 
   return (
     <div className="grid gap-6">
-      {canQueue ? (
+      {view === "queue" && canQueue ? (
         <section className="draft-console-outline rounded-[1.65rem] border border-[#6e95ff]/18 bg-[#091228]/82 px-5 py-5">
-          <div className="flex flex-wrap items-start justify-between gap-4 border-b border-[#6e95ff]/14 pb-4">
+          <div className="flex flex-wrap items-center justify-between gap-4 border-b border-[#6e95ff]/14 pb-4">
             <div>
               <p className="draft-console-kicker text-[0.68rem] text-[#8eb0ff]">Priority queue</p>
               <h3 className="draft-console-title mt-2 text-xl text-white">Your queue</h3>
-              <p className="mt-2 max-w-xl text-sm leading-7 text-stone-300">
-                Queue players while others are on the clock. If you time out or stay on autopick, the system will try your queued players first.
-              </p>
             </div>
-            {queuedPlayers.length > 0 ? (
-              <form action={clearDraftQueue}>
-                <input type="hidden" name="league_id" value={leagueId} />
-                <input type="hidden" name="league_slug" value={leagueSlug} />
-                <button
-                  type="submit"
-                  className="rounded-full border border-white/10 bg-black/25 px-4 py-2 text-xs uppercase tracking-[0.24em] text-stone-200 transition-colors hover:bg-white/10"
-                >
-                  Clear queue
-                </button>
-              </form>
-            ) : null}
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="draft-console-chip rounded-full px-4 py-2 text-xs uppercase tracking-[0.24em] text-stone-300">
+                {queuedPlayers.length} queued
+              </span>
+              {queuedPlayers.length > 0 ? (
+                <form action={clearDraftQueue}>
+                  <input type="hidden" name="league_id" value={leagueId} />
+                  <input type="hidden" name="league_slug" value={leagueSlug} />
+                  <button
+                    type="submit"
+                    className="rounded-full border border-white/10 bg-black/25 px-4 py-2 text-xs uppercase tracking-[0.24em] text-stone-200 transition-colors hover:bg-white/10"
+                  >
+                    Clear
+                  </button>
+                </form>
+              ) : null}
+            </div>
           </div>
 
           {queuedPlayers.length > 0 ? (
@@ -210,7 +229,7 @@ export function DraftPlayerBrowser({
                       <p className="draft-console-kicker text-[0.68rem] text-stone-500">Queue #{player.queueRank}</p>
                       <p className="mt-2 text-base font-semibold text-stone-100">{player.fullName}</p>
                       <p className="mt-1 text-sm text-stone-400">
-                        {player.position} | {player.nflTeam} | Bye {player.byeWeek ?? "-"}
+                        {player.position} | {player.nflTeam} | Bye {formatByeWeek(player.byeWeek)}
                       </p>
                     </div>
                     <div className="flex flex-wrap gap-2">
@@ -241,43 +260,48 @@ export function DraftPlayerBrowser({
                     </div>
                   </div>
                   <div className="mt-4 grid gap-2 sm:grid-cols-3">
-                    <StatChip label="Draft Value" value={formatDraftValue(player)} />
-                    <StatChip label="Age" value={player.age ? String(player.age) : "-"} />
-                    <StatChip label="Exp" value={String(player.yearsExperience)} />
+                    <StatChip label={getValueLabel(player)} value={formatDraftValue(player)} />
+                    <StatChip label="Rank" value={getPlayerRankLabel(player)} />
+                    <StatChip label="Synced" value={formatSyncAge(player.providerLastSyncedAt)} />
                   </div>
                 </div>
               ))}
             </div>
           ) : (
             <p className="mt-5 rounded-[1.2rem] border border-white/10 bg-black/20 px-4 py-3 text-sm text-stone-400">
-              Your queue is empty. Add players below so you have a plan ready before your next turn.
+              Your queue is empty. Add players from the Available Players tab so you have a plan ready before your next turn.
             </p>
           )}
         </section>
       ) : null}
 
+      {view === "queue" && !canQueue ? (
+        <p className="rounded-[1.2rem] border border-white/10 bg-black/20 px-4 py-3 text-sm text-stone-400">
+          Queue controls are available for human draft participants.
+        </p>
+      ) : null}
+
+      {view === "available" ? (
       <section className="grid gap-5">
-        <div className="flex flex-wrap items-start justify-between gap-4">
+        <div className="flex flex-wrap items-center justify-between gap-4">
           <div>
-            <p className="draft-console-kicker text-[0.68rem] text-[#8eb0ff]">Player intelligence</p>
-            <h3 className="draft-console-title mt-2 text-2xl text-white">Available player pool</h3>
-            <p className="mt-2 max-w-2xl text-sm leading-7 text-stone-300">
-              The pool stays visible throughout the live draft, with enough structure to browse comfortably even while other teams are making decisions.
-            </p>
+            <h3 className="draft-console-title text-2xl text-white">Available Player Pool</h3>
           </div>
-          <div className="draft-console-chip rounded-full px-4 py-2 text-xs uppercase tracking-[0.24em] text-stone-300">
-            {filteredPlayers.length} available
+          <div className="flex flex-wrap items-center gap-2">
+            <div className="draft-console-chip rounded-full px-4 py-2 text-xs uppercase tracking-[0.24em] text-stone-300">
+              {filteredPlayers.length} available
+            </div>
+            <div className="draft-console-chip rounded-full px-4 py-2 text-xs uppercase tracking-[0.24em] text-stone-300">
+              Synced {formatSyncAge(latestProviderSync)}
+            </div>
           </div>
         </div>
 
         <div className="draft-console-outline rounded-[1.65rem] border border-[#f2bf5e]/18 bg-[#120f22]/78 px-5 py-5">
-          <div className="flex flex-wrap items-start justify-between gap-3 border-b border-[#f2bf5e]/14 pb-4">
+          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[#f2bf5e]/14 pb-4">
             <div>
               <p className="draft-console-kicker text-[0.68rem] text-[#f2bf5e]">Guidance layer</p>
-              <h4 className="draft-console-title mt-2 text-xl text-white">Recommendation snapshot</h4>
-              <p className="mt-2 max-w-xl text-sm leading-7 text-stone-300">
-                This first-pass guidance is rules-based: it weights roster needs against imported market value, then falls back to last season&apos;s production when needed.
-              </p>
+              <h4 className="draft-console-title mt-2 text-xl text-white">Recommended</h4>
             </div>
             <div className="draft-console-chip rounded-full px-4 py-2 text-xs uppercase tracking-[0.24em] text-stone-300">
               {rosterSlotsRemaining} slots left
@@ -291,9 +315,17 @@ export function DraftPlayerBrowser({
                 return (
                   <div key={player.id} className="rounded-[1.2rem] border border-white/10 bg-black/25 px-4 py-4">
                     <p className="draft-console-kicker text-[0.68rem] text-stone-500">Recommendation #{index + 1}</p>
-                    <p className="mt-2 text-base font-semibold text-stone-100">{player.fullName}</p>
-                    <p className="mt-1 text-sm text-stone-400">{player.position} | {player.nflTeam}</p>
-                    <p className="mt-3 text-sm leading-7 text-stone-300">{insight.reason}</p>
+                    <div className="mt-2 flex items-start justify-between gap-3">
+                      <div>
+                        <p className="text-base font-semibold text-stone-100">{player.fullName}</p>
+                        <p className="mt-1 text-sm text-stone-400">{player.position} | {player.nflTeam}</p>
+                      </div>
+                      <p className="text-right text-sm font-semibold text-[#f2bf5e]">{formatDraftValue(player)}</p>
+                    </div>
+                    <div className="mt-3 flex flex-wrap gap-2">
+                      <TagChip tone={insight.isLegalNow ? "emerald" : "stone"}>{insight.recommendationLabel}</TagChip>
+                      <TagChip tone="stone">{getPlayerRankLabel(player)}</TagChip>
+                    </div>
                   </div>
                 );
               })}
@@ -333,8 +365,11 @@ export function DraftPlayerBrowser({
               className="rounded-[1.15rem] border border-[#6e95ff]/16 bg-black/25 px-4 py-3 text-sm text-stone-100 outline-none transition-colors focus:border-[#f2bf5e]/40"
             >
               <option value="ALL">ALL</option>
-              <option value="seed">Seed</option>
-              <option value="fantasycalc">FantasyCalc</option>
+              {sourceOptions.map((option) => (
+                <option key={option} value={option}>
+                  {formatSourceLabel(option)}
+                </option>
+              ))}
             </select>
           </label>
           <label className="grid gap-2 text-sm text-stone-300">
@@ -360,7 +395,9 @@ export function DraftPlayerBrowser({
               className="rounded-[1.15rem] border border-[#6e95ff]/16 bg-black/25 px-4 py-3 text-sm text-stone-100 outline-none transition-colors focus:border-[#f2bf5e]/40"
             >
               <option value="recommended">Recommended</option>
+              <option value="market">Market value</option>
               <option value="best">Best available</option>
+              <option value="positionRank">Position rank</option>
               <option value="alphabetical">Alphabetical</option>
               <option value="bye">Bye week</option>
               <option value="age">Youngest first</option>
@@ -369,7 +406,15 @@ export function DraftPlayerBrowser({
         </div>
 
         {filteredPlayers.length > 0 ? (
-          <div className="grid gap-3 xl:grid-cols-2">
+          <div className="overflow-hidden rounded-[1.45rem] border border-[#6e95ff]/16 bg-[#0a1127]/84">
+            <div className="hidden grid-cols-[minmax(13rem,1.5fr)_4.2rem_4.2rem_5rem_5rem_8rem] gap-3 border-b border-[#6e95ff]/14 px-4 py-3 text-[0.68rem] uppercase tracking-[0.22em] text-stone-500 lg:grid">
+              <span>Player</span>
+              <span>Pos</span>
+              <span>Team</span>
+              <span>Value</span>
+              <span>Rank</span>
+              <span className="text-right">Action</span>
+            </div>
             {filteredPlayers.map((player) => {
               const isQueued = queuedPlayerIds.has(player.id);
               const insight = playerInsights.get(player.id)!;
@@ -377,48 +422,43 @@ export function DraftPlayerBrowser({
               return (
                 <div
                   key={player.id}
-                  className={`draft-console-glow grid gap-4 rounded-[1.4rem] border px-4 py-4 transition-colors ${
+                  className={`grid gap-3 border-b border-[#6e95ff]/10 px-4 py-4 last:border-b-0 lg:grid-cols-[minmax(13rem,1.5fr)_4.2rem_4.2rem_5rem_5rem_8rem] lg:items-center ${
                     isQueued
-                      ? "border-sky-300/25 bg-sky-400/10"
-                      : "border-[#6e95ff]/16 bg-[#0a1127]/84"
+                      ? "bg-sky-400/10"
+                      : insight.isLegalNow
+                        ? "bg-transparent"
+                        : "bg-black/20 opacity-70"
                   }`}
                 >
-                  <div className="flex items-start justify-between gap-3">
-                    <div>
-                      <p className="text-lg font-semibold text-stone-100">{player.fullName}</p>
-                      <p className="mt-1 text-sm text-stone-400">
-                        {player.position} | {player.nflTeam} | Bye {player.byeWeek ?? "-"}
-                      </p>
-                    </div>
-                    <div className="text-right">
-                      <p className="draft-console-kicker text-[0.68rem] text-stone-500">Draft Value</p>
-                      <p className="mt-1 text-xl font-semibold text-stone-100">{formatDraftValue(player)}</p>
+                  <div>
+                    <p className="text-base font-semibold text-stone-100">{player.fullName}</p>
+                    <div className="mt-2 flex flex-wrap gap-2 lg:mt-1">
+                      {isQueued ? <TagChip tone="sky">Queued</TagChip> : null}
+                      <TagChip tone="stone">{formatSourceLabel(player.source)}</TagChip>
+                      {insight.isLegalNow ? (
+                        <TagChip tone="emerald">{insight.recommendationLabel}</TagChip>
+                      ) : null}
                     </div>
                   </div>
 
-                  <div className="flex flex-wrap gap-2">
-                    <TagChip tone={insight.isLegalNow ? "emerald" : "stone"}>{insight.recommendationLabel}</TagChip>
-                    {isQueued ? <TagChip tone="sky">Queued</TagChip> : null}
-                    <TagChip tone="stone">{formatSourceLabel(player.source)}</TagChip>
+                  <div className="grid grid-cols-3 gap-2 text-sm lg:contents">
+                    <MobileColumn label="Pos" value={player.position} />
+                    <MobileColumn label="Team" value={player.nflTeam} />
+                    <MobileColumn label="Bye" value={String(formatByeWeek(player.byeWeek))} />
                   </div>
 
-                  <div className="grid gap-2 sm:grid-cols-4">
-                    <StatChip
-                      label="Rank"
-                      value={player.providerOverallRank ? `#${player.providerOverallRank}` : "-"}
-                    />
-                    <StatChip label="Age" value={player.age ? String(player.age) : "-"} />
-                    <StatChip label="Exp" value={String(player.yearsExperience)} />
-                    <StatChip label="Fit" value={insight.isLegalNow ? "Legal" : "Blocked"} />
+                  <p className="hidden text-sm font-semibold text-stone-100 lg:block">{player.position}</p>
+                  <p className="hidden text-sm text-stone-300 lg:block">{player.nflTeam}</p>
+                  <div>
+                    <p className="lg:hidden draft-console-kicker text-[0.62rem] text-stone-500">{getValueLabel(player)}</p>
+                    <p className="text-base font-semibold text-stone-100">{formatDraftValue(player)}</p>
+                  </div>
+                  <div>
+                    <p className="lg:hidden draft-console-kicker text-[0.62rem] text-stone-500">Rank</p>
+                    <p className="text-sm text-stone-300">{getPlayerRankLabel(player)}</p>
                   </div>
 
-                  <p className="text-sm text-stone-300">{formatStatSummary(player)}</p>
-                  <p className="text-sm leading-7 text-stone-400">{insight.reason}</p>
-                  <p className="draft-console-kicker text-[0.68rem] text-stone-500">
-                    {player.key}{player.college ? ` | ${player.college}` : ""}
-                  </p>
-
-                  <div className="flex flex-wrap gap-2">
+                  <div className="grid gap-2">
                     {isMyTurn && !isMyAutopickMode && draftStatus === "live" ? (
                       <form action={submitDraftPick}>
                         <input type="hidden" name="league_id" value={leagueId} />
@@ -427,7 +467,7 @@ export function DraftPlayerBrowser({
                         <button
                           type="submit"
                           disabled={!insight.isLegalNow}
-                          className={`rounded-full px-4 py-2 text-xs uppercase tracking-[0.24em] transition-colors ${
+                          className={`w-full rounded-full px-4 py-2 text-xs uppercase tracking-[0.18em] transition-colors ${
                             insight.isLegalNow
                               ? "border border-emerald-300/25 bg-emerald-400/10 text-emerald-100 hover:bg-emerald-400/15"
                               : "cursor-not-allowed border border-white/10 bg-black/20 text-stone-500"
@@ -445,9 +485,9 @@ export function DraftPlayerBrowser({
                           <input type="hidden" name="player_id" value={player.id} />
                           <button
                             type="submit"
-                            className="rounded-full border border-sky-300/25 bg-sky-400/10 px-4 py-2 text-xs uppercase tracking-[0.24em] text-sky-100 transition-colors hover:bg-sky-400/15"
+                            className="w-full rounded-full border border-sky-300/25 bg-sky-400/10 px-4 py-2 text-xs uppercase tracking-[0.18em] text-sky-100 transition-colors hover:bg-sky-400/15"
                           >
-                            Remove from queue
+                            Remove
                           </button>
                         </form>
                       ) : (
@@ -457,9 +497,14 @@ export function DraftPlayerBrowser({
                           <input type="hidden" name="player_id" value={player.id} />
                           <button
                             type="submit"
-                            className="rounded-full border border-white/10 bg-black/20 px-4 py-2 text-xs uppercase tracking-[0.24em] text-stone-200 transition-colors hover:bg-white/10"
+                            disabled={!insight.isLegalNow}
+                            className={`w-full rounded-full border px-4 py-2 text-xs uppercase tracking-[0.18em] transition-colors ${
+                              insight.isLegalNow
+                                ? "border-white/10 bg-black/20 text-stone-200 hover:bg-white/10"
+                                : "cursor-not-allowed border-white/5 bg-black/10 text-stone-600"
+                            }`}
                           >
-                            Add to queue
+                            Queue
                           </button>
                         </form>
                       )
@@ -475,6 +520,7 @@ export function DraftPlayerBrowser({
           </p>
         )}
       </section>
+      ) : null}
     </div>
   );
 }
@@ -544,7 +590,7 @@ function evaluatePlayer(
       score,
       isLegalNow,
       recommendationLabel: "Power pick",
-      reason: `Your required slots are covered enough to chase raw value here, and ${player.fullName} is one of the strongest remaining players on the imported board.`,
+      reason: `Your required slots are covered enough to chase raw value here, and ${player.fullName} is one of the strongest remaining players by imported market rank.`,
     };
   }
 
@@ -556,25 +602,25 @@ function evaluatePlayer(
   };
 }
 
-function formatStatSummary(player: DraftablePlayer) {
-  if (player.gamesPlayed === 0 && player.providerOverallRank !== null) {
-    return `Overall rank #${player.providerOverallRank}, position rank #${player.providerPositionRank ?? "-"}, imported from FantasyCalc market data.`;
-  }
-
-  if (player.position === "QB") {
-    return `${player.passingYards.toLocaleString()} pass yds, ${player.passingTds} pass TD, ${player.rushingYards.toLocaleString()} rush yds`;
-  }
-
-  if (player.position === "RB") {
-    return `${player.rushingYards.toLocaleString()} rush yds, ${player.rushingTds} rush TD, ${player.receptions} rec`;
-  }
-
-  return `${player.receptions} rec, ${player.receivingYards.toLocaleString()} rec yds, ${player.receivingTds} rec TD`;
+function hasProviderData(player: DraftablePlayer) {
+  return player.providerValue !== null || player.providerOverallRank !== null || player.providerPositionRank !== null;
 }
 
 function getPlayerBoardScore(player: DraftablePlayer) {
   if (player.providerValue !== null && player.providerValue > 0) {
     return player.providerValue;
+  }
+
+  return player.fantasyPointsPpr;
+}
+
+function getMarketSortValue(player: DraftablePlayer) {
+  if (player.providerValue !== null && player.providerValue > 0) {
+    return player.providerValue;
+  }
+
+  if (player.providerOverallRank !== null && player.providerOverallRank > 0) {
+    return 100000 - player.providerOverallRank;
   }
 
   return player.fantasyPointsPpr;
@@ -586,6 +632,65 @@ function formatDraftValue(player: DraftablePlayer) {
   }
 
   return player.fantasyPointsPpr.toFixed(1);
+}
+
+function getValueLabel(player: DraftablePlayer) {
+  return hasProviderData(player) ? "Market Value" : "Fantasy Pts";
+}
+
+function getPlayerRankLabel(player: DraftablePlayer) {
+  const overall = player.providerOverallRank ? `#${player.providerOverallRank}` : null;
+  const position = player.providerPositionRank ? `${player.position} #${player.providerPositionRank}` : null;
+
+  if (overall && position) {
+    return `${overall} / ${position}`;
+  }
+
+  return overall ?? position ?? "-";
+}
+
+function formatByeWeek(byeWeek: number | null) {
+  return byeWeek ?? "TBD";
+}
+
+function getLatestProviderSync(players: DraftablePlayer[]) {
+  return players.reduce<string | null>((latest, player) => {
+    if (!player.providerLastSyncedAt) {
+      return latest;
+    }
+
+    if (!latest) {
+      return player.providerLastSyncedAt;
+    }
+
+    return new Date(player.providerLastSyncedAt).getTime() > new Date(latest).getTime()
+      ? player.providerLastSyncedAt
+      : latest;
+  }, null);
+}
+
+function formatSyncAge(value: string | null) {
+  if (!value) {
+    return "-";
+  }
+
+  const syncedAt = new Date(value);
+  if (Number.isNaN(syncedAt.getTime())) {
+    return "-";
+  }
+
+  const diffMs = Date.now() - syncedAt.getTime();
+  const diffHours = Math.max(0, Math.floor(diffMs / (1000 * 60 * 60)));
+
+  if (diffHours < 1) {
+    return "<1h";
+  }
+
+  if (diffHours < 24) {
+    return `${diffHours}h`;
+  }
+
+  return `${Math.floor(diffHours / 24)}d`;
 }
 
 function formatSourceLabel(source: string) {
@@ -604,6 +709,15 @@ function StatChip({ label, value }: { label: string; value: string }) {
   return (
     <div className="draft-console-chip rounded-full px-3 py-2 text-xs uppercase tracking-[0.24em] text-stone-300">
       {label}: {value}
+    </div>
+  );
+}
+
+function MobileColumn({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="rounded-[0.9rem] border border-white/10 bg-black/20 px-3 py-2 lg:hidden">
+      <p className="draft-console-kicker text-[0.6rem] text-stone-500">{label}</p>
+      <p className="mt-1 font-semibold text-stone-100">{value}</p>
     </div>
   );
 }
