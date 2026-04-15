@@ -64,7 +64,6 @@ export default async function DungeonPage() {
     <PageShell
       eyebrow="Dungeon / Hub"
       title="Dungeon Gate"
-      description="The Dungeon is the dark branch of the world shell. Enter one of the eight Tribe doors to browse the Wild Players your House will eventually hunt."
     >
       <RoomScene
         roomName="Dungeon Gate"

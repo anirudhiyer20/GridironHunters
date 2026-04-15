@@ -27,7 +27,6 @@ export default async function ArenaPage() {
     <PageShell
       eyebrow="Arena / Competitive Wing"
       title="Arena Gate"
-      description="The Arena frames duels, standings, and results as the competitive wing of the world shell."
     >
       <RoomScene
         roomName="Arena Gate"

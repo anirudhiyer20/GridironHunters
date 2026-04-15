@@ -13,7 +13,6 @@ export default function Home() {
     <PageShell
       eyebrow="Closed Beta / World Shell"
       title={appName}
-      description="GridironHunters now pivots into a medieval pixel-arcade presentation where each player belongs to a House within a Guild, carries a Party, and moves through the House, Guild, Dungeon, and Arena."
     >
       <div className="grid gap-8 lg:grid-cols-[1.05fr_0.95fr]">
         <Panel

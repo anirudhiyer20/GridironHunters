@@ -17,7 +17,7 @@ export function PageShell({
 }: {
   title: string;
   eyebrow: string;
-  description: string;
+  description?: string;
   children: React.ReactNode;
 }) {
   return (
@@ -30,9 +30,11 @@ export function PageShell({
             <div>
               <p className="app-kicker text-[0.68rem] text-[#d9bc83] sm:text-xs">{eyebrow}</p>
               <h1 className="app-title mt-3 text-4xl font-semibold sm:text-5xl lg:text-6xl">{title}</h1>
-              <p className="mt-3 max-w-3xl text-sm leading-7 text-[#efe2c9] sm:text-base">
-                {description}
-              </p>
+              {description ? (
+                <p className="mt-3 max-w-3xl text-sm leading-7 text-[#efe2c9] sm:text-base">
+                  {description}
+                </p>
+              ) : null}
             </div>
 
             <nav className="flex flex-wrap gap-3 text-sm text-[#efe2c9]">

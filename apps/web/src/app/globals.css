@@ -870,6 +870,688 @@ a {
   white-space: nowrap;
 }
 
+.mailbox-shell {
+  position: relative;
+  display: grid;
+  min-height: clamp(28rem, 58vw, 40rem);
+  overflow: hidden;
+  border: 5px solid rgba(127, 137, 153, 0.92);
+  background:
+    radial-gradient(circle at 26% 40%, rgba(229, 196, 117, 0.08), transparent 24%),
+    linear-gradient(180deg, #050706 0%, #010201 100%);
+  box-shadow:
+    inset 0 0 0 3px rgba(78, 96, 143, 0.7),
+    inset 0 0 42px rgba(0, 0, 0, 0.65),
+    0 24px 48px rgba(0, 0, 0, 0.34);
+  padding: clamp(1rem, 3vw, 2rem);
+}
+
+@media (min-width: 860px) {
+  .mailbox-shell {
+    grid-template-columns: minmax(18rem, 0.9fr) minmax(22rem, 1fr);
+    align-items: stretch;
+    gap: clamp(1.5rem, 4vw, 3rem);
+  }
+}
+
+.mailbox-home-link {
+  position: absolute;
+  left: clamp(1rem, 2.2vw, 1.6rem);
+  top: clamp(1rem, 2.2vw, 1.6rem);
+  z-index: 3;
+  width: 3.6rem;
+  height: 3.6rem;
+  border: 0;
+}
+
+.mailbox-home-link::before {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 0;
+  width: 62%;
+  height: 45%;
+  transform: translateX(-50%) rotate(45deg);
+  border: 4px solid #ffffff;
+  border-bottom: 0;
+  border-right: 0;
+}
+
+.mailbox-home-link::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  bottom: 0.25rem;
+  width: 52%;
+  height: 68%;
+  transform: translateX(-50%);
+  border: 4px solid #ffffff;
+  border-top: 0;
+}
+
+.mailbox-reader {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  min-height: 24rem;
+  place-items: center;
+  padding-top: 4rem;
+}
+
+.mailbox-empty-state {
+  color: #ffffff;
+  font-family: "Courier New", "Consolas", monospace;
+  font-size: clamp(1.2rem, 2.7vw, 1.65rem);
+  font-style: italic;
+  letter-spacing: 0.08em;
+  line-height: 1.25;
+  text-align: center;
+  text-shadow: 0 2px 0 rgba(0, 0, 0, 0.72);
+}
+
+.mailbox-scroll-list {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  align-content: start;
+  gap: clamp(1rem, 3vw, 2.2rem);
+  max-height: clamp(25rem, 55vw, 36rem);
+  overflow-y: auto;
+  padding: 1rem 0.45rem 1rem 0;
+}
+
+.mailbox-scroll-button {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(8rem, 0.72fr) minmax(12rem, 1fr);
+  align-items: center;
+  gap: 1rem;
+  min-height: 5.6rem;
+  border: 0;
+  background: transparent;
+  color: #ffffff;
+  cursor: pointer;
+  font-family: "Courier New", "Consolas", monospace;
+  text-align: left;
+}
+
+.mailbox-scroll-button::before {
+  content: "";
+  position: absolute;
+  right: 0;
+  top: 50%;
+  width: min(18rem, 52%);
+  height: 4rem;
+  transform: translateY(-50%);
+  border-radius: 999px;
+  background:
+    radial-gradient(circle at 12% 50%, rgba(104, 57, 24, 0.75) 0 13%, transparent 14%),
+    radial-gradient(circle at 88% 50%, rgba(104, 57, 24, 0.75) 0 13%, transparent 14%),
+    linear-gradient(90deg, rgba(104, 57, 24, 0.58) 0 9%, transparent 9% 91%, rgba(104, 57, 24, 0.58) 91% 100%),
+    repeating-linear-gradient(135deg, rgba(132, 78, 31, 0.28) 0 5px, transparent 5px 10px),
+    linear-gradient(180deg, #f7d58d 0%, #c88838 100%);
+  box-shadow:
+    inset 0 0 0 3px rgba(87, 45, 17, 0.42),
+    inset 0 12px 0 rgba(255, 239, 174, 0.25),
+    0 10px 18px rgba(0, 0, 0, 0.35);
+}
+
+.mailbox-scroll-button::after {
+  content: "";
+  position: absolute;
+  right: min(7.4rem, 23%);
+  top: 50%;
+  width: 2rem;
+  height: 4.25rem;
+  transform: translateY(-50%);
+  background:
+    linear-gradient(90deg, rgba(92, 10, 20, 0.95), rgba(190, 22, 36, 0.95), rgba(92, 10, 20, 0.95));
+  clip-path: polygon(20% 0, 80% 0, 100% 18%, 82% 35%, 100% 52%, 78% 68%, 95% 100%, 12% 100%, 28% 68%, 5% 52%, 25% 35%, 0 18%);
+  box-shadow: 0 0 10px rgba(119, 8, 23, 0.42);
+}
+
+.mailbox-scroll-button:hover,
+.mailbox-scroll-button--active {
+  transform: translateY(-1px);
+}
+
+.mailbox-scroll-title {
+  position: relative;
+  z-index: 2;
+  justify-self: end;
+  max-width: 14rem;
+  color: #ffffff;
+  font-size: clamp(1.05rem, 2.1vw, 1.45rem);
+  font-weight: 900;
+  line-height: 1.15;
+  text-align: right;
+  text-shadow: 0 3px 0 rgba(0, 0, 0, 0.82);
+}
+
+.mailbox-scroll-status {
+  position: relative;
+  z-index: 2;
+  justify-self: end;
+  margin-right: min(13.4rem, 38%);
+  border: 1px solid rgba(255, 255, 255, 0.26);
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.38);
+  color: #f3dfb3;
+  padding: 0.2rem 0.5rem;
+  font-size: 0.58rem;
+  font-weight: 900;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.mailbox-scroll-status--unopened {
+  color: #ffffff;
+  box-shadow: 0 0 14px rgba(255, 221, 130, 0.28);
+}
+
+.mailbox-open-scroll {
+  position: relative;
+  width: min(24rem, 100%);
+  min-height: 24rem;
+  color: #2a1507;
+  padding: 5.5rem 3.4rem 5rem;
+  transform: rotate(-1deg);
+}
+
+.mailbox-open-scroll::before,
+.mailbox-open-scroll::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  z-index: -1;
+  width: 105%;
+  height: 5rem;
+  transform: translateX(-50%);
+  border-radius: 999px;
+  background:
+    radial-gradient(circle at 8% 50%, #8b5526 0 15%, transparent 16%),
+    radial-gradient(circle at 92% 50%, #8b5526 0 15%, transparent 16%),
+    linear-gradient(180deg, #f7d895 0%, #b8732d 100%);
+  box-shadow:
+    inset 0 0 0 3px rgba(92, 49, 18, 0.35),
+    0 8px 14px rgba(0, 0, 0, 0.35);
+}
+
+.mailbox-open-scroll::before {
+  top: 0;
+}
+
+.mailbox-open-scroll::after {
+  bottom: 0;
+}
+
+.mailbox-open-scroll {
+  background:
+    radial-gradient(circle at 18% 17%, rgba(173, 39, 52, 0.18), transparent 8%),
+    repeating-linear-gradient(0deg, rgba(133, 82, 29, 0.06) 0 6px, transparent 6px 12px),
+    linear-gradient(180deg, #f5d591 0%, #e7b968 48%, #d29b48 100%);
+  box-shadow:
+    inset 0 0 0 3px rgba(103, 54, 21, 0.2),
+    inset 0 0 36px rgba(94, 45, 14, 0.24),
+    0 18px 28px rgba(0, 0, 0, 0.34);
+}
+
+.mailbox-open-scroll__seal {
+  position: absolute;
+  left: 3.2rem;
+  top: 5.1rem;
+  width: 2.15rem;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background:
+    radial-gradient(circle at 42% 36%, #ff6b76 0 16%, transparent 17%),
+    linear-gradient(135deg, #e33a4f 0%, #8c1228 100%);
+  box-shadow:
+    inset 0 0 0 3px rgba(92, 7, 23, 0.32),
+    0 3px 0 rgba(96, 52, 18, 0.28);
+}
+
+.mailbox-open-scroll .fantasy-kicker {
+  color: #5f2f11;
+  font-size: 0.58rem;
+  text-align: center;
+}
+
+.mailbox-open-scroll .fantasy-title {
+  margin-top: 0.35rem;
+  color: #2f1608;
+  font-size: 1.2rem;
+  font-weight: 900;
+  text-align: center;
+  text-shadow: none;
+  text-transform: uppercase;
+}
+
+.mailbox-open-scroll__body {
+  display: grid;
+  gap: 0.78rem;
+  margin-top: 1.1rem;
+  font-family: "Courier New", "Consolas", monospace;
+  font-size: 0.76rem;
+  font-weight: 700;
+  line-height: 1.35;
+}
+
+.mailbox-open-scroll__icon {
+  width: 4.5rem;
+  height: 1.1rem;
+  margin: 0.6rem auto 0;
+  border-radius: 999px;
+  background:
+    linear-gradient(90deg, transparent 0 16%, #d59e16 16% 28%, #f8d854 28% 42%, #9a6c0d 42% 52%, #d59e16 52% 66%, transparent 66% 100%);
+  box-shadow: 1.6rem 0 0 -0.3rem #9a6c0d;
+}
+
+.mailbox-stage {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(17rem, 0.9fr) minmax(24rem, 1.1fr);
+  min-height: clamp(30rem, 58vw, 42rem);
+  overflow: hidden;
+  border: 5px solid #9098a6;
+  background:
+    radial-gradient(circle at 20% 30%, rgba(54, 84, 142, 0.14), transparent 18rem),
+    linear-gradient(180deg, #030504 0%, #000000 100%);
+  box-shadow:
+    inset 0 0 0 3px #25315d,
+    inset 0 0 52px rgba(0, 0, 0, 0.86),
+    0 24px 42px rgba(0, 0, 0, 0.36);
+}
+
+.mailbox-stage__home {
+  position: absolute;
+  top: clamp(1rem, 2vw, 1.6rem);
+  left: clamp(1rem, 2vw, 1.6rem);
+  z-index: 5;
+  width: 3.9rem;
+  height: 3.9rem;
+  color: #ffffff;
+}
+
+.mailbox-stage__home::before {
+  content: "";
+  position: absolute;
+  top: 0.2rem;
+  left: 50%;
+  width: 2.65rem;
+  height: 2.65rem;
+  transform: translateX(-50%) rotate(45deg);
+  border-top: 4px solid currentColor;
+  border-left: 4px solid currentColor;
+}
+
+.mailbox-stage__home::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  bottom: 0;
+  width: 2.5rem;
+  height: 2.75rem;
+  transform: translateX(-50%);
+  border: 4px solid currentColor;
+  border-top: 0;
+}
+
+.mailbox-stage__reader {
+  position: relative;
+  display: grid;
+  min-height: 30rem;
+  place-items: center;
+  padding: 6.8rem clamp(1.25rem, 3vw, 3rem) 2rem;
+}
+
+.mailbox-stage__filters {
+  position: absolute;
+  top: clamp(1.15rem, 2vw, 1.6rem);
+  right: clamp(1rem, 2.2vw, 1.75rem);
+  z-index: 6;
+  display: flex;
+  max-width: min(52rem, calc(100% - 7rem));
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 0.45rem;
+}
+
+.mailbox-filter {
+  display: inline-flex;
+  min-height: 2rem;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid rgba(244, 214, 144, 0.36);
+  border-radius: 999px;
+  background: rgba(8, 10, 13, 0.84);
+  color: #f7e3b4;
+  padding: 0.35rem 0.75rem;
+  font-family: "Courier New", "Consolas", monospace;
+  font-size: 0.58rem;
+  font-weight: 900;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 255, 255, 0.04),
+    0 0.45rem 0.9rem rgba(0, 0, 0, 0.28);
+}
+
+.mailbox-filter:hover,
+.mailbox-filter--active {
+  border-color: rgba(255, 227, 157, 0.78);
+  background: linear-gradient(180deg, rgba(100, 59, 22, 0.92), rgba(34, 19, 9, 0.96));
+  color: #ffffff;
+}
+
+.mailbox-stage__empty {
+  color: #ffffff;
+  font-family: "Courier New", "Consolas", monospace;
+  font-size: clamp(1.15rem, 2.2vw, 1.65rem);
+  font-style: italic;
+  letter-spacing: 0.12em;
+  line-height: 1.25;
+  text-align: center;
+  text-shadow:
+    0 2px 0 #000000,
+    0 0 18px rgba(255, 255, 255, 0.12);
+}
+
+.mailbox-stage__rail {
+  display: grid;
+  align-content: start;
+  gap: clamp(1.45rem, 4vw, 4.1rem);
+  max-height: clamp(27rem, 55vw, 39rem);
+  overflow-y: auto;
+  padding: clamp(5.4rem, 8vw, 6.6rem) clamp(1.25rem, 2.8vw, 2.25rem) clamp(2rem, 4vw, 3rem) 0.5rem;
+  scrollbar-color: #8c1a2d #101010;
+}
+
+.mailbox-stage__no-mail {
+  margin: clamp(2rem, 8vw, 5rem) auto 0;
+  border: 3px solid rgba(244, 214, 144, 0.36);
+  background: rgba(0, 0, 0, 0.72);
+  color: #f8e3b2;
+  padding: 1rem 1.25rem;
+  font-family: "Courier New", "Consolas", monospace;
+  font-size: 0.82rem;
+  font-weight: 900;
+  letter-spacing: 0.1em;
+  text-align: center;
+  text-transform: uppercase;
+}
+
+.mailbox-stage__scroll {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(8rem, 0.65fr) minmax(16rem, 1fr);
+  align-items: center;
+  gap: clamp(0.8rem, 2vw, 1.5rem);
+  width: 100%;
+  min-height: 6.6rem;
+  border: 0;
+  background: transparent;
+  color: #ffffff;
+  cursor: pointer;
+  text-align: left;
+  transition:
+    transform 140ms ease,
+    filter 140ms ease;
+}
+
+.mailbox-stage__scroll:hover,
+.mailbox-stage__scroll--active {
+  transform: translateX(-0.25rem);
+  filter: drop-shadow(0 0 14px rgba(247, 211, 126, 0.28));
+}
+
+.mailbox-stage__scroll-title {
+  position: relative;
+  z-index: 2;
+  color: #ffffff;
+  font-family: "Courier New", "Consolas", monospace;
+  font-size: clamp(1.15rem, 2.25vw, 1.7rem);
+  font-weight: 900;
+  line-height: 1.18;
+  text-align: right;
+  text-shadow:
+    0 3px 0 #000000,
+    0 0 16px rgba(255, 255, 255, 0.18);
+}
+
+.mailbox-stage__scroll-art {
+  position: relative;
+  display: block;
+  width: min(21rem, 100%);
+  height: clamp(4.2rem, 7vw, 5.35rem);
+  border-radius: 999px;
+  background:
+    radial-gradient(circle at 8% 50%, #734016 0 10%, transparent 10.5%),
+    radial-gradient(circle at 92% 50%, #734016 0 10%, transparent 10.5%),
+    linear-gradient(90deg, rgba(97, 53, 20, 0.78) 0 8%, transparent 8% 92%, rgba(97, 53, 20, 0.78) 92% 100%),
+    repeating-linear-gradient(135deg, rgba(120, 70, 26, 0.32) 0 5px, rgba(120, 70, 26, 0.32) 5px 9px, transparent 9px 15px),
+    linear-gradient(180deg, #f9dc95 0%, #d7a148 52%, #af6f27 100%);
+  image-rendering: pixelated;
+  box-shadow:
+    inset 0 0 0 3px rgba(82, 43, 15, 0.38),
+    inset 0 0.8rem 0 rgba(255, 244, 180, 0.24),
+    inset 0 -0.6rem 0 rgba(96, 48, 16, 0.2),
+    0 0.75rem 1.2rem rgba(0, 0, 0, 0.52);
+}
+
+.mailbox-stage__scroll-art::before,
+.mailbox-stage__scroll-art::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  width: 2.2rem;
+  height: 4.45rem;
+  transform: translateY(-50%);
+  background:
+    linear-gradient(180deg, #b9772d 0%, #6f3e17 100%);
+  clip-path: polygon(0 20%, 34% 0, 100% 0, 84% 50%, 100% 100%, 34% 100%, 0 80%);
+}
+
+.mailbox-stage__scroll-art::before {
+  left: -1rem;
+}
+
+.mailbox-stage__scroll-art::after {
+  right: -1rem;
+  transform: translateY(-50%) scaleX(-1);
+}
+
+.mailbox-stage__scroll-art span {
+  position: absolute;
+  inset: -0.2rem 44%;
+  background:
+    linear-gradient(90deg, #6e0819 0%, #d51b36 52%, #6e0819 100%);
+  clip-path: polygon(22% 0, 82% 0, 100% 16%, 82% 34%, 100% 52%, 78% 68%, 94% 100%, 10% 100%, 26% 68%, 3% 52%, 24% 34%, 0 16%);
+  box-shadow: 0 0 10px rgba(213, 27, 54, 0.34);
+}
+
+.mailbox-parchment {
+  position: relative;
+  display: grid;
+  width: min(25rem, 100%);
+  color: #251305;
+  filter: drop-shadow(0 1.1rem 1rem rgba(0, 0, 0, 0.45));
+  transform: rotate(-1deg);
+}
+
+.mailbox-parchment__roll {
+  position: relative;
+  z-index: 2;
+  height: 4.6rem;
+  border-radius: 999px;
+  background:
+    radial-gradient(circle at 8% 50%, #704116 0 11%, transparent 11.5%),
+    radial-gradient(circle at 92% 50%, #704116 0 11%, transparent 11.5%),
+    repeating-linear-gradient(135deg, rgba(133, 78, 31, 0.32) 0 5px, rgba(133, 78, 31, 0.32) 5px 9px, transparent 9px 15px),
+    linear-gradient(180deg, #ffe29a 0%, #c88838 100%);
+  box-shadow:
+    inset 0 0 0 3px rgba(89, 49, 19, 0.3),
+    inset 0 0.7rem 0 rgba(255, 247, 184, 0.22);
+}
+
+.mailbox-parchment__roll::before,
+.mailbox-parchment__roll::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  width: 2.15rem;
+  height: 4.2rem;
+  transform: translateY(-50%);
+  background: linear-gradient(180deg, #9f6626 0%, #653711 100%);
+  clip-path: polygon(0 20%, 34% 0, 100% 0, 84% 50%, 100% 100%, 34% 100%, 0 80%);
+}
+
+.mailbox-parchment__roll::before {
+  left: -1rem;
+}
+
+.mailbox-parchment__roll::after {
+  right: -1rem;
+  transform: translateY(-50%) scaleX(-1);
+}
+
+.mailbox-parchment__roll--top {
+  margin-bottom: -1.55rem;
+}
+
+.mailbox-parchment__roll--bottom {
+  margin-top: -1.55rem;
+}
+
+.mailbox-parchment__paper {
+  position: relative;
+  min-height: 18.5rem;
+  padding: 3.05rem 2.2rem 2.6rem;
+  background:
+    radial-gradient(circle at 18% 11%, rgba(204, 45, 55, 0.14), transparent 13%),
+    repeating-linear-gradient(0deg, rgba(116, 71, 24, 0.06) 0 6px, transparent 6px 12px),
+    linear-gradient(180deg, #f8dc96 0%, #edc572 46%, #dca852 100%);
+  box-shadow:
+    inset 0 0 0 3px rgba(103, 54, 21, 0.16),
+    inset 0 0 30px rgba(97, 48, 15, 0.2);
+}
+
+.mailbox-parchment__seal {
+  position: absolute;
+  top: 2rem;
+  left: 2rem;
+  width: 2.1rem;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background:
+    radial-gradient(circle at 40% 34%, #ff7378 0 18%, transparent 19%),
+    linear-gradient(135deg, #e13b4e 0%, #811124 100%);
+  box-shadow:
+    inset 0 0 0 3px rgba(88, 9, 25, 0.38),
+    0 3px 0 rgba(91, 50, 17, 0.35);
+}
+
+.mailbox-parchment__category {
+  margin: 0;
+  color: #5f2e10;
+  font-family: "Courier New", "Consolas", monospace;
+  font-size: 0.66rem;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-align: center;
+  text-transform: uppercase;
+}
+
+.mailbox-parchment__title {
+  margin: 0.35rem 0 0;
+  color: #2c1507;
+  font-family: "Courier New", "Consolas", monospace;
+  font-size: clamp(1.05rem, 2vw, 1.35rem);
+  font-weight: 900;
+  letter-spacing: 0.04em;
+  text-align: center;
+  text-transform: uppercase;
+}
+
+.mailbox-parchment__body {
+  display: grid;
+  gap: 0.72rem;
+  margin-top: 1.3rem;
+  color: #271407;
+  font-family: "Courier New", "Consolas", monospace;
+  font-size: 0.77rem;
+  font-weight: 800;
+  line-height: 1.32;
+}
+
+.mailbox-parchment__body p {
+  margin: 0;
+}
+
+.mailbox-parchment__key {
+  width: 4.9rem;
+  height: 1.2rem;
+  margin: 0.95rem auto 0;
+  border-radius: 999px;
+  background:
+    linear-gradient(90deg, transparent 0 14%, #b77b0f 14% 26%, #f6d34c 26% 42%, #8a5a08 42% 52%, #d49a18 52% 66%, transparent 66% 100%);
+  box-shadow:
+    1.55rem 0 0 -0.3rem #8a5a08,
+    2.05rem 0 0 -0.42rem #f6d34c;
+}
+
+.mailbox-parchment__action {
+  display: flex;
+  width: fit-content;
+  min-height: 2rem;
+  align-items: center;
+  justify-content: center;
+  margin: 1rem auto 0;
+  border: 2px solid rgba(64, 33, 10, 0.34);
+  border-radius: 999px;
+  background: linear-gradient(180deg, #d69b31, #a7621f);
+  color: #211103;
+  padding: 0.35rem 0.78rem;
+  font-family: "Courier New", "Consolas", monospace;
+  font-size: 0.58rem;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-align: center;
+  text-transform: uppercase;
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 238, 176, 0.24),
+    0 0.35rem 0 rgba(96, 50, 14, 0.16);
+}
+
+@media (max-width: 860px) {
+  .mailbox-stage {
+    grid-template-columns: 1fr;
+  }
+
+  .mailbox-stage__rail {
+    padding-left: clamp(1rem, 4vw, 1.8rem);
+    padding-top: 1rem;
+  }
+
+  .mailbox-stage__scroll {
+    grid-template-columns: minmax(6rem, 0.5fr) minmax(12rem, 1fr);
+  }
+
+  .mailbox-stage__filters {
+    position: relative;
+    top: auto;
+    right: auto;
+    grid-column: 1;
+    max-width: 100%;
+    justify-content: center;
+    padding: 5.25rem 1rem 0;
+  }
+
+  .mailbox-stage__reader {
+    padding-top: 1.5rem;
+  }
+}
+
 .room-hotspot--door {
   border-color: rgba(118, 82, 43, 0.78);
   border-radius: 0.14rem 0.14rem 0.08rem 0.08rem;

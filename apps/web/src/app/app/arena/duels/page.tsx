@@ -24,7 +24,6 @@ export default async function ArenaDuelsPage() {
     <PageShell
       eyebrow="Arena / Duels"
       title="Duel Grounds"
-      description="The Duel Grounds are the first real home for weekly competitive matchups. This chamber gives the Arena a clear route for head-to-head conflict before the full PvP screens are rebuilt into the shell."
     >
       <section className="fantasy-panel fantasy-panel--arena rounded-[1.9rem] p-5">
         <div className="flex flex-wrap items-center justify-between gap-4">

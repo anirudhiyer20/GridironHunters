@@ -28,7 +28,6 @@ export default async function GuildBoardPage() {
     <PageShell
       eyebrow="Guild / Board"
       title="Guild Board"
-      description="The Guild Board is the communal layer of the hall: notices, season state, and the quickest explanation of what the Guild should care about right now."
     >
       <section className="rounded-[2rem] border border-[#7c5229] bg-[linear-gradient(180deg,#6a4321_0%,#4e3018_100%)] p-4 shadow-[0_18px_36px_rgba(0,0,0,0.28),inset_0_0_0_2px_rgba(243,214,158,0.06)]">
         <div className="rounded-[1.6rem] border border-[#8f6437] bg-[repeating-linear-gradient(90deg,rgba(168,116,63,0.18)_0_26px,rgba(118,76,38,0.18)_26px_52px),linear-gradient(180deg,#5b381c_0%,#3f2613_100%)] p-5">

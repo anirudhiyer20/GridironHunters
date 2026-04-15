@@ -25,7 +25,6 @@ export default async function GuildDraftsPage() {
     <PageShell
       eyebrow="Guild / Draft Command"
       title="Draft Command"
-      description="This chamber is where the Guild Hall points Houses when they want the strategic side of Draft access rather than the broader Guild ledger."
     >
       <section className="fantasy-panel fantasy-panel--stone rounded-[1.9rem] p-5">
         <div className="flex flex-wrap items-center justify-between gap-4">

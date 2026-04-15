@@ -299,7 +299,6 @@ export default async function DungeonTribePage({
     <PageShell
       eyebrow={`Dungeon / ${tribe}`}
       title={details.chamberTitle}
-      description="Browse this Tribe's available Wild Players and add targets to your Hunt Queue. Battler assignments now live on the global Hunt Slate."
     >
       <HuntBoardClient
         tribe={tribe}

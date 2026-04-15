@@ -207,7 +207,6 @@ export default async function PartyChestPage({ searchParams }: PartyChestPagePro
     <PageShell
       eyebrow="House / Party Chest"
       title="Party Chest"
-      description="A wooden inventory chest for your House Party, Arena lineup, and Dungeon assignments."
     >
       <div className="grid gap-6">
         {message ? (

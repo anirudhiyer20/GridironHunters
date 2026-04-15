@@ -13,7 +13,6 @@ export default async function CreateLeaguePage({
     <PageShell
       eyebrow="App / Leagues"
       title="Create a league"
-      description="This flow will become the commissioner entry point. For now it establishes the route, fields, and product shape before we wire the database-backed action."
     >
       <Panel
         title="League details"

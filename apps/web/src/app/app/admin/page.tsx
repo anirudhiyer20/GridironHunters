@@ -33,7 +33,6 @@ export default async function AdminPage({
     <PageShell
       eyebrow="Admin / Steward Tools"
       title="Steward Console"
-      description="Admin tools remain practical and low-fantasy on purpose, but they now sit inside the same medieval shell as the rest of the world."
     >
       <Panel
         title="Player Import"

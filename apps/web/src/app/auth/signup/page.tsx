@@ -15,7 +15,6 @@ export default async function SignupPage({
     <PageShell
       eyebrow="Auth"
       title="Create your beta account"
-      description="This route is the foundation for closed-beta onboarding. The real implementation will create a verified human account before the user joins or creates a league."
     >
       <div className="grid gap-8 lg:grid-cols-[1fr_0.8fr]">
         <Panel title="Sign Up">

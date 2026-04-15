@@ -37,7 +37,6 @@ export default async function GuildPage() {
     <PageShell
       eyebrow="Guild / Hall"
       title="Guild Hall"
-      description="The Guild Hall gathers the strategic, social, and Draft-facing systems of the season into one communal chamber."
     >
       <RoomScene
         roomName="Guild Hall"

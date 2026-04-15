@@ -23,7 +23,6 @@ export default async function GuildLedgerPage() {
     <PageShell
       eyebrow="Guild / Ledger"
       title="Guild Ledger"
-      description="The Guild Ledger is the most direct record of every Guild your House currently belongs to. It stays practical while the hall around it carries the fantasy shell."
     >
       <section className="fantasy-panel fantasy-panel--stone rounded-[1.9rem] p-5">
         <div className="flex flex-wrap items-center justify-between gap-4">

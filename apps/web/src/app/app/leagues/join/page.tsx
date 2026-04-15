@@ -13,7 +13,6 @@ export default async function JoinLeaguePage({
     <PageShell
       eyebrow="App / Leagues"
       title="Join with invite code"
-      description="This flow will enforce capacity, pre-draft join rules, and the one-league-at-a-time restriction for general users."
     >
       <Panel
         title="Enter invite code"

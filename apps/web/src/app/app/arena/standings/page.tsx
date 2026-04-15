@@ -22,7 +22,6 @@ export default async function ArenaStandingsPage() {
     <PageShell
       eyebrow="Arena / Standings"
       title="Standings Hall"
-      description="The Standings Hall is the record room of the Arena: ranking, pressure, and momentum should eventually feel visible here at a glance."
     >
       <section className="fantasy-panel fantasy-panel--arena rounded-[1.9rem] p-5">
         <div className="flex flex-wrap items-center justify-between gap-4">

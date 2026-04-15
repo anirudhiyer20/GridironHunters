@@ -260,7 +260,6 @@ export default async function DraftRoomPage({
     <PageShell
       eyebrow="App / Leagues / Draft"
       title={`${league.name} Draft Room`}
-      description="Live draft command center for tracking the board, your roster build, and the player pool without burying the important information."
     >
       <div className="draft-console-shell p-4 sm:p-6">
         <div className="draft-console-inner p-4 sm:p-6 lg:p-8">

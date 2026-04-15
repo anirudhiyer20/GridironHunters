@@ -24,7 +24,6 @@ export default async function ArenaResultsPage() {
     <PageShell
       eyebrow="Arena / Results"
       title="Results Archive"
-      description="The Results Archive is where Houses should revisit what happened, why it happened, and how the Arena shifted from one week to the next."
     >
       <section className="fantasy-panel fantasy-panel--arena rounded-[1.9rem] p-5">
         <div className="flex flex-wrap items-center justify-between gap-4">

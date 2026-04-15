@@ -1,6 +1,5 @@
 import { FANTASY_TERMS } from "@gridiron/shared";
 
-import { HeroLink } from "@/components/hero-link";
 import { LogoutButton } from "@/components/logout-button";
 import { PageShell } from "@/components/page-shell";
 import { RoomScene } from "@/components/room-scene";
@@ -57,19 +56,11 @@ export default async function AppHomePage() {
     : guildCount > 0
       ? FANTASY_TERMS.member
       : "Free Wanderer";
-  const nextRoute = activeGuild
-    ? activeGuild.status === "pre_draft"
-      ? "Gather in the Guild Hall and shape the next Draft."
-      : activeGuild.status === "draft_ready" || activeGuild.status === "draft_live" || activeGuild.status === "draft_paused"
-        ? "The Draft Room is alive. Step through the Guild Hall to command it."
-        : "The Arena and Dungeon are the strongest next routes for this House."
-    : "Found or join a Guild to give this House a banner to fight under.";
 
   return (
     <PageShell
       eyebrow="House / Home Base"
       title={houseName}
-      description="Your House should feel like a real home base: a warm room with meaningful objects, quick weekly information, and clear doors into the Guild, Dungeon, and Arena."
     >
       <RoomScene
         roomName="The House"
@@ -252,7 +243,7 @@ export default async function AppHomePage() {
         ]}
       />
 
-      <div className="mt-8 grid gap-4 lg:grid-cols-[1.15fr_0.85fr]">
+      <div className="mt-8">
         <div className="rounded-[1.9rem] border border-[#9e8455]/18 bg-black/20 px-6 py-5">
           <div className="flex flex-wrap items-start justify-between gap-4">
             <div>
@@ -266,15 +257,6 @@ export default async function AppHomePage() {
             <StatusCard label="House Role" value={guildRole} />
             <StatusCard label="Active Guild" value={activeGuild?.name ?? "No Banner Yet"} />
             <StatusCard label="House State" value={activeGuild ? prettifyStatus(activeGuild.status) : "Gathering"} />
-          </div>
-        </div>
-
-        <div className="rounded-[1.9rem] border border-[#9e8455]/18 bg-black/20 px-6 py-5">
-          <p className="fantasy-kicker text-[0.68rem] text-[#d9bc83]">Next Route</p>
-          <p className="mt-3 text-base leading-7 text-[#f2e5c7]">{nextRoute}</p>
-          <div className="mt-5 flex flex-wrap gap-3">
-            <HeroLink href="/app/house/board">Open Strategy Center</HeroLink>
-            <HeroLink href="/app/guild" tone="secondary">Enter Guild</HeroLink>
           </div>
         </div>
       </div>

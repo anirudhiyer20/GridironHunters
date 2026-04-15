@@ -109,7 +109,6 @@ export default async function LeagueDetailPage({
     <PageShell
       eyebrow="App / Leagues"
       title={league.name}
-      description="This league page now reads from league participants so humans and bots can share the same draft and season structure."
     >
       <div className="grid gap-8 lg:grid-cols-[1.15fr_0.85fr]">
         <Panel

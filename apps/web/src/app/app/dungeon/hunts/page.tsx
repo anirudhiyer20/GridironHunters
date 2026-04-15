@@ -257,7 +257,6 @@ export default async function HuntSlatePage({
     <PageShell
       eyebrow="Dungeon / Hunts"
       title="Hunt Slate"
-      description="Manage every queued Hunt in one place. Tribe doors are for finding Wild Players; this slate is where your House assigns battlers, spends Battle Keys, and checks scores."
     >
       <HuntSlateClient
         leagueId={currentGuild?.id ?? null}

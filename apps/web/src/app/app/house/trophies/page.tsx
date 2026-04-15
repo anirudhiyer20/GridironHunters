@@ -21,7 +21,6 @@ export default function TrophyCabinetPage() {
     <PageShell
       eyebrow="House / Trophy Cabinet"
       title="Trophy Cabinet"
-      description="A House should remember what it has done. The Trophy Cabinet is where achievements and championship history gain a physical place in the home."
     >
       <section className="rounded-[1.9rem] border border-[#7f5328] bg-[linear-gradient(180deg,#5a381b_0%,#3a2311_100%)] p-5 shadow-[0_18px_36px_rgba(0,0,0,0.28),inset_0_0_0_2px_rgba(243,214,158,0.05)]">
         <div className="flex flex-wrap items-center justify-between gap-4">

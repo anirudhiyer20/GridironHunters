@@ -170,7 +170,6 @@ export default async function StrategyCenterPage() {
     <PageShell
       eyebrow="House / Strategy Center"
       title="Strategy Center"
-      description="A wooden planning board where each paper opens only the details you want to inspect."
     >
       <StrategyBoardClient papers={papers} />
     </PageShell>

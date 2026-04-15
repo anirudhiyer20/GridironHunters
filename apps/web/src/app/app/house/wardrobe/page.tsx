@@ -29,7 +29,6 @@ export default async function WardrobePage({ searchParams }: WardrobePageProps) 
     <PageShell
       eyebrow="House / Wardrobe"
       title="Wardrobe"
-      description="Build the local character shell for your House: archetype, body frame, colors, crest, and pixel avatar identity."
     >
       <WardrobeEditor
         initialCharacter={character}

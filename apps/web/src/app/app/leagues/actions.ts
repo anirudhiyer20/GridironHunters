@@ -44,8 +44,11 @@ export async function createLeague(formData: FormData) {
   }
 
   const createdLeague = data?.[0];
+  await supabase.rpc("seed_my_welcome_notification");
+
   revalidatePath("/app");
   revalidatePath("/app/leagues");
+  revalidatePath("/app/house/notifications");
 
   redirect(
     `/app/leagues/${createdLeague?.league_slug ?? slug}?message=${encodeMessage("League created successfully.")}`,
@@ -69,8 +72,11 @@ export async function joinLeague(formData: FormData) {
   }
 
   const joinedLeague = data?.[0];
+  await supabase.rpc("seed_my_welcome_notification");
+
   revalidatePath("/app");
   revalidatePath("/app/leagues");
+  revalidatePath("/app/house/notifications");
 
   redirect(
     `/app/leagues/${joinedLeague?.league_slug ?? ""}?message=${encodeMessage("Joined league successfully.")}`,

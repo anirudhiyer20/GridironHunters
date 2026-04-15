@@ -15,7 +15,6 @@ export default async function LoginPage({
     <PageShell
       eyebrow="Auth"
       title="Log back in"
-      description="Sprint 1 uses email and password auth. This screen is the route foundation for the real login flow we’ll wire to Supabase next."
     >
       <div className="grid gap-8 lg:grid-cols-[1fr_0.8fr]">
         <Panel title="Login">

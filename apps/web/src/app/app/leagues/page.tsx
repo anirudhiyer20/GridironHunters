@@ -28,7 +28,6 @@ export default async function LeaguesPage({
     <PageShell
       eyebrow="Guild / Ledger"
       title="Guild Ledger"
-      description="The Guild Ledger keeps the underlying guild records visible while the hall, House, Dungeon, and Arena start taking over the world-facing navigation."
     >
       <div className="grid gap-8 lg:grid-cols-[1.15fr_0.85fr]">
         <Panel
