@@ -26,7 +26,9 @@ export type RoomHotspot = {
   height: number;
   kind: "door" | "object";
   tone?: "warm" | "stone" | "ember" | "forest";
-  displayStyle?: "board" | "wardrobe" | "cabinet" | "chest" | "door" | "mailbox";
+  displayStyle?: "board" | "wardrobe" | "cabinet" | "chest" | "door" | "mailbox" | "dungeon-door" | "portal";
+  accentColor?: string;
+  accentTextColor?: string;
   href?: string;
   actionLabel?: string;
   interactionMode?: "modal" | "direct";
@@ -139,7 +141,9 @@ export function RoomScene({
                 top: `${hotspot.y}%`,
                 width: `${hotspot.width}%`,
                 height: `${hotspot.height}%`,
-              }}
+                "--room-hotspot-accent": hotspot.accentColor,
+                "--room-hotspot-accent-text": hotspot.accentTextColor,
+              } as CSSProperties}
             >
               <span className="room-hotspot__label">{hotspot.displayLabel ?? hotspot.label}</span>
               <span className="room-hotspot__hover-label">{hotspot.label}</span>

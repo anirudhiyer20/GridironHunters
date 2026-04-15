@@ -212,7 +212,7 @@ function HuntAssignmentSummary({ huntAssignments }: { huntAssignments: HuntAssig
           <span>Dungeon Hunts</span>
           <strong>{huntAssignments.length ? `${huntAssignments.length} Battle Keys At Work` : "No Hunts Assigned"}</strong>
         </div>
-        <HeroLink href="/app/dungeon" tone="secondary">Open Dungeon</HeroLink>
+        <HeroLink href="/app/dungeon/hunts" tone="secondary">Open Hunt Slate</HeroLink>
       </div>
       <div className="party-hunt-summary__list">
         {huntAssignments.length ? huntAssignments.map((assignment) => (
@@ -228,7 +228,7 @@ function HuntAssignmentSummary({ huntAssignments }: { huntAssignments: HuntAssig
           <div className="party-dungeon-slot">
             <span>Dungeon</span>
             <strong>No Active Hunt Assignments</strong>
-            <small>Queue a Wild Player in the Dungeon, then choose battlers there.</small>
+            <small>Queue a Wild Player in the Dungeon, then choose battlers on the Hunt Slate.</small>
           </div>
         )}
       </div>

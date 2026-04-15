@@ -1,21 +1,18 @@
-import { TRIBE_DETAILS, TRIBE_NAMES, type DraftPosition, type TribeName } from "@gridiron/shared";
-import { notFound } from "next/navigation";
+import { TRIBE_NAMES, type DraftPosition, type TribeName } from "@gridiron/shared";
 
 import { PageShell } from "@/components/page-shell";
 import { createClient } from "@/lib/supabase/server";
 
 import {
-  HuntBoardClient,
-  type HuntAttemptSummary,
-  type HuntChallengerCandidate,
-  type HuntTargetPlayer,
-  type QueuedHuntChallenger,
-  type QueuedHuntTarget,
-} from "./hunt-board-client";
-
-const tribeBySlug = Object.fromEntries(
-  TRIBE_NAMES.map((tribe) => [TRIBE_DETAILS[tribe].slug, tribe]),
-) as Record<string, TribeName>;
+  HuntSlateClient,
+} from "./hunt-slate-client";
+import type {
+  HuntAttemptSummary,
+  HuntChallengerCandidate,
+  HuntTargetPlayer,
+  QueuedHuntChallenger,
+  QueuedHuntTarget,
+} from "../[tribe]/hunt-board-client";
 
 type PartyAssignment = {
   assignment_type: "arena" | "dungeon";
@@ -44,6 +41,7 @@ type HuntQueueRow = {
   id: string;
   queue_rank: number;
   target_player_id: string;
+  target_tribe: TribeName;
 };
 
 type HuntChallengerRow = {
@@ -70,26 +68,12 @@ type HuntAttemptChallengerRow = {
 
 const BATTLE_KEY_TOTAL = 12;
 
-export function generateStaticParams() {
-  return TRIBE_NAMES.map((tribe) => ({ tribe: TRIBE_DETAILS[tribe].slug }));
-}
-
-export default async function DungeonTribePage({
-  params,
+export default async function HuntSlatePage({
   searchParams,
 }: {
-  params: Promise<{ tribe: string }>;
   searchParams?: Promise<{ message?: string }>;
 }) {
-  const { tribe: tribeSlug } = await params;
   const { message } = searchParams ? await searchParams : {};
-  const tribe = tribeBySlug[tribeSlug];
-
-  if (!tribe) {
-    notFound();
-  }
-
-  const details = TRIBE_DETAILS[tribe];
   const supabase = await createClient();
   const {
     data: { user },
@@ -156,43 +140,16 @@ export default async function DungeonTribePage({
     })
     .filter((candidate): candidate is HuntChallengerCandidate => Boolean(candidate));
 
-  const { data: draftedRows } = currentGuild?.id
-    ? await supabase
-        .from("draft_picks")
-        .select("picked_player_id")
-        .eq("league_id", currentGuild.id)
-        .not("picked_player_id", "is", null)
-    : { data: [] };
-  const ownedPlayerIds = new Set(
-    (draftedRows ?? [])
-      .map((row) => row.picked_player_id)
-      .filter((id): id is string => Boolean(id)),
-  );
-  const { data: targetPlayerRows } = await supabase
-    .from("players")
-    .select("id, full_name, position, nfl_team, tribe, provider_value, provider_overall_rank")
-    .eq("is_active", true)
-    .eq("tribe", tribe)
-    .in("position", ["QB", "RB", "WR", "TE"])
-    .order("provider_overall_rank", { ascending: true, nullsFirst: false })
-    .order("provider_value", { ascending: false, nullsFirst: false })
-    .order("full_name", { ascending: true })
-    .limit(120);
-  const availableTargets = (targetPlayerRows ?? [])
-    .filter((player) => !ownedPlayerIds.has(player.id))
-    .map(mapTargetPlayer)
-    .filter((player): player is HuntTargetPlayer => Boolean(player));
-
   const { data: huntQueueRows } = participant?.id && currentGuild?.id
     ? await supabase
         .from("hunt_queue_entries")
-        .select("id, queue_rank, target_player_id")
+        .select("id, queue_rank, target_player_id, target_tribe")
         .eq("league_id", currentGuild.id)
         .eq("participant_id", participant.id)
-        .eq("target_tribe", tribe)
+        .order("target_tribe", { ascending: true })
         .order("queue_rank", { ascending: true })
     : { data: [] };
-  const queuedRows = (huntQueueRows ?? []) as HuntQueueRow[];
+  const queuedRows = ((huntQueueRows ?? []) as HuntQueueRow[]).filter((row) => isTribeName(row.target_tribe));
   const queuedPlayerIds = queuedRows.map((row) => row.target_player_id);
   const { data: queuedPlayerRows } = queuedPlayerIds.length
     ? await supabase
@@ -287,6 +244,7 @@ export default async function DungeonTribePage({
 
       return {
         ...player,
+        tribe: row.target_tribe,
         queueEntryId: row.id,
         queueRank: row.queue_rank,
         challengers: challengersByQueueEntryId[row.id] ?? [null, null],
@@ -297,17 +255,14 @@ export default async function DungeonTribePage({
 
   return (
     <PageShell
-      eyebrow={`Dungeon / ${tribe}`}
-      title={details.chamberTitle}
-      description="Browse this Tribe's available Wild Players and add targets to your Hunt Queue. Battler assignments now live on the global Hunt Slate."
+      eyebrow="Dungeon / Hunts"
+      title="Hunt Slate"
+      description="Manage every queued Hunt in one place. Tribe doors are for finding Wild Players; this slate is where your House assigns battlers, spends Battle Keys, and checks scores."
     >
-      <HuntBoardClient
-        tribe={tribe}
-        mappedTeams={details.teams}
+      <HuntSlateClient
         leagueId={currentGuild?.id ?? null}
         participantId={participant?.id ?? null}
         message={message}
-        availableTargets={availableTargets}
         queuedTargets={queuedTargets}
         challengerCandidates={challengerCandidates}
         battleKeyTotal={BATTLE_KEY_TOTAL}
