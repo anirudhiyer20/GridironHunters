@@ -2,6 +2,7 @@ import { PageShell } from "@/components/page-shell";
 import { Panel } from "@/components/panel";
 import { RoomScene } from "@/components/room-scene";
 import { createClient } from "@/lib/supabase/server";
+import { getRoomAvatarAppearance, normalizeCharacter } from "../house/wardrobe/wardrobe-model";
 
 export default async function ArenaPage() {
   const supabase = await createClient();
@@ -14,6 +15,10 @@ export default async function ArenaPage() {
     .select("role, leagues!inner(name, slug, season, status)")
     .eq("user_id", user?.id ?? "")
     .order("joined_at", { ascending: false });
+  const { data: characterRow } = user
+    ? await supabase.from("user_characters").select("*").eq("user_id", user.id).maybeSingle()
+    : { data: null };
+  const character = normalizeCharacter(characterRow);
 
   const activeGuild = memberships?.[0];
   const guild = activeGuild ? (Array.isArray(activeGuild.leagues) ? activeGuild.leagues[0] : activeGuild.leagues) : null;
@@ -28,7 +33,9 @@ export default async function ArenaPage() {
         roomName="Arena Gate"
         roomMood="This stone court leads toward duels, records, and the score-driven pulse of the Guild season."
         avatarName="Arena Navigation"
-        sceneClassName="room-scene--arena"
+        avatarAppearance={getRoomAvatarAppearance(character)}
+        sceneClassName="room-scene--arena room-scene--full"
+        showHud={false}
         defaultSelectedHotspotId="duel-dais"
         hotspots={[
           {

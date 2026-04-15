@@ -5,6 +5,7 @@ import { PageShell } from "@/components/page-shell";
 import { Panel } from "@/components/panel";
 import { RoomScene } from "@/components/room-scene";
 import { createClient } from "@/lib/supabase/server";
+import { getRoomAvatarAppearance, normalizeCharacter } from "../house/wardrobe/wardrobe-model";
 
 export default async function GuildPage() {
   const supabase = await createClient();
@@ -19,6 +20,10 @@ export default async function GuildPage() {
     )
     .eq("user_id", user?.id ?? "")
     .order("joined_at", { ascending: false });
+  const { data: characterRow } = user
+    ? await supabase.from("user_characters").select("*").eq("user_id", user.id).maybeSingle()
+    : { data: null };
+  const character = normalizeCharacter(characterRow);
 
   const guildCount = memberships?.length ?? 0;
   const currentGuild = memberships?.[0]
@@ -38,7 +43,9 @@ export default async function GuildPage() {
         roomName="Guild Hall"
         roomMood="Warm torchlight, hanging banners, and a long planning table make this the place where Guilds organize before the road turns competitive."
         avatarName="Hall Navigation"
-        sceneClassName="room-scene--guild"
+        avatarAppearance={getRoomAvatarAppearance(character)}
+        sceneClassName="room-scene--guild room-scene--full"
+        showHud={false}
         defaultSelectedHotspotId="planning-table"
         hotspots={[
           {

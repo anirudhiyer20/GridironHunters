@@ -3,8 +3,19 @@ import { FANTASY_TERMS, TRIBE_DETAILS, TRIBE_NAMES } from "@gridiron/shared";
 import { PageShell } from "@/components/page-shell";
 import { Panel } from "@/components/panel";
 import { RoomScene } from "@/components/room-scene";
+import { createClient } from "@/lib/supabase/server";
+import { getRoomAvatarAppearance, normalizeCharacter } from "../house/wardrobe/wardrobe-model";
 
-export default function DungeonPage() {
+export default async function DungeonPage() {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  const { data: characterRow } = user
+    ? await supabase.from("user_characters").select("*").eq("user_id", user.id).maybeSingle()
+    : { data: null };
+  const character = normalizeCharacter(characterRow);
+
   return (
     <PageShell
       eyebrow="Dungeon / Hub"
@@ -15,7 +26,9 @@ export default function DungeonPage() {
         roomName="Dungeon Gate"
         roomMood="Wet stone, torch smoke, and sealed archways make the Dungeon feel dangerous even before the Hunts themselves arrive in full."
         avatarName="Dungeon Navigation"
-        sceneClassName="room-scene--dungeon"
+        avatarAppearance={getRoomAvatarAppearance(character)}
+        sceneClassName="room-scene--dungeon room-scene--full"
+        showHud={false}
         defaultSelectedHotspotId="combat-door"
         hotspots={[
           {

@@ -16,6 +16,17 @@ import {
   submitDraftPick,
   unqueueDraftPlayer,
 } from "../actions";
+import {
+  evaluateDraftPlayer,
+  formatByeWeek,
+  formatDraftValue,
+  formatSyncAge,
+  getLatestProviderSync,
+  getMarketSortValue,
+  getPlayerBoardScore,
+  getPlayerRankLabel,
+  getValueLabel,
+} from "./draft-room-rules";
 
 type DraftablePlayer = {
   id: string;
@@ -67,13 +78,6 @@ const POSITION_OPTIONS = ["ALL", ...DRAFT_POSITIONS] as const;
 type SortOption = "recommended" | "market" | "best" | "positionRank" | "alphabetical" | "bye" | "age";
 type SourceOption = "ALL" | string;
 
-type PlayerInsight = {
-  score: number;
-  isLegalNow: boolean;
-  recommendationLabel: string;
-  reason: string;
-};
-
 export function DraftPlayerBrowser({
   leagueId,
   leagueSlug,
@@ -108,7 +112,12 @@ export function DraftPlayerBrowser({
       new Map(
         availablePlayers.map((player) => [
           player.id,
-          evaluatePlayer(player, rosterCounts, rosterSlotsRemaining),
+          evaluateDraftPlayer(player, rosterCounts, rosterSlotsRemaining, {
+            positions: DRAFT_POSITIONS,
+            rosterSize: MVP_DRAFT_ROSTER_SIZE,
+            requiredCounts: MVP_REQUIRED_POSITION_COUNTS,
+            maxCounts: MVP_MAX_POSITION_COUNTS,
+          }),
         ]),
       ),
     [availablePlayers, rosterCounts, rosterSlotsRemaining],
@@ -523,174 +532,6 @@ export function DraftPlayerBrowser({
       ) : null}
     </div>
   );
-}
-
-function evaluatePlayer(
-  player: DraftablePlayer,
-  rosterCounts: RosterCounts,
-  rosterSlotsRemaining: number,
-): PlayerInsight {
-  const totalRostered = DRAFT_POSITIONS.reduce(
-    (sum, draftPosition) => sum + rosterCounts[draftPosition],
-    0,
-  );
-  const nextCounts = {
-    ...rosterCounts,
-    [player.position]: rosterCounts[player.position] + 1,
-  };
-  const slotsAfterPick = Math.max(0, MVP_DRAFT_ROSTER_SIZE - (totalRostered + 1));
-  const missingAfterPick = DRAFT_POSITIONS.reduce(
-    (sum, draftPosition) =>
-      sum + Math.max(0, MVP_REQUIRED_POSITION_COUNTS[draftPosition] - nextCounts[draftPosition]),
-    0,
-  );
-  const maxCount = MVP_MAX_POSITION_COUNTS[player.position];
-  const isOverMax = typeof maxCount === "number" && nextCounts[player.position] > maxCount;
-  const strandsRequiredSlots = missingAfterPick > slotsAfterPick;
-  const isLegalNow = !isOverMax && !strandsRequiredSlots && totalRostered < MVP_DRAFT_ROSTER_SIZE;
-  const neededNow = rosterCounts[player.position] < MVP_REQUIRED_POSITION_COUNTS[player.position];
-  const wouldFinishRequirement =
-    neededNow && nextCounts[player.position] >= MVP_REQUIRED_POSITION_COUNTS[player.position];
-
-  let score = getPlayerBoardScore(player);
-  if (neededNow) score += 120;
-  if (wouldFinishRequirement) score += 40;
-  if (player.position === "QB" && rosterCounts.QB === 1) score += 10;
-  if (!isLegalNow) score -= 10000;
-
-  if (!isLegalNow) {
-    if (isOverMax) {
-      return {
-        score,
-        isLegalNow,
-        recommendationLabel: "Blocked now",
-        reason: `${player.position} is already at the current roster limit. Draft a different position first.`,
-      };
-    }
-
-    return {
-      score,
-      isLegalNow,
-      recommendationLabel: "Blocked now",
-      reason: `Taking another ${player.position} here would leave too few picks to satisfy the remaining required positions.`,
-    };
-  }
-
-  if (neededNow) {
-    return {
-      score,
-      isLegalNow,
-      recommendationLabel: "Need pick",
-      reason: `${player.position} is still a required roster need, so this pick helps lock in your legal build while keeping strong production on the board.`,
-    };
-  }
-
-  if (player.providerOverallRank !== null && player.providerOverallRank <= 24) {
-    return {
-      score,
-      isLegalNow,
-      recommendationLabel: "Power pick",
-      reason: `Your required slots are covered enough to chase raw value here, and ${player.fullName} is one of the strongest remaining players by imported market rank.`,
-    };
-  }
-
-  return {
-    score,
-    isLegalNow,
-    recommendationLabel: "Depth fit",
-    reason: `${player.fullName} fits the current roster rules cleanly and gives you optionality for the remaining ${rosterSlotsRemaining - 1} picks after this one.`,
-  };
-}
-
-function hasProviderData(player: DraftablePlayer) {
-  return player.providerValue !== null || player.providerOverallRank !== null || player.providerPositionRank !== null;
-}
-
-function getPlayerBoardScore(player: DraftablePlayer) {
-  if (player.providerValue !== null && player.providerValue > 0) {
-    return player.providerValue;
-  }
-
-  return player.fantasyPointsPpr;
-}
-
-function getMarketSortValue(player: DraftablePlayer) {
-  if (player.providerValue !== null && player.providerValue > 0) {
-    return player.providerValue;
-  }
-
-  if (player.providerOverallRank !== null && player.providerOverallRank > 0) {
-    return 100000 - player.providerOverallRank;
-  }
-
-  return player.fantasyPointsPpr;
-}
-
-function formatDraftValue(player: DraftablePlayer) {
-  if (player.providerValue !== null && player.providerValue > 0) {
-    return player.providerValue.toLocaleString();
-  }
-
-  return player.fantasyPointsPpr.toFixed(1);
-}
-
-function getValueLabel(player: DraftablePlayer) {
-  return hasProviderData(player) ? "Market Value" : "Fantasy Pts";
-}
-
-function getPlayerRankLabel(player: DraftablePlayer) {
-  const overall = player.providerOverallRank ? `#${player.providerOverallRank}` : null;
-  const position = player.providerPositionRank ? `${player.position} #${player.providerPositionRank}` : null;
-
-  if (overall && position) {
-    return `${overall} / ${position}`;
-  }
-
-  return overall ?? position ?? "-";
-}
-
-function formatByeWeek(byeWeek: number | null) {
-  return byeWeek ?? "TBD";
-}
-
-function getLatestProviderSync(players: DraftablePlayer[]) {
-  return players.reduce<string | null>((latest, player) => {
-    if (!player.providerLastSyncedAt) {
-      return latest;
-    }
-
-    if (!latest) {
-      return player.providerLastSyncedAt;
-    }
-
-    return new Date(player.providerLastSyncedAt).getTime() > new Date(latest).getTime()
-      ? player.providerLastSyncedAt
-      : latest;
-  }, null);
-}
-
-function formatSyncAge(value: string | null) {
-  if (!value) {
-    return "-";
-  }
-
-  const syncedAt = new Date(value);
-  if (Number.isNaN(syncedAt.getTime())) {
-    return "-";
-  }
-
-  const diffMs = Date.now() - syncedAt.getTime();
-  const diffHours = Math.max(0, Math.floor(diffMs / (1000 * 60 * 60)));
-
-  if (diffHours < 1) {
-    return "<1h";
-  }
-
-  if (diffHours < 24) {
-    return `${diffHours}h`;
-  }
-
-  return `${Math.floor(diffHours / 24)}d`;
 }
 
 function formatSourceLabel(source: string) {

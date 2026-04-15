@@ -208,7 +208,7 @@ export default async function DraftRoomPage({
   );
   const hasAdminControls = Boolean(canPauseDraft || canResolveTimeout || canForceAutopick);
   const snakeBoard = (
-    <div>
+    <div key="draft-board-view">
       {groupedPicks.length > 0 ? (
         <div className="grid gap-5">
           {groupedPicks.map(([roundNumber, roundPicks]) => (
@@ -455,6 +455,7 @@ export default async function DraftRoomPage({
                 board={snakeBoard}
                 players={
                   <DraftPlayerBrowser
+                    key="available-player-view"
                     leagueId={league.id}
                     leagueSlug={league.slug}
                     draftStatus={draft?.status ?? null}
@@ -469,6 +470,7 @@ export default async function DraftRoomPage({
                 }
                 queue={
                   <DraftPlayerBrowser
+                    key="queue-view"
                     leagueId={league.id}
                     leagueSlug={league.slug}
                     draftStatus={draft?.status ?? null}

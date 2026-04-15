@@ -9,7 +9,8 @@
     "supabase:db:pull": "supabase db pull",
     "web:dev": "npm --prefix apps/web run dev",
     "web:build": "npm --prefix apps/web run build",
-    "web:lint": "npm --prefix apps/web run lint"
+    "web:lint": "npm --prefix apps/web run lint",
+    "web:test": "npm --prefix apps/web run test"
   },
   "devDependencies": {
     "supabase": "^2.84.6"

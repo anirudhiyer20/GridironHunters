@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useMemo, useState } from "react";
+import { useMemo, useState, type CSSProperties } from "react";
 
 export type RoomHotspotAction = {
   href: string;
@@ -26,7 +26,7 @@ export type RoomHotspot = {
   height: number;
   kind: "door" | "object";
   tone?: "warm" | "stone" | "ember" | "forest";
-  displayStyle?: "board" | "wardrobe" | "cabinet" | "chest" | "door";
+  displayStyle?: "board" | "wardrobe" | "cabinet" | "chest" | "door" | "mailbox";
   href?: string;
   actionLabel?: string;
   interactionMode?: "modal" | "direct";
@@ -35,18 +35,31 @@ export type RoomHotspot = {
   actions?: RoomHotspotAction[];
 };
 
+export type RoomAvatarAppearance = {
+  skinColor: string;
+  hairColor: string;
+  shirtColor: string;
+  pantsColor: string;
+  hairStyle: "cropped" | "waves" | "braids" | "hooded";
+  bodyFrame: "Balanced" | "Sturdy" | "Swift";
+};
+
 export function RoomScene({
   avatarName,
+  avatarAppearance,
   sceneClassName,
   hotspots,
   defaultSelectedHotspotId,
+  showHud = true,
 }: {
   roomName: string;
   roomMood: string;
   avatarName: string;
+  avatarAppearance?: RoomAvatarAppearance;
   sceneClassName?: string;
   hotspots: RoomHotspot[];
   defaultSelectedHotspotId?: string;
+  showHud?: boolean;
 }) {
   const defaultHotspot = useMemo(
     () => hotspots.find((hotspot) => hotspot.id === defaultSelectedHotspotId) ?? hotspots[0] ?? null,
@@ -104,9 +117,11 @@ export function RoomScene({
           moveAvatarTo(clickX, clickY);
         }}
         >
-          <div className="room-scene__hud">
-            <h2 className="room-scene__title">{avatarName}</h2>
-          </div>
+          {showHud ? (
+            <div className="room-scene__hud">
+              <h2 className="room-scene__title">{avatarName}</h2>
+            </div>
+          ) : null}
 
         <div className="room-scene__playfield">
           {hotspots.map((hotspot) => (
@@ -131,9 +146,31 @@ export function RoomScene({
             </button>
           ))}
 
-          <div className="room-avatar" style={{ left: `${avatarPosition.x}%`, top: `${avatarPosition.y}%` }}>
-            <div className="room-avatar__head" />
-            <div className="room-avatar__body" />
+          <div
+            className={`room-avatar ${avatarAppearance ? "room-avatar--custom" : ""} ${avatarAppearance ? `room-avatar--${avatarAppearance.bodyFrame.toLowerCase()}` : ""}`}
+            style={{
+              left: `${avatarPosition.x}%`,
+              top: `${avatarPosition.y}%`,
+              "--room-avatar-skin": avatarAppearance?.skinColor,
+              "--room-avatar-hair": avatarAppearance?.hairColor,
+              "--room-avatar-shirt": avatarAppearance?.shirtColor,
+              "--room-avatar-pants": avatarAppearance?.pantsColor,
+            } as CSSProperties}
+          >
+            {avatarAppearance ? (
+              <>
+                <div className={`room-avatar__hair room-avatar__hair--${avatarAppearance.hairStyle}`} />
+                <div className="room-avatar__head" />
+                <div className="room-avatar__shirt" />
+                <div className="room-avatar__belt" />
+                <div className="room-avatar__pants" />
+              </>
+            ) : (
+              <>
+                <div className="room-avatar__head" />
+                <div className="room-avatar__body" />
+              </>
+            )}
             <div className="room-avatar__shadow" />
           </div>
         </div>

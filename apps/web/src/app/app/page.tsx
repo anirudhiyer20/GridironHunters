@@ -5,6 +5,10 @@ import { LogoutButton } from "@/components/logout-button";
 import { PageShell } from "@/components/page-shell";
 import { RoomScene } from "@/components/room-scene";
 import { createClient } from "@/lib/supabase/server";
+import {
+  getRoomAvatarAppearance,
+  normalizeCharacter,
+} from "./house/wardrobe/wardrobe-model";
 
 function houseNameFromEmail(email: string | null | undefined) {
   if (!email) return "The Ember House";
@@ -41,6 +45,10 @@ export default async function AppHomePage() {
       ? memberships[0].leagues[0]
       : memberships[0].leagues
     : null;
+  const { data: characterRow } = user
+    ? await supabase.from("user_characters").select("*").eq("user_id", user.id).maybeSingle()
+    : { data: null };
+  const character = normalizeCharacter(characterRow);
 
   const houseName = houseNameFromEmail(user?.email);
   const guildCount = memberships?.length ?? 0;
@@ -63,38 +71,13 @@ export default async function AppHomePage() {
       title={houseName}
       description="Your House should feel like a real home base: a warm room with meaningful objects, quick weekly information, and clear doors into the Guild, Dungeon, and Arena."
     >
-      <div className="mb-6 grid gap-4 lg:grid-cols-[1.15fr_0.85fr]">
-        <div className="rounded-[1.9rem] border border-[#9e8455]/18 bg-black/20 px-6 py-5">
-          <div className="flex flex-wrap items-start justify-between gap-4">
-            <div>
-              <p className="fantasy-kicker text-[0.68rem] text-[#d9bc83]">House Hearth</p>
-              <p className="mt-2 text-base text-[#f7ecd2]">{user?.email ?? "Authenticated user"}</p>
-            </div>
-            <LogoutButton />
-          </div>
-
-          <div className="mt-5 grid gap-3 sm:grid-cols-3">
-            <StatusCard label="House Role" value={guildRole} />
-            <StatusCard label="Active Guild" value={activeGuild?.name ?? "No Banner Yet"} />
-            <StatusCard label="House State" value={activeGuild ? prettifyStatus(activeGuild.status) : "Gathering"} />
-          </div>
-        </div>
-
-        <div className="rounded-[1.9rem] border border-[#9e8455]/18 bg-black/20 px-6 py-5">
-          <p className="fantasy-kicker text-[0.68rem] text-[#d9bc83]">Next Route</p>
-          <p className="mt-3 text-base leading-7 text-[#f2e5c7]">{nextRoute}</p>
-          <div className="mt-5 flex flex-wrap gap-3">
-            <HeroLink href="/app/house/board">Open Strategy Center</HeroLink>
-            <HeroLink href="/app/guild" tone="secondary">Enter Guild</HeroLink>
-          </div>
-        </div>
-      </div>
-
       <RoomScene
         roomName="The House"
         roomMood="A lantern-lit home where your House gathers, checks the Strategy Center, and decides whether the next route belongs to the Guild, Dungeon, or Arena."
         avatarName={houseName}
-        sceneClassName="room-scene--house"
+        avatarAppearance={getRoomAvatarAppearance(character)}
+        sceneClassName="room-scene--house room-scene--full"
+        showHud={false}
         defaultSelectedHotspotId="blackboard"
         hotspots={[
           {
@@ -104,6 +87,7 @@ export default async function AppHomePage() {
             kind: "object",
             tone: "warm",
             displayStyle: "wardrobe",
+            interactionMode: "direct",
             x: 10,
             y: 22,
             width: 12,
@@ -189,6 +173,29 @@ export default async function AppHomePage() {
             ],
           },
           {
+            id: "mailbox",
+            label: "Mailbox",
+            flavor: "A small House mailbox for Guild notes, Draft alerts, Arena results, and future in-app notifications.",
+            kind: "object",
+            tone: "warm",
+            displayStyle: "mailbox",
+            interactionMode: "direct",
+            x: 77,
+            y: 50,
+            width: 10,
+            height: 12,
+            href: "/app/house/notifications",
+            actionLabel: "Open Mailbox",
+            stats: [
+              { label: "Inbox", value: "Ready" },
+              { label: "Delivery", value: "In-App" },
+            ],
+            notes: [
+              "The Mailbox is the House entry point for notifications.",
+              "Later it can hold Draft reminders, Arena results, Guild updates, and system notices.",
+            ],
+          },
+          {
             id: "guild-door",
             label: "Guild Door",
             displayLabel: "Guild",
@@ -244,6 +251,33 @@ export default async function AppHomePage() {
           },
         ]}
       />
+
+      <div className="mt-8 grid gap-4 lg:grid-cols-[1.15fr_0.85fr]">
+        <div className="rounded-[1.9rem] border border-[#9e8455]/18 bg-black/20 px-6 py-5">
+          <div className="flex flex-wrap items-start justify-between gap-4">
+            <div>
+              <p className="fantasy-kicker text-[0.68rem] text-[#d9bc83]">House Hearth</p>
+              <p className="mt-2 text-base text-[#f7ecd2]">{user?.email ?? "Authenticated user"}</p>
+            </div>
+            <LogoutButton />
+          </div>
+
+          <div className="mt-5 grid gap-3 sm:grid-cols-3">
+            <StatusCard label="House Role" value={guildRole} />
+            <StatusCard label="Active Guild" value={activeGuild?.name ?? "No Banner Yet"} />
+            <StatusCard label="House State" value={activeGuild ? prettifyStatus(activeGuild.status) : "Gathering"} />
+          </div>
+        </div>
+
+        <div className="rounded-[1.9rem] border border-[#9e8455]/18 bg-black/20 px-6 py-5">
+          <p className="fantasy-kicker text-[0.68rem] text-[#d9bc83]">Next Route</p>
+          <p className="mt-3 text-base leading-7 text-[#f2e5c7]">{nextRoute}</p>
+          <div className="mt-5 flex flex-wrap gap-3">
+            <HeroLink href="/app/house/board">Open Strategy Center</HeroLink>
+            <HeroLink href="/app/guild" tone="secondary">Enter Guild</HeroLink>
+          </div>
+        </div>
+      </div>
     </PageShell>
   );
 }
