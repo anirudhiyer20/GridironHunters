@@ -66,7 +66,10 @@ type HuntAttemptChallengerRow = {
   challenger_draft_pick_id: string;
 };
 
-const BATTLE_KEY_TOTAL = 12;
+type BattleKeyGrantRow = {
+  week_number: number;
+  keys_granted: number;
+};
 
 export default async function HuntSlatePage({
   searchParams,
@@ -96,6 +99,18 @@ export default async function HuntSlatePage({
         .eq("user_id", user?.id ?? "")
         .maybeSingle()
     : { data: null };
+
+  const { data: battleKeyGrantRows } = participant?.id
+    ? await supabase
+        .from("battle_key_grants")
+        .select("week_number, keys_granted")
+        .eq("participant_id", participant.id)
+        .order("week_number", { ascending: false })
+        .limit(1)
+    : { data: [] };
+  const latestGrant = (battleKeyGrantRows?.[0] as BattleKeyGrantRow | undefined) ?? null;
+  const currentWeekNumber = latestGrant?.week_number ?? 1;
+  const battleKeyTotal = latestGrant?.keys_granted ?? 12;
 
   const { data: partyPickRows } = participant?.id
     ? await supabase
@@ -264,7 +279,8 @@ export default async function HuntSlatePage({
         message={message}
         queuedTargets={queuedTargets}
         challengerCandidates={challengerCandidates}
-        battleKeyTotal={BATTLE_KEY_TOTAL}
+        battleKeyTotal={battleKeyTotal}
+        currentWeekNumber={currentWeekNumber}
       />
     </PageShell>
   );

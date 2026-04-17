@@ -1746,9 +1746,14 @@ a {
 }
 
 @media (min-width: 1024px) {
-  .party-chest-shell {
+  .party-chest-main {
     grid-template-columns: minmax(18rem, 0.84fr) minmax(28rem, 1.16fr);
   }
+}
+
+.party-chest-main {
+  display: grid;
+  gap: 1.25rem;
 }
 
 .party-chest-left,
@@ -1765,6 +1770,13 @@ a {
   display: grid;
   align-content: start;
   gap: 1.1rem;
+  min-height: 32rem;
+}
+
+.party-chest-right {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  min-height: 32rem;
 }
 
 .party-chest-actions {
@@ -1802,7 +1814,7 @@ a {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 0.75rem;
-  min-height: 19rem;
+  min-height: 25.4rem;
   border-radius: 1.3rem;
   border: 2px solid rgba(27, 17, 9, 0.66);
   background:
@@ -1896,6 +1908,7 @@ a {
   border: 2px solid rgba(99, 117, 98, 0.42);
   background: rgba(25, 36, 29, 0.76);
   padding: 0.9rem;
+  min-width: 0;
 }
 
 .party-hunt-summary__header {
@@ -1931,13 +1944,18 @@ a {
 
 .party-hunt-summary__list {
   display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: calc((100% - 1.3rem) / 3);
   gap: 0.65rem;
+  overflow-x: auto;
+  padding-bottom: 0.2rem;
 }
 
 .party-hunt-assignment {
   position: relative;
   display: grid;
   gap: 0.25rem;
+  min-width: 0;
   border: 2px solid rgba(116, 145, 108, 0.42);
   border-radius: 0.9rem;
   background: rgba(14, 21, 17, 0.76);
@@ -2005,13 +2023,15 @@ a {
     inset 0 0 0 3px rgba(238, 200, 134, 0.08),
     inset 0 -12px 0 rgba(55, 31, 14, 0.28);
   padding: 0.8rem;
+  height: 100%;
+  min-height: 0;
 }
 
 .party-inventory-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 0.32rem;
-  max-height: 31rem;
+  height: 100%;
   overflow-y: auto;
   padding-right: 0.35rem;
 }
@@ -2088,6 +2108,10 @@ a {
   align-self: center;
   justify-self: center;
   color: rgba(56, 35, 19, 0.34);
+}
+
+.party-dungeon-slot--empty {
+  width: 100%;
 }
 
 .party-tribe-badge {

@@ -11,9 +11,9 @@ const achievements = [
 ];
 
 const trophyFinishes = [
-  { title: "Gold Finish", tone: "gold", seasons: "No Titles Yet" },
-  { title: "Silver Finish", tone: "silver", seasons: "No Finals Yet" },
-  { title: "Bronze Finish", tone: "bronze", seasons: "No Podiums Yet" },
+  { title: "Gold Finish", tone: "gold", count: 0 },
+  { title: "Silver Finish", tone: "silver", count: 0 },
+  { title: "Bronze Finish", tone: "bronze", count: 0 },
 ];
 
 export default function TrophyCabinetPage() {
@@ -24,13 +24,9 @@ export default function TrophyCabinetPage() {
     >
       <section className="rounded-[1.9rem] border border-[#7f5328] bg-[linear-gradient(180deg,#5a381b_0%,#3a2311_100%)] p-5 shadow-[0_18px_36px_rgba(0,0,0,0.28),inset_0_0_0_2px_rgba(243,214,158,0.05)]">
         <div className="flex flex-wrap items-center justify-between gap-4">
-          <div>
-            <p className="fantasy-kicker text-[0.68rem] text-[#e8d0a2]">House Honors</p>
-            <h2 className="fantasy-title mt-2 text-3xl text-[#fff4d8]">Cabinet Display</h2>
-          </div>
+          <h2 className="fantasy-title text-3xl text-[#fff4d8]">Cabinet Display</h2>
           <div className="flex flex-wrap gap-3">
             <HeroLink href="/app">Return Home</HeroLink>
-            <HeroLink href="/app/house/board" tone="secondary">Open Strategy Center</HeroLink>
           </div>
         </div>
 
@@ -59,10 +55,11 @@ export default function TrophyCabinetPage() {
               <div className="grid gap-4 sm:grid-cols-3">
                 {trophyFinishes.map((finish) => (
                   <div key={finish.title} className="rounded-[1rem] border border-[#c4a46b]/18 bg-[#f0dfbe] px-3 py-4 text-center shadow-[0_8px_14px_rgba(0,0,0,0.12)]">
-                    <div className={`mx-auto h-16 w-12 rounded-t-full border ${finish.tone === "gold" ? "border-[#d5ac44] bg-[linear-gradient(180deg,#f2d47b_0%,#bb8226_100%)]" : finish.tone === "silver" ? "border-[#b9c2ca] bg-[linear-gradient(180deg,#dde3e8_0%,#8994a2_100%)]" : "border-[#b2794d] bg-[linear-gradient(180deg,#d2a172_0%,#8f5527_100%)]"}`} />
+                    <div className={`mx-auto flex h-16 w-12 items-center justify-center rounded-t-full border ${finish.tone === "gold" ? "border-[#d5ac44] bg-[linear-gradient(180deg,#f2d47b_0%,#bb8226_100%)]" : finish.tone === "silver" ? "border-[#b9c2ca] bg-[linear-gradient(180deg,#dde3e8_0%,#8994a2_100%)]" : "border-[#b2794d] bg-[linear-gradient(180deg,#d2a172_0%,#8f5527_100%)]"}`}>
+                      <span className="text-xl font-black text-[#22150b]">{finish.count}</span>
+                    </div>
                     <div className={`mx-auto h-5 w-16 rounded-b-lg border ${finish.tone === "gold" ? "border-[#c1912e] bg-[#9e6b1d]" : finish.tone === "silver" ? "border-[#8994a2] bg-[#67707c]" : "border-[#8f5527] bg-[#6a3d19]"}`} />
                     <p className="fantasy-title mt-4 text-lg text-[#3f2512]">{finish.title}</p>
-                    <p className="mt-2 text-sm text-[#6a4a25]">{finish.seasons}</p>
                   </div>
                 ))}
               </div>

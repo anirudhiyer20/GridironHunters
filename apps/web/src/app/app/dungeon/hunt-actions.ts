@@ -117,7 +117,14 @@ export async function queueHuntTarget(formData: FormData) {
       .eq("picked_player_id", targetPlayerId)
       .maybeSingle();
 
-    if (draftedTarget) {
+    const { data: capturedTarget } = await supabase
+      .from("hunt_captures")
+      .select("id")
+      .eq("league_id", leagueId)
+      .eq("player_id", targetPlayerId)
+      .maybeSingle();
+
+    if (draftedTarget || capturedTarget) {
       throw new Error("That Wild Player already belongs to a House in this Guild.");
     }
 
@@ -243,6 +250,66 @@ export async function assignHuntChallenger(formData: FormData) {
       queueEntryId,
       tribe,
     });
+
+    const { data: existingSlotAssignment, error: existingSlotError } = await supabase
+      .from("hunt_challengers")
+      .select("id")
+      .eq("league_id", leagueId)
+      .eq("participant_id", participantId)
+      .eq("hunt_queue_entry_id", queueEntryId)
+      .eq("challenger_slot", challengerSlot)
+      .maybeSingle();
+
+    if (existingSlotError) {
+      throw new Error(existingSlotError.message);
+    }
+
+    const { data: duplicateAssignment, error: duplicateError } = await supabase
+      .from("hunt_challengers")
+      .select("id")
+      .eq("league_id", leagueId)
+      .eq("participant_id", participantId)
+      .eq("challenger_draft_pick_id", challengerDraftPickId)
+      .neq("hunt_queue_entry_id", queueEntryId)
+      .maybeSingle();
+
+    if (duplicateError) {
+      throw new Error(duplicateError.message);
+    }
+
+    if (duplicateAssignment) {
+      throw new Error("That battler is already assigned to another Hunt.");
+    }
+
+    const { data: grantRow, error: grantError } = await supabase
+      .from("battle_key_grants")
+      .select("keys_granted")
+      .eq("league_id", leagueId)
+      .eq("participant_id", participantId)
+      .order("week_number", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    if (grantError) {
+      throw new Error(grantError.message);
+    }
+
+    const { data: allAssignedRows, error: assignedRowsError } = await supabase
+      .from("hunt_challengers")
+      .select("id")
+      .eq("league_id", leagueId)
+      .eq("participant_id", participantId);
+
+    if (assignedRowsError) {
+      throw new Error(assignedRowsError.message);
+    }
+
+    const battleKeyTotal = Number(grantRow?.keys_granted ?? 12);
+    const currentBattleKeysInUse = allAssignedRows?.length ?? 0;
+
+    if (!existingSlotAssignment && currentBattleKeysInUse >= battleKeyTotal) {
+      throw new Error("No unspent Battle Keys remain. Clear a battler or wait for next grant.");
+    }
 
     const { data: challengerPick } = await supabase
       .from("draft_picks")
@@ -375,10 +442,27 @@ export async function submitHuntSlate(formData: FormData) {
   try {
     const leagueId = readRequired(formData, "league_id");
     const participantId = readRequired(formData, "participant_id");
+    const weekNumber = Number.parseInt(readRequired(formData, "week_number"), 10);
     const targetTribe = readOptionalTribe(formData);
     returnPath = readSafeReturnPath(formData, targetTribe ? getTribeReturnPath(targetTribe) : fallbackPath);
 
+    if (!Number.isInteger(weekNumber) || weekNumber < 1 || weekNumber > 18) {
+      throw new Error("Week number must be between 1 and 18.");
+    }
+
     await validateOwnedParticipant({ supabase, userId: user.id, leagueId, participantId });
+
+    const { data: grantRow, error: grantError } = await supabase
+      .from("battle_key_grants")
+      .select("keys_granted")
+      .eq("league_id", leagueId)
+      .eq("participant_id", participantId)
+      .eq("week_number", weekNumber)
+      .maybeSingle();
+
+    if (grantError) {
+      throw new Error(grantError.message);
+    }
 
     let queueQuery = supabase
       .from("hunt_queue_entries")
@@ -432,6 +516,18 @@ export async function submitHuntSlate(formData: FormData) {
       throw new Error("Assign at least one battler before submitting this Hunt slate.");
     }
 
+    const totalBattleKeysSpent = readyQueueEntries.reduce((total, entry) => {
+      const challengers = challengersByQueueEntryId[entry.id] ?? [];
+      return total + countBattleKeys(challengers.length);
+    }, 0);
+    const battleKeysGranted = Number(grantRow?.keys_granted ?? 12);
+
+    if (totalBattleKeysSpent > battleKeysGranted) {
+      throw new Error(
+        `This Hunt slate uses ${totalBattleKeysSpent} Battle Keys, but week ${weekNumber} has only ${battleKeysGranted}.`,
+      );
+    }
+
     for (const queueEntry of readyQueueEntries) {
       const challengers = challengersByQueueEntryId[queueEntry.id] ?? [];
       const battleKeysSpent = countBattleKeys(challengers.length);
@@ -444,7 +540,7 @@ export async function submitHuntSlate(formData: FormData) {
             hunt_queue_entry_id: queueEntry.id,
             target_player_id: queueEntry.target_player_id,
             target_tribe: queueEntry.target_tribe,
-            week_number: 1,
+            week_number: weekNumber,
             battle_keys_spent: battleKeysSpent,
             status: "submitted",
             result: null,

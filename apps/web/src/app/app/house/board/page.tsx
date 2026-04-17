@@ -16,9 +16,13 @@ type PartyAssignment = {
   draft_pick_id: string;
 };
 
+type BattleKeyGrantRow = {
+  week_number: number;
+  keys_granted: number;
+};
+
 const ARENA_SLOT_COUNT = 6;
 const DUNGEON_SLOT_COUNT = 3;
-const BATTLE_KEY_TOTAL = 12;
 
 export default async function StrategyCenterPage() {
   const supabase = await createClient();
@@ -60,9 +64,20 @@ export default async function StrategyCenterPage() {
         .select("id")
         .eq("participant_id", participant.id)
     : { data: [] };
+  const { data: battleKeyGrantRows } = participant?.id
+    ? await supabase
+        .from("battle_key_grants")
+        .select("week_number, keys_granted")
+        .eq("participant_id", participant.id)
+        .order("week_number", { ascending: false })
+        .limit(1)
+    : { data: [] };
+  const latestGrant = (battleKeyGrantRows?.[0] as BattleKeyGrantRow | undefined) ?? null;
+  const currentWeekNumber = latestGrant?.week_number ?? 1;
+  const battleKeyTotal = latestGrant?.keys_granted ?? 12;
   const assignments = (assignmentRows ?? []) as PartyAssignment[];
   const battleKeysInUse = huntQueueRows?.length ?? 0;
-  const battleKeysUnspent = Math.max(BATTLE_KEY_TOTAL - battleKeysInUse, 0);
+  const battleKeysUnspent = Math.max(battleKeyTotal - battleKeysInUse, 0);
   const arenaAssignments = assignments.filter((assignment) => assignment.assignment_type === "arena");
   const dungeonAssignments = huntQueueRows ?? [];
   const assignedPickIds = assignments.map((assignment) => assignment.draft_pick_id);
@@ -151,11 +166,12 @@ export default async function StrategyCenterPage() {
     {
       id: "battle-keys",
       title: "Battle Keys",
-      summary: `${battleKeysUnspent} Unspent`,
+      summary: `Week ${currentWeekNumber} • ${battleKeysUnspent} Unspent`,
       tone: battleKeysUnspent > 0 ? "green" : "warning",
       body: "Battle Keys are the weekly Dungeon resource used to power Hunts. This is the House-level snapshot for the current week.",
       rows: [
-        { label: "Battle Key Count", value: String(BATTLE_KEY_TOTAL) },
+        { label: "Week", value: String(currentWeekNumber) },
+        { label: "Battle Key Count", value: String(battleKeyTotal) },
         { label: "Battle Keys At Work", value: String(battleKeysInUse) },
         { label: "Battle Keys To Spend", value: String(battleKeysUnspent), warning: battleKeysUnspent === 0 },
       ],

@@ -21,6 +21,7 @@ type HuntSlateClientProps = {
   queuedTargets: QueuedHuntTarget[];
   challengerCandidates: HuntChallengerCandidate[];
   battleKeyTotal: number;
+  currentWeekNumber: number;
 };
 
 export function HuntSlateClient({
@@ -30,6 +31,7 @@ export function HuntSlateClient({
   queuedTargets,
   challengerCandidates,
   battleKeyTotal,
+  currentWeekNumber,
 }: HuntSlateClientProps) {
   const [challengerPicker, setChallengerPicker] = useState<{
     target: QueuedHuntTarget;
@@ -40,6 +42,12 @@ export function HuntSlateClient({
     0,
   );
   const unspentBattleKeys = Math.max(battleKeyTotal - battleKeysInUse, 0);
+  const isOverBattleKeyLimit = battleKeysInUse > battleKeyTotal;
+  const globallyAssignedDraftPickIds = new Set(
+    queuedTargets
+      .flatMap((target) => target.challengers.map((challenger) => challenger?.draftPickId))
+      .filter((id): id is string => Boolean(id)),
+  );
   const readyTargets = queuedTargets.filter((target) => target.challengers.some(Boolean));
   const hasSubmittedTargets = queuedTargets.some((target) => target.attempt);
   const needsResubmission = queuedTargets.some(isHuntTargetOutOfSync);
@@ -47,6 +55,7 @@ export function HuntSlateClient({
     readyCount: readyTargets.length,
     hasSubmittedTargets,
     needsResubmission,
+    isOverBattleKeyLimit,
   });
   const completedHunts = queuedTargets.filter((target) => target.attempt?.status === "resolved");
   const shellStyle = {
@@ -83,8 +92,12 @@ export function HuntSlateClient({
             <form action={submitHuntSlate} className="hunt-slate-submit">
               <input type="hidden" name="league_id" value={leagueId ?? ""} />
               <input type="hidden" name="participant_id" value={participantId ?? ""} />
+              <input type="hidden" name="week_number" value={currentWeekNumber} />
               <input type="hidden" name="return_to" value="/app/dungeon/hunts" />
-              <button type="submit" disabled={!leagueId || !participantId || readyTargets.length < 1}>
+              <button
+                type="submit"
+                disabled={!leagueId || !participantId || readyTargets.length < 1 || isOverBattleKeyLimit}
+              >
                 {needsResubmission ? "Resubmit Hunt Slate" : "Submit Hunt Slate"}
               </button>
               <span>{slateStatus}</span>
@@ -109,6 +122,8 @@ export function HuntSlateClient({
                     leagueId={leagueId}
                     participantId={participantId}
                     canSetHunts={Boolean(leagueId && participantId)}
+                    unspentBattleKeys={unspentBattleKeys}
+                    globallyAssignedDraftPickIds={globallyAssignedDraftPickIds}
                     onOpenChallengerPicker={(selectedTarget, slotNumber) => setChallengerPicker({ target: selectedTarget, slotNumber })}
                   />
                 ))
@@ -145,6 +160,7 @@ export function HuntSlateClient({
             target={challengerPicker.target}
             slotNumber={challengerPicker.slotNumber}
             candidates={challengerCandidates}
+            globallyAssignedDraftPickIds={globallyAssignedDraftPickIds}
             onClose={() => setChallengerPicker(null)}
           />
         ) : null}
@@ -158,12 +174,16 @@ function HuntSquadRow({
   leagueId,
   participantId,
   canSetHunts,
+  unspentBattleKeys,
+  globallyAssignedDraftPickIds,
   onOpenChallengerPicker,
 }: {
   target: QueuedHuntTarget;
   leagueId: string | null;
   participantId: string | null;
   canSetHunts: boolean;
+  unspentBattleKeys: number;
+  globallyAssignedDraftPickIds: Set<string>;
   onOpenChallengerPicker: (target: QueuedHuntTarget, slotNumber: 1 | 2) => void;
 }) {
   const colors = TRIBE_COLORS[target.tribe];
@@ -202,6 +222,7 @@ function HuntSquadRow({
               participantId={participantId}
               assignedDraftPickIds={assignedDraftPickIds}
               canSetHunts={canSetHunts}
+              unspentBattleKeys={unspentBattleKeys}
               onOpenPicker={() => onOpenChallengerPicker(target, slotNumber as 1 | 2)}
             />
           );
@@ -219,6 +240,7 @@ function ChallengerSlot({
   participantId,
   assignedDraftPickIds,
   canSetHunts,
+  unspentBattleKeys,
   onOpenPicker,
 }: {
   slotNumber: 1 | 2;
@@ -228,9 +250,11 @@ function ChallengerSlot({
   participantId: string | null;
   assignedDraftPickIds: Set<string>;
   canSetHunts: boolean;
+  unspentBattleKeys: number;
   onOpenPicker: () => void;
 }) {
   const isTakenByOtherSlot = challenger ? false : assignedDraftPickIds.size >= 2;
+  const isBlockedByBattleKeys = !challenger && unspentBattleKeys <= 0;
   const challengerColors = challenger && challenger.tribe !== "Unclaimed" ? TRIBE_COLORS[challenger.tribe] : null;
   const slotStyle = challengerColors
     ? ({
@@ -259,7 +283,11 @@ function ChallengerSlot({
           </div>
         </>
       ) : (
-        <button type="button" disabled={!canSetHunts || isTakenByOtherSlot} onClick={onOpenPicker}>
+        <button
+          type="button"
+          disabled={!canSetHunts || isTakenByOtherSlot || isBlockedByBattleKeys}
+          onClick={onOpenPicker}
+        >
           Choose Battler {slotNumber}
         </button>
       )}
@@ -273,6 +301,7 @@ function ChallengerPickerModal({
   target,
   slotNumber,
   candidates,
+  globallyAssignedDraftPickIds,
   onClose,
 }: {
   leagueId: string | null;
@@ -280,6 +309,7 @@ function ChallengerPickerModal({
   target: QueuedHuntTarget;
   slotNumber: 1 | 2;
   candidates: HuntChallengerCandidate[];
+  globallyAssignedDraftPickIds: Set<string>;
   onClose: () => void;
 }) {
   const [tribeFilter, setTribeFilter] = useState<TribeName | "ALL">("ALL");
@@ -326,7 +356,10 @@ function ChallengerPickerModal({
             </div>
             <div className="hunt-picker-grid">
               {visibleCandidates.length ? visibleCandidates.map((candidate) => {
-                const isDisabled = candidate.isInArenaLineup || alreadyAssignedIds.has(candidate.draftPickId);
+                const isDisabled =
+                  candidate.isInArenaLineup ||
+                  alreadyAssignedIds.has(candidate.draftPickId) ||
+                  globallyAssignedDraftPickIds.has(candidate.draftPickId);
 
                 return (
                   <form key={candidate.draftPickId} action={assignHuntChallenger}>
@@ -394,11 +427,14 @@ function getSlateStatus({
   readyCount,
   hasSubmittedTargets,
   needsResubmission,
+  isOverBattleKeyLimit,
 }: {
   readyCount: number;
   hasSubmittedTargets: boolean;
   needsResubmission: boolean;
+  isOverBattleKeyLimit: boolean;
 }) {
+  if (isOverBattleKeyLimit) return "Over Battle Key Limit";
   if (readyCount < 1) return "Assign at least one battler";
   if (needsResubmission) return "Changes Need Resubmission";
   if (hasSubmittedTargets) return "Slate Submitted";

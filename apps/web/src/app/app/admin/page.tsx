@@ -1,4 +1,4 @@
-import { importFantasyCalcPlayers } from "./actions";
+import { grantWeeklyBattleKeys, importFantasyCalcPlayers, resolveSubmittedHunts } from "./actions";
 
 import { PageShell } from "@/components/page-shell";
 import { Panel } from "@/components/panel";
@@ -14,6 +14,13 @@ type PlayerPoolRow = {
   nfl_team: string | null;
 };
 
+type LeagueOption = {
+  id: string;
+  name: string;
+  season: number;
+  status: string;
+};
+
 export default async function AdminPage({
   searchParams,
 }: {
@@ -22,10 +29,16 @@ export default async function AdminPage({
   const resolvedSearchParams = searchParams ? await searchParams : undefined;
   const message = resolvedSearchParams?.message;
   const supabase = await createClient();
+  const { data: leagueRows } = await supabase
+    .from("leagues")
+    .select("id, name, season, status")
+    .order("created_at", { ascending: false })
+    .limit(50);
   const { data: playerPoolRows } = await supabase
     .from("players")
     .select("source, position, is_active, provider_last_synced_at, full_name, source_player_id, nfl_team");
   const playerPoolSummary = summarizePlayerPool((playerPoolRows ?? []) as PlayerPoolRow[]);
+  const leagueOptions = (leagueRows ?? []) as LeagueOption[];
   const readinessChecks = buildDraftReadinessChecks((playerPoolRows ?? []) as PlayerPoolRow[]);
   const failingReadinessChecks = readinessChecks.filter((check) => check.status !== "ready");
 
@@ -97,6 +110,116 @@ export default async function AdminPage({
             No players are currently available in Supabase.
           </p>
         )}
+      </Panel>
+
+      <Panel
+        title="Battle Key Grants"
+        description="Issue weekly Battle Keys to every human House in a Guild and send mailbox notices."
+      >
+        <form action={grantWeeklyBattleKeys} className="grid gap-4 rounded-[1.2rem] border border-[#c6ad7d]/20 bg-[#201913] p-4">
+          <label className="grid gap-2 text-xs uppercase tracking-[0.18em] text-[#d6bf90]">
+            Guild
+            <select
+              name="league_id"
+              required
+              className="rounded-[0.8rem] border border-[#c6ad7d]/30 bg-[#130f0b] px-3 py-2 text-sm normal-case tracking-normal text-[#fff4d8]"
+            >
+              <option value="">Select a Guild</option>
+              {leagueOptions.map((league) => (
+                <option key={league.id} value={league.id}>
+                  {league.name} ({league.season}) - {league.status}
+                </option>
+              ))}
+            </select>
+          </label>
+          <div className="grid gap-4 md:grid-cols-2">
+            <label className="grid gap-2 text-xs uppercase tracking-[0.18em] text-[#d6bf90]">
+              Week
+              <input
+                type="number"
+                name="week_number"
+                min={1}
+                max={18}
+                defaultValue={1}
+                required
+                className="rounded-[0.8rem] border border-[#c6ad7d]/30 bg-[#130f0b] px-3 py-2 text-sm tracking-normal text-[#fff4d8]"
+              />
+            </label>
+            <label className="grid gap-2 text-xs uppercase tracking-[0.18em] text-[#d6bf90]">
+              Keys Granted
+              <input
+                type="number"
+                name="keys_granted"
+                min={1}
+                max={50}
+                defaultValue={12}
+                required
+                className="rounded-[0.8rem] border border-[#c6ad7d]/30 bg-[#130f0b] px-3 py-2 text-sm tracking-normal text-[#fff4d8]"
+              />
+            </label>
+          </div>
+          <button
+            type="submit"
+            className="w-fit rounded-full border border-[#c6ad7d]/35 bg-[#2e2419] px-5 py-3 text-sm uppercase tracking-[0.2em] text-[#fff4d8] transition-colors hover:bg-[#3a2e21]"
+          >
+            Grant Weekly Battle Keys
+          </button>
+        </form>
+      </Panel>
+
+      <Panel
+        title="Hunt Resolution"
+        description="Resolve submitted Hunt slates for a Guild week using the MVP score engine and trigger Hunt report scrolls."
+      >
+        <form action={resolveSubmittedHunts} className="grid gap-4 rounded-[1.2rem] border border-[#c6ad7d]/20 bg-[#201913] p-4">
+          <label className="grid gap-2 text-xs uppercase tracking-[0.18em] text-[#d6bf90]">
+            Guild
+            <select
+              name="league_id"
+              required
+              className="rounded-[0.8rem] border border-[#c6ad7d]/30 bg-[#130f0b] px-3 py-2 text-sm normal-case tracking-normal text-[#fff4d8]"
+            >
+              <option value="">Select a Guild</option>
+              {leagueOptions.map((league) => (
+                <option key={league.id} value={league.id}>
+                  {league.name} ({league.season}) - {league.status}
+                </option>
+              ))}
+            </select>
+          </label>
+          <div className="grid gap-4 md:grid-cols-2">
+            <label className="grid gap-2 text-xs uppercase tracking-[0.18em] text-[#d6bf90]">
+              Week
+              <input
+                type="number"
+                name="week_number"
+                min={1}
+                max={18}
+                defaultValue={1}
+                required
+                className="rounded-[0.8rem] border border-[#c6ad7d]/30 bg-[#130f0b] px-3 py-2 text-sm tracking-normal text-[#fff4d8]"
+              />
+            </label>
+            <label className="grid gap-2 text-xs uppercase tracking-[0.18em] text-[#d6bf90]">
+              Resolve Limit
+              <input
+                type="number"
+                name="resolve_limit"
+                min={1}
+                max={500}
+                defaultValue={200}
+                required
+                className="rounded-[0.8rem] border border-[#c6ad7d]/30 bg-[#130f0b] px-3 py-2 text-sm tracking-normal text-[#fff4d8]"
+              />
+            </label>
+          </div>
+          <button
+            type="submit"
+            className="w-fit rounded-full border border-[#c6ad7d]/35 bg-[#2e2419] px-5 py-3 text-sm uppercase tracking-[0.2em] text-[#fff4d8] transition-colors hover:bg-[#3a2e21]"
+          >
+            Resolve Submitted Hunts
+          </button>
+        </form>
       </Panel>
 
       <Panel

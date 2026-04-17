@@ -68,6 +68,10 @@ type HuntAttemptChallengerRow = {
   challenger_draft_pick_id: string;
 };
 
+type HuntCaptureRow = {
+  player_id: string;
+};
+
 const BATTLE_KEY_TOTAL = 12;
 
 export function generateStaticParams() {
@@ -163,11 +167,22 @@ export default async function DungeonTribePage({
         .eq("league_id", currentGuild.id)
         .not("picked_player_id", "is", null)
     : { data: [] };
+  const { data: capturedRows } = currentGuild?.id
+    ? await supabase
+        .from("hunt_captures")
+        .select("player_id")
+        .eq("league_id", currentGuild.id)
+    : { data: [] };
   const ownedPlayerIds = new Set(
     (draftedRows ?? [])
       .map((row) => row.picked_player_id)
       .filter((id): id is string => Boolean(id)),
   );
+  for (const row of (capturedRows ?? []) as HuntCaptureRow[]) {
+    if (row.player_id) {
+      ownedPlayerIds.add(row.player_id);
+    }
+  }
   const { data: targetPlayerRows } = await supabase
     .from("players")
     .select("id, full_name, position, nfl_team, tribe, provider_value, provider_overall_rank")

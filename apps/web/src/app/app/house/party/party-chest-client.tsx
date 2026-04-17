@@ -20,6 +20,7 @@ export type PartyChestPlayer = {
 
 type PartyChestClientProps = {
   party: PartyChestPlayer[];
+  capturedRecruits: PartyChestPlayer[];
   lineup: Array<{
     id: string;
     position: DraftPosition | "FLEX";
@@ -44,7 +45,7 @@ export type HuntAssignment = {
 type PositionFilter = "ALL" | DraftPosition;
 type TribeFilter = "ALL" | TribeName | "Unclaimed";
 
-export function PartyChestClient({ party, lineup, huntAssignments, leagueId, participantId }: PartyChestClientProps) {
+export function PartyChestClient({ party, capturedRecruits, lineup, huntAssignments, leagueId, participantId }: PartyChestClientProps) {
   const [positionFilter, setPositionFilter] = useState<PositionFilter>("ALL");
   const [tribeFilter, setTribeFilter] = useState<TribeFilter>("ALL");
   const [selectedPlayerId, setSelectedPlayerId] = useState<string | null>(party[0]?.id ?? null);
@@ -76,78 +77,101 @@ export function PartyChestClient({ party, lineup, huntAssignments, leagueId, par
 
   return (
     <section className="party-chest-shell">
-      <div className="party-chest-left">
-        <div className="party-chest-actions">
-          <form action={confirmPartySquad}>
-            <button type="submit" className="fantasy-button fantasy-button--gold">
-              Confirm Squad
-            </button>
-          </form>
-          <HeroLink href="/app/arena/duels" tone="secondary">Enter Duel Dais</HeroLink>
-        </div>
+      <div className="party-chest-main">
+        <div className="party-chest-left">
+          <div className="party-chest-actions">
+            <form action={confirmPartySquad}>
+              <button type="submit" className="fantasy-button fantasy-button--gold">
+                Confirm Squad
+              </button>
+            </form>
+            <HeroLink href="/app/arena/duels" tone="secondary">Enter Duel Dais</HeroLink>
+          </div>
 
-        <div className="party-selection-ribbon">
-          <span>Selected Fighter</span>
-          <strong>{selectedPlayer ? `${selectedPlayer.name} (${selectedPlayer.position})` : "Choose from inventory"}</strong>
-        </div>
+          <div className="party-selection-ribbon">
+            <span>Selected Fighter</span>
+            <strong>{selectedPlayer ? `${selectedPlayer.name} (${selectedPlayer.position})` : "Choose from inventory"}</strong>
+          </div>
 
-        <div className="party-lineup-stage" aria-label="Current Arena lineup">
-          {lineup.slice(0, 6).map((slot) => (
-            <LineupSlot
-              key={slot.id}
-              slot={slot}
-              selectedPlayer={selectedPlayer}
-              leagueId={leagueId}
-              participantId={participantId}
-              canSave={canSaveAssignments}
-              isSelectedAlreadyAssigned={Boolean(selectedPlayer && assignedPickIds.has(selectedPlayer.draftPickId))}
-            />
-          ))}
-        </div>
-
-        <HuntAssignmentSummary huntAssignments={huntAssignments} />
-      </div>
-
-      <div className="party-chest-right">
-        <div className="party-chest-filter-bar">
-          <HeroLink href="/app" tone="secondary">Return Home</HeroLink>
-          <label>
-            <span>Tribe</span>
-            <select value={tribeFilter} onChange={(event) => setTribeFilter(event.target.value as TribeFilter)}>
-              {tribeOptions.map((tribe) => (
-                <option key={tribe} value={tribe}>
-                  {tribe}
-                </option>
-              ))}
-            </select>
-          </label>
-          <label>
-            <span>Position</span>
-            <select value={positionFilter} onChange={(event) => setPositionFilter(event.target.value as PositionFilter)}>
-              <option value="ALL">ALL</option>
-              {DRAFT_POSITIONS.map((position) => (
-                <option key={position} value={position}>
-                  {position}
-                </option>
-              ))}
-            </select>
-          </label>
-        </div>
-
-        <div className="party-inventory-window">
-          <div className="party-inventory-grid">
-            {inventorySlots.map((player, index) => (
-              <InventorySlot
-                key={player?.id ?? `inventory-empty-${index}`}
-                player={player}
-                index={index}
-                isSelected={player?.id === selectedPlayerId}
-                onSelect={() => player ? setSelectedPlayerId(player.id) : undefined}
+          <div className="party-lineup-stage" aria-label="Current Arena lineup">
+            {lineup.slice(0, 6).map((slot) => (
+              <LineupSlot
+                key={slot.id}
+                slot={slot}
+                selectedPlayer={selectedPlayer}
+                leagueId={leagueId}
+                participantId={participantId}
+                canSave={canSaveAssignments}
+                isSelectedAlreadyAssigned={Boolean(selectedPlayer && assignedPickIds.has(selectedPlayer.draftPickId))}
               />
             ))}
           </div>
         </div>
+
+        <div className="party-chest-right">
+          <div className="party-chest-filter-bar">
+            <HeroLink href="/app" tone="secondary">Return Home</HeroLink>
+            <label>
+              <span>Tribe</span>
+              <select value={tribeFilter} onChange={(event) => setTribeFilter(event.target.value as TribeFilter)}>
+                {tribeOptions.map((tribe) => (
+                  <option key={tribe} value={tribe}>
+                    {tribe}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label>
+              <span>Position</span>
+              <select value={positionFilter} onChange={(event) => setPositionFilter(event.target.value as PositionFilter)}>
+                <option value="ALL">ALL</option>
+                {DRAFT_POSITIONS.map((position) => (
+                  <option key={position} value={position}>
+                    {position}
+                  </option>
+                ))}
+              </select>
+            </label>
+          </div>
+
+          <div className="party-inventory-window">
+            <div className="party-inventory-grid">
+              {inventorySlots.map((player, index) => (
+                <InventorySlot
+                  key={player?.id ?? `inventory-empty-${index}`}
+                  player={player}
+                  index={index}
+                  isSelected={player?.id === selectedPlayerId}
+                  onSelect={() => player ? setSelectedPlayerId(player.id) : undefined}
+                />
+              ))}
+            </div>
+          </div>
+        </div>
       </div>
+
+      {capturedRecruits.length ? (
+        <div className="party-hunt-summary" aria-label="Captured recruits">
+          <div className="party-hunt-summary__header">
+            <div>
+              <span>Captured Recruits</span>
+              <strong>{capturedRecruits.length} Captured From Hunts</strong>
+            </div>
+          </div>
+          <div className="party-hunt-summary__list">
+            {capturedRecruits.map((player) => (
+              <article key={player.id} className="party-hunt-assignment">
+                <TribeBadge tribe={player.tribe} />
+                <span>{player.position}</span>
+                <strong>{player.name}</strong>
+                <small>{player.nflTeam}</small>
+              </article>
+            ))}
+          </div>
+        </div>
+      ) : null}
+
+      <HuntAssignmentSummary huntAssignments={huntAssignments} />
     </section>
   );
 }
@@ -225,7 +249,7 @@ function HuntAssignmentSummary({ huntAssignments }: { huntAssignments: HuntAssig
             </small>
           </article>
         )) : (
-          <div className="party-dungeon-slot">
+          <div className="party-dungeon-slot party-dungeon-slot--empty">
             <span>Dungeon</span>
             <strong>No Active Hunt Assignments</strong>
             <small>Queue a Wild Player in the Dungeon, then choose battlers on the Hunt Slate.</small>

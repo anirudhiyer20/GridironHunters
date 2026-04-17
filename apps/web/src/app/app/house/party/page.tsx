@@ -41,8 +41,16 @@ type DraftPick = {
 
 type PlayerRow = {
   id: string;
+  full_name?: string | null;
+  position?: DraftPosition | string | null;
   nfl_team: string | null;
   tribe: TribeName | "Unclaimed" | null;
+};
+
+type HuntCaptureRow = {
+  id: string;
+  player_id: string;
+  week_number: number;
 };
 
 type PartyAssignment = {
@@ -109,6 +117,14 @@ export default async function PartyChestPage({ searchParams }: PartyChestPagePro
         .select("assignment_type, slot_key, draft_pick_id")
         .eq("participant_id", participant.id)
     : { data: [] };
+  const { data: huntCaptureRows } = participant?.id && currentGuild?.id
+    ? await supabase
+        .from("hunt_captures")
+        .select("id, player_id, week_number")
+        .eq("league_id", currentGuild.id)
+        .eq("participant_id", participant.id)
+        .order("created_at", { ascending: false })
+    : { data: [] };
 
   const partyPicks = (picks ?? []) as DraftPick[];
   const playerIds = partyPicks
@@ -132,6 +148,34 @@ export default async function PartyChestPage({ searchParams }: PartyChestPagePro
       tribe: player?.tribe ?? "Unclaimed",
     };
   });
+  const capturedRows = (huntCaptureRows ?? []) as HuntCaptureRow[];
+  const capturedPlayerIds = capturedRows.map((capture) => capture.player_id).filter((id): id is string => Boolean(id));
+  const { data: capturedPlayerRows } = capturedPlayerIds.length
+    ? await supabase
+        .from("players")
+        .select("id, full_name, position, nfl_team, tribe")
+        .in("id", capturedPlayerIds)
+    : { data: [] };
+  const capturedPlayersById = new Map((capturedPlayerRows ?? []).map((player) => [player.id, player as PlayerRow]));
+  const capturedRecruits = capturedRows
+    .map((capture): PartyChestPlayer | null => {
+      const player = capturedPlayersById.get(capture.player_id);
+
+      if (!player || !player.full_name || !isDraftPosition(player.position)) {
+        return null;
+      }
+
+      return {
+        id: `captured-${capture.id}`,
+        draftPickId: `captured-${capture.id}`,
+        pickNumber: 0,
+        name: player.full_name,
+        position: player.position,
+        nflTeam: player.nfl_team ?? "FA",
+        tribe: player.tribe ?? "Unclaimed",
+      };
+    })
+    .filter((player): player is PartyChestPlayer => Boolean(player));
   const partyByPickId = new Map(party.map((player) => [player.draftPickId, player]));
   const assignmentRows = (assignments ?? []) as PartyAssignment[];
   const assignmentPlayerBySlot = new Map(
@@ -217,6 +261,7 @@ export default async function PartyChestPage({ searchParams }: PartyChestPagePro
 
         <PartyChestClient
           party={party}
+          capturedRecruits={capturedRecruits}
           lineup={lineup}
           huntAssignments={huntAssignments}
           leagueId={currentGuild?.id ?? null}
