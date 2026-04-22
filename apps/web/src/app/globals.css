@@ -269,6 +269,27 @@ a {
   border: 4px solid rgba(121, 83, 44, 0.86);
 }
 
+.room-scene--guild-chamber::before {
+  background:
+    linear-gradient(
+      180deg,
+      #b64329 0%,
+      #ad3b23 27%,
+      #25170f 27%,
+      #25170f 28.2%,
+      rgba(78, 49, 28, 0.24) 28.2%,
+      rgba(78, 49, 28, 0.24) 100%
+    ),
+    linear-gradient(90deg, rgba(55, 34, 19, 0.44) 0 1px, transparent 1px),
+    linear-gradient(180deg, rgba(55, 34, 19, 0.34) 0 1px, transparent 1px),
+    repeating-linear-gradient(180deg, rgba(67, 44, 25, 0.62) 0 22px, rgba(49, 32, 19, 0.68) 22px 44px);
+  background-size: auto, 62px 28px, 62px 28px, auto;
+  border: 4px solid rgba(31, 17, 8, 0.92);
+  box-shadow:
+    inset 0 0 0 2px rgba(226, 200, 154, 0.08),
+    0 20px 36px rgba(0, 0, 0, 0.32);
+}
+
 .room-scene--dungeon {
   background:
     radial-gradient(circle at top, rgba(119, 172, 141, 0.12), transparent 22%),
@@ -3869,6 +3890,799 @@ a {
   border-radius: 1rem 1rem 0.2rem 0.2rem;
 }
 
+/* Guild Center Full Art Polish (active override) */
+.guild-center-landing {
+  overflow: hidden;
+  background:
+    linear-gradient(180deg, #d1462a 0%, #c53f25 100%) !important;
+}
+
+.guild-center-landing::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  background:
+    linear-gradient(
+      180deg,
+      rgba(63, 29, 17, 0) 0 26%,
+      rgba(35, 19, 10, 0.85) 26% 27.2%,
+      rgba(94, 58, 31, 0.2) 27.2% 100%
+    ),
+    linear-gradient(90deg, rgba(36, 18, 9, 0.36) 0 1px, transparent 1px),
+    linear-gradient(180deg, rgba(36, 18, 9, 0.24) 0 1px, transparent 1px),
+    repeating-linear-gradient(0deg, rgba(81, 50, 29, 0.38) 0 20px, rgba(63, 40, 22, 0.42) 20px 40px);
+  background-size: auto, 58px 26px, 58px 26px, auto;
+}
+
+.guild-center-tavern {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+}
+
+.guild-center-tavern__shelves {
+  position: absolute;
+  left: 50%;
+  top: 11%;
+  transform: translateX(-50%);
+  width: min(44rem, calc(100% - 8rem));
+  height: 30%;
+  border: 4px solid rgba(41, 20, 10, 0.92);
+  background:
+    linear-gradient(180deg, rgba(39, 20, 11, 0.85) 0%, rgba(22, 12, 8, 0.95) 100%),
+    repeating-linear-gradient(90deg, rgba(126, 74, 42, 0.3) 0 14px, rgba(69, 39, 23, 0.3) 14px 28px);
+  box-shadow:
+    inset 0 -28px 0 rgba(118, 71, 39, 0.32),
+    inset 0 -56px 0 rgba(95, 56, 31, 0.24);
+}
+
+.guild-center-tavern__counter {
+  position: absolute;
+  left: 50%;
+  bottom: 17%;
+  transform: translateX(-50%);
+  width: min(46rem, calc(100% - 6rem));
+  height: 25%;
+  border: 4px solid rgba(48, 27, 14, 0.94);
+  background:
+    linear-gradient(180deg, rgba(184, 111, 62, 0.96) 0 15%, rgba(121, 70, 37, 0.98) 15% 100%),
+    repeating-linear-gradient(90deg, rgba(158, 98, 55, 0.4) 0 20px, rgba(95, 56, 30, 0.4) 20px 40px);
+  box-shadow:
+    inset 0 -20px 0 rgba(71, 40, 22, 0.5),
+    0 12px 0 rgba(31, 17, 9, 0.55);
+}
+
+.guild-center-tavern__stools {
+  position: absolute;
+  left: 50%;
+  bottom: 4%;
+  transform: translateX(-50%);
+  width: min(41rem, calc(100% - 10rem));
+  display: flex;
+  justify-content: space-between;
+}
+
+.guild-center-tavern__stools span {
+  position: relative;
+  width: 4.1rem;
+  height: 5.2rem;
+  border: 3px solid rgba(58, 33, 18, 0.95);
+  border-top-width: 9px;
+  background: linear-gradient(180deg, rgba(153, 92, 52, 0.98) 0%, rgba(98, 59, 32, 1) 100%);
+  box-shadow: inset 0 -10px 0 rgba(58, 33, 18, 0.58);
+}
+
+.guild-center-tavern__stools span::before,
+.guild-center-tavern__stools span::after {
+  content: "";
+  position: absolute;
+  bottom: -15px;
+  width: 5px;
+  height: 15px;
+  background: rgba(81, 45, 24, 1);
+}
+
+.guild-center-tavern__stools span::before {
+  left: 9px;
+}
+
+.guild-center-tavern__stools span::after {
+  right: 9px;
+}
+
+.guild-center-tavern__bottles {
+  position: absolute;
+  left: 50%;
+  top: 16%;
+  transform: translateX(-50%);
+  width: min(36rem, calc(100% - 14rem));
+  display: flex;
+  justify-content: space-between;
+}
+
+.guild-center-tavern__bottles span {
+  width: 0.95rem;
+  height: 2.8rem;
+  border: 2px solid rgba(31, 18, 10, 0.9);
+  border-bottom-width: 3px;
+  background: linear-gradient(180deg, #8fe0ff 0%, #3a95d1 100%);
+}
+
+.guild-center-tavern__bottles span:nth-child(2n) {
+  background: linear-gradient(180deg, #e0be86 0%, #ac7830 100%);
+}
+
+.guild-center-tavern__bottles span:nth-child(3n) {
+  background: linear-gradient(180deg, #95e593 0%, #2d8f43 100%);
+}
+
+.guild-center-tavern__plant {
+  position: absolute;
+  left: clamp(1rem, 4vw, 2rem);
+  top: 30%;
+  width: 3.8rem;
+  height: 5.4rem;
+  border: 3px solid rgba(84, 53, 27, 0.9);
+  background: linear-gradient(180deg, #d8a46d 0%, #8c5c31 100%);
+  box-shadow: inset 0 -8px 0 rgba(74, 43, 22, 0.35);
+}
+
+.guild-center-tavern__plant::before {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: -30px;
+  transform: translateX(-50%);
+  width: 3rem;
+  height: 2.5rem;
+  background:
+    radial-gradient(circle at 18% 62%, #63ba67 0 36%, transparent 38%),
+    radial-gradient(circle at 50% 30%, #7cd17c 0 40%, transparent 42%),
+    radial-gradient(circle at 82% 65%, #53ab5a 0 38%, transparent 40%);
+}
+
+.guild-center-buttons {
+  top: clamp(1.6rem, 5vw, 2.8rem) !important;
+  width: min(31rem, calc(100% - 3.5rem)) !important;
+}
+
+.guild-center-buttons button {
+  border: 3px solid #5d4f44 !important;
+  border-radius: 0.2rem !important;
+  background: linear-gradient(180deg, #f5e1c5 0%, #dec29a 100%) !important;
+  color: #47372f !important;
+  box-shadow:
+    inset 0 -4px 0 rgba(124, 93, 63, 0.38),
+    0 3px 0 rgba(42, 25, 13, 0.32) !important;
+}
+
+.guild-center-wizard {
+  bottom: clamp(8.7rem, 15vw, 10.6rem) !important;
+  width: clamp(8.9rem, 16vw, 10.6rem) !important;
+  height: clamp(10.4rem, 18vw, 12.3rem) !important;
+  z-index: 2;
+}
+
+.guild-center-wizard--left {
+  left: clamp(4.5rem, 13vw, 8.6rem) !important;
+  bottom: clamp(1.2rem, 6vw, 2.8rem) !important;
+}
+
+.guild-wizard {
+  position: relative;
+  width: 100%;
+  height: 100%;
+}
+
+.guild-wizard span {
+  position: absolute;
+}
+
+.guild-wizard__hat {
+  left: 50%;
+  top: 2%;
+  transform: translateX(-50%);
+  width: 59%;
+  height: 30%;
+  background:
+    linear-gradient(135deg, transparent 0 14%, #0e2f5d 14% 72%, transparent 72%),
+    linear-gradient(180deg, #3a78be 0%, #204878 100%);
+  clip-path: polygon(2% 92%, 16% 55%, 5% 36%, 32% 12%, 78% 7%, 98% 26%, 80% 44%, 78% 70%, 100% 88%);
+  filter: drop-shadow(0 2px 0 rgba(0, 0, 0, 0.36));
+}
+
+.guild-wizard__head {
+  left: 50%;
+  top: 30%;
+  transform: translateX(-50%);
+  width: 28%;
+  height: 19%;
+  background: #efd1a8;
+  border: 3px solid #111e31;
+}
+
+.guild-wizard__head::before,
+.guild-wizard__head::after {
+  content: "";
+  position: absolute;
+  top: 38%;
+  width: 3px;
+  height: 3px;
+  background: #1a2232;
+}
+
+.guild-wizard__head::before {
+  left: 26%;
+}
+
+.guild-wizard__head::after {
+  right: 26%;
+}
+
+.guild-wizard__robe {
+  left: 50%;
+  bottom: 13%;
+  transform: translateX(-50%);
+  width: 56%;
+  height: 42%;
+  background:
+    linear-gradient(90deg, transparent 46%, rgba(15, 23, 40, 0.26) 46% 54%, transparent 54%),
+    linear-gradient(180deg, #3269ab 0%, #214878 100%);
+  border: 3px solid #111c30;
+  clip-path: polygon(10% 0, 90% 0, 100% 22%, 88% 100%, 12% 100%, 0 22%);
+}
+
+.guild-wizard__beard {
+  left: 50%;
+  top: 44%;
+  transform: translateX(-50%);
+  width: 30%;
+  height: 25%;
+  background: linear-gradient(180deg, #f8f7f2 0%, #dfddd4 100%);
+  clip-path: polygon(0 0, 100% 0, 84% 34%, 66% 100%, 34% 100%, 16% 34%);
+  border: 2px solid #141f32;
+}
+
+.guild-wizard__arm {
+  left: 28%;
+  top: 54%;
+  width: 19%;
+  height: 12%;
+  background: #efd1a8;
+  border: 2px solid #111c30;
+}
+
+.guild-wizard__staff {
+  right: 17%;
+  top: 34%;
+  width: 6%;
+  height: 53%;
+  background: linear-gradient(180deg, #523c26 0%, #312316 100%);
+  border: 2px solid #131313;
+}
+
+.guild-wizard__orb {
+  right: 11%;
+  top: 31%;
+  width: 12%;
+  height: 10%;
+  border-radius: 999px;
+  border: 2px solid #122043;
+  background: radial-gradient(circle at 35% 30%, #c5ebff 0 28%, #66b1e0 45%, #345f9d 100%);
+}
+
+.guild-wizard__shadow {
+  left: 50%;
+  bottom: 7%;
+  transform: translateX(-50%);
+  width: 44%;
+  height: 7%;
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.42);
+}
+
+.guild-center-role-note {
+  right: clamp(1.2rem, 3vw, 2rem) !important;
+  top: auto !important;
+  bottom: clamp(8.4rem, 15vw, 10.2rem) !important;
+  border: 2px solid #7d828a !important;
+  background: #eef0f5 !important;
+  padding: 0.72rem 0.88rem !important;
+  font-weight: 600;
+}
+
+.guild-center-role-note::before {
+  content: "";
+  position: absolute;
+  left: -22px;
+  bottom: 16px;
+  width: 0;
+  height: 0;
+  border-top: 11px solid transparent;
+  border-bottom: 11px solid transparent;
+  border-right: 22px solid #eef0f5;
+  filter: drop-shadow(-2px 0 0 #7d828a);
+}
+
+.guild-book {
+  border: 10px solid #9f8b7b !important;
+  background: #efddc2 !important;
+  box-shadow: 0 14px 24px rgba(0, 0, 0, 0.28);
+}
+
+.guild-book::after {
+  content: "";
+  position: absolute;
+  inset: 8px;
+  pointer-events: none;
+  background:
+    linear-gradient(180deg, rgba(126, 113, 98, 0.22), rgba(126, 113, 98, 0.22)),
+    linear-gradient(90deg, transparent 0 7%, rgba(129, 113, 95, 0.22) 7% 9%, transparent 9% 100%),
+    linear-gradient(90deg, transparent 91%, rgba(129, 113, 95, 0.22) 91% 93%, transparent 93% 100%);
+  clip-path: polygon(0 0, 100% 0, 100% 94%, 95% 94%, 95% 100%, 5% 100%, 5% 94%, 0 94%);
+}
+
+.guild-book-left,
+.guild-book-right {
+  position: relative;
+}
+
+.guild-book-left::before,
+.guild-book-right::before {
+  content: "";
+  position: absolute;
+  bottom: 10px;
+  width: 56px;
+  height: 14px;
+  background: rgba(171, 154, 132, 0.35);
+}
+
+.guild-book-left::before {
+  left: 18px;
+}
+
+.guild-book-right::before {
+  right: 18px;
+}
+
+.room-hotspot--podium {
+  border: 2px solid rgba(229, 211, 174, 0.45);
+  border-radius: 0.7rem;
+  background:
+    radial-gradient(circle at 50% 78%, rgba(219, 168, 94, 0.24) 0 36%, transparent 38% 100%),
+    linear-gradient(180deg, rgba(229, 220, 202, 0.92) 0%, rgba(203, 189, 166, 0.95) 74%, rgba(163, 138, 102, 0.95) 100%);
+}
+
+.room-hotspot--podium::before {
+  content: "";
+  position: absolute;
+  left: 36%;
+  bottom: 18%;
+  width: 28%;
+  height: 58%;
+  border: 2px solid rgba(133, 113, 84, 0.7);
+  border-radius: 0.2rem;
+  background: linear-gradient(180deg, rgba(238, 232, 219, 0.95) 0%, rgba(201, 189, 169, 0.96) 100%);
+}
+
+.room-hotspot--podium .room-hotspot__label {
+  bottom: -2.2rem;
+  color: #e4f3ff;
+  font-size: clamp(1.25rem, 2.1vw, 2rem);
+  letter-spacing: 0.02em;
+  text-transform: none;
+}
+
+.room-hotspot--guild-center {
+  border: 2px solid rgba(224, 190, 129, 0.5);
+  border-radius: 0.7rem;
+  background:
+    linear-gradient(180deg, rgba(42, 22, 15, 0.35) 0%, rgba(20, 12, 8, 0.52) 100%),
+    repeating-linear-gradient(90deg, rgba(213, 163, 97, 0.14) 0 12px, rgba(94, 63, 37, 0.14) 12px 24px),
+    linear-gradient(180deg, rgba(112, 75, 41, 0.76) 0%, rgba(60, 38, 20, 0.85) 100%);
+}
+
+.room-hotspot--guild-center::before {
+  content: "";
+  position: absolute;
+  left: 8%;
+  right: 8%;
+  bottom: 12%;
+  height: 24%;
+  border: 2px solid rgba(72, 45, 24, 0.7);
+  border-radius: 0.4rem;
+  background: linear-gradient(180deg, rgba(129, 85, 53, 0.95) 0%, rgba(81, 52, 31, 0.95) 100%);
+}
+
+.room-hotspot--guild-center .room-hotspot__label {
+  bottom: -2.35rem;
+  color: #ecf4ff;
+  font-size: clamp(1.2rem, 2vw, 1.9rem);
+  letter-spacing: 0.02em;
+  text-transform: none;
+}
+
+.room-hotspot--quest-board {
+  border: 2px solid rgba(173, 148, 92, 0.64);
+  border-radius: 0.5rem;
+  background: linear-gradient(180deg, rgba(123, 87, 44, 0.94) 0%, rgba(78, 53, 26, 0.96) 100%);
+}
+
+.room-hotspot--quest-board::before {
+  content: "";
+  position: absolute;
+  inset: 14% 8% 13% 8%;
+  border: 2px solid rgba(94, 58, 28, 0.72);
+  border-radius: 0.35rem;
+  background:
+    repeating-linear-gradient(
+      90deg,
+      rgba(226, 207, 167, 0.92) 0 13%,
+      rgba(226, 207, 167, 0.92) 13% 16%,
+      transparent 16% 23%
+    ),
+    repeating-linear-gradient(
+      180deg,
+      transparent 0 18%,
+      rgba(212, 193, 149, 0.84) 18% 32%
+    );
+}
+
+.room-hotspot--quest-board .room-hotspot__label {
+  bottom: -2.3rem;
+  color: #e9f6ff;
+  font-size: clamp(1.2rem, 2vw, 1.95rem);
+  letter-spacing: 0.02em;
+  text-transform: none;
+}
+
+.room-hotspot--war-table {
+  border: 2px solid rgba(215, 141, 86, 0.56);
+  border-radius: 0.45rem;
+  background:
+    linear-gradient(180deg, rgba(201, 128, 65, 0.9) 0%, rgba(140, 84, 43, 0.96) 58%, rgba(95, 56, 30, 0.98) 100%);
+}
+
+.room-hotspot--war-table::before {
+  content: "";
+  position: absolute;
+  left: 10%;
+  right: 10%;
+  top: -24%;
+  height: 26%;
+  clip-path: polygon(50% 0, 83% 38%, 67% 100%, 33% 100%, 17% 38%);
+  border: 2px solid rgba(214, 78, 78, 0.78);
+  background: linear-gradient(180deg, rgba(231, 112, 112, 0.95) 0%, rgba(154, 36, 36, 0.95) 100%);
+}
+
+.room-hotspot--war-table .room-hotspot__label {
+  bottom: -2.25rem;
+  color: #8fe6ff;
+  font-size: clamp(1.25rem, 2.1vw, 2rem);
+  letter-spacing: 0.02em;
+  text-transform: none;
+}
+
+.guild-center-shell {
+  position: relative;
+  min-height: clamp(34rem, 62vw, 44rem);
+  border: 6px solid #4a4d52;
+  border-radius: 1rem;
+  background: #ce3e24;
+  box-shadow:
+    inset 0 0 0 2px #131313,
+    0 20px 44px rgba(0, 0, 0, 0.34);
+  overflow: hidden;
+  padding: clamp(1rem, 2.8vw, 2rem);
+}
+
+.guild-center-message {
+  margin-bottom: 0.75rem;
+  border: 2px solid rgba(253, 234, 179, 0.28);
+  border-radius: 0.6rem;
+  background: rgba(24, 16, 10, 0.56);
+  padding: 0.4rem 0.7rem;
+  color: #fff4d8;
+  font-family: "Courier New", "Consolas", monospace;
+  font-size: 0.86rem;
+}
+
+.guild-center-close {
+  position: absolute;
+  right: 1.15rem;
+  top: 0.85rem;
+  border: none;
+  background: transparent;
+  color: #f1f4ff;
+  font-family: "Courier New", "Consolas", monospace;
+  font-size: 2.25rem;
+  line-height: 1;
+  font-weight: 700;
+  text-shadow: 0 2px 0 rgba(0, 0, 0, 0.36);
+}
+
+.guild-center-landing {
+  position: relative;
+  min-height: clamp(30rem, 52vw, 38rem);
+  border: 3px solid #111;
+  background:
+    linear-gradient(180deg, rgba(102, 53, 33, 0.1) 0%, rgba(43, 28, 18, 0.28) 100%),
+    linear-gradient(180deg, #cb3a23 0%, #cb3a23 100%);
+}
+
+.guild-center-buttons {
+  position: absolute;
+  left: 50%;
+  top: clamp(2.4rem, 8vw, 4.4rem);
+  transform: translateX(-50%);
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.7rem;
+  width: min(30rem, calc(100% - 3rem));
+  z-index: 3;
+}
+
+.guild-center-buttons button {
+  border: 2px solid #5f5350;
+  border-radius: 0.35rem;
+  background: #e7cfad;
+  color: #4b3a32;
+  padding: 0.52rem 0.6rem;
+  font-family: "Courier New", "Consolas", monospace;
+  font-size: clamp(0.92rem, 1.5vw, 1.2rem);
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  font-weight: 700;
+}
+
+.guild-center-buttons button:hover {
+  background: #f3dec2;
+}
+
+.guild-center-wizard {
+  position: absolute;
+  left: 50%;
+  bottom: clamp(4.5rem, 10vw, 6.6rem);
+  transform: translateX(-50%);
+  width: clamp(6.6rem, 14vw, 8.4rem);
+  height: clamp(8.2rem, 16vw, 10rem);
+  z-index: 2;
+}
+
+.guild-center-wizard--left {
+  left: clamp(4.5rem, 13vw, 8.6rem);
+  transform: none;
+  bottom: clamp(1.2rem, 6vw, 2.8rem);
+}
+
+.guild-center-role-note {
+  position: absolute;
+  right: clamp(1.2rem, 4vw, 2.4rem);
+  top: clamp(12.8rem, 29vw, 16.5rem);
+  width: min(18rem, 46%);
+  border: 2px solid #80868f;
+  background: #e9edf6;
+  padding: 0.72rem 0.82rem;
+  color: #4a4f57;
+  font-family: "Trebuchet MS", "Verdana", "Segoe UI", sans-serif;
+  font-size: clamp(0.88rem, 1.35vw, 1.3rem);
+}
+
+.guild-book-shell {
+  position: relative;
+  min-height: clamp(30rem, 52vw, 38rem);
+  border: 3px solid #111;
+  background: #cb3a23;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.guild-book-arrow {
+  position: absolute;
+  left: 1.1rem;
+  top: 50%;
+  transform: translateY(-50%);
+  border: 2px solid #5f6367;
+  background: #ebf2f6;
+  color: #4f545d;
+  font-size: 1.9rem;
+  width: 3rem;
+  height: 4.4rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.guild-book-arrow--right {
+  left: auto;
+  right: 1.1rem;
+}
+
+.guild-book-arrow:disabled {
+  opacity: 0.45;
+}
+
+.guild-book {
+  width: min(44rem, calc(100% - 9rem));
+  min-height: clamp(22rem, 36vw, 27rem);
+  border: 10px solid #ad9888;
+  background: #efddc2;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  position: relative;
+}
+
+.guild-book::before {
+  content: "";
+  position: absolute;
+  left: calc(50% - 5px);
+  top: 0;
+  width: 10px;
+  height: 100%;
+  background: #9b8a79;
+}
+
+.guild-book-left,
+.guild-book-right {
+  padding: clamp(1rem, 2.2vw, 1.6rem);
+  color: #4b443f;
+  font-family: "Courier New", "Consolas", monospace;
+}
+
+.guild-book-left {
+  display: grid;
+  place-items: center;
+  text-align: center;
+}
+
+.guild-book-left h2,
+.guild-book-left h3 {
+  margin: 0;
+  text-transform: uppercase;
+  text-decoration: underline;
+  font-size: clamp(1.2rem, 2vw, 1.8rem);
+}
+
+.guild-book-right h4 {
+  margin: 0 0 0.8rem 0;
+  font-size: clamp(1.1rem, 1.8vw, 1.5rem);
+  text-decoration: underline;
+}
+
+.guild-book-grid {
+  display: grid;
+  gap: 0.5rem;
+}
+
+.guild-book-row {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 0.75rem;
+  align-items: center;
+  font-size: clamp(0.78rem, 1.18vw, 1rem);
+}
+
+.guild-book-row strong {
+  border: 1px solid #9e9387;
+  padding: 0.2rem 0.36rem;
+  background: #f2e6d2;
+}
+
+.guild-book-lines {
+  margin: 0;
+  padding-left: 1rem;
+  display: grid;
+  gap: 0.55rem;
+  font-size: clamp(0.8rem, 1.2vw, 1.02rem);
+}
+
+.guild-exit-shell,
+.guild-resign-shell {
+  position: relative;
+  min-height: clamp(30rem, 52vw, 38rem);
+  border: 3px solid #111;
+  background: #cb3a23;
+}
+
+.guild-exit-bubble {
+  position: absolute;
+  left: 50%;
+  top: 40%;
+  transform: translate(-50%, -50%);
+  min-width: min(29rem, calc(100% - 9rem));
+  border: 2px solid #a7aeb8;
+  background: #f0f3f8;
+  padding: 1rem 1.1rem;
+  text-align: center;
+  color: #4a4f57;
+  font-family: "Courier New", "Consolas", monospace;
+}
+
+.guild-exit-bubble p {
+  margin: 0;
+  font-size: clamp(1rem, 1.45vw, 1.42rem);
+}
+
+.guild-exit-actions {
+  margin-top: 0.8rem;
+  display: inline-flex;
+  gap: 0.9rem;
+}
+
+.guild-exit-yes,
+.guild-exit-no {
+  border: 2px solid #4e4b4a;
+  border-radius: 0.35rem;
+  min-width: 5.8rem;
+  padding: 0.35rem 0.7rem;
+  font-family: "Courier New", "Consolas", monospace;
+  font-size: 1rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: #fff;
+}
+
+.guild-exit-yes {
+  background: #1ec120;
+}
+
+.guild-exit-no {
+  background: #c41616;
+}
+
+.guild-resign-card {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: min(32rem, calc(100% - 10rem));
+  border: 4px solid #65707a;
+  background: #e7c39b;
+  padding: 1rem 1rem 1.15rem;
+  color: #4d4640;
+  font-family: "Courier New", "Consolas", monospace;
+}
+
+.guild-resign-card h3 {
+  margin: 0 0 0.5rem 0;
+  text-align: center;
+  text-transform: uppercase;
+  font-size: clamp(1.1rem, 1.7vw, 1.5rem);
+}
+
+.guild-resign-lock {
+  border-bottom: 2px solid #6b6d6f;
+  padding: 0.55rem 0;
+  font-size: clamp(0.9rem, 1.35vw, 1.24rem);
+}
+
+.guild-resign-section {
+  margin-top: 0.85rem;
+  display: grid;
+  gap: 0.56rem;
+}
+
+.guild-resign-section strong {
+  font-size: clamp(1rem, 1.5vw, 1.34rem);
+}
+
+.guild-resign-section p {
+  margin: 0;
+}
+
+.guild-resign-actions {
+  display: inline-flex;
+  gap: 0.9rem;
+}
+
+.guild-resign-warning {
+  font-size: clamp(0.74rem, 1.08vw, 0.98rem);
+  color: #654e3b;
+}
+
 @media (max-width: 760px) {
   .strategy-board-surface {
     display: grid;
@@ -3886,4 +4700,479 @@ a {
     width: 100%;
     transform: none;
   }
+}
+
+.guild-center-landing {
+  background:
+    linear-gradient(180deg, #cf4429 0%, #c13c22 100%);
+}
+
+.guild-center-landing::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background:
+    repeating-linear-gradient(90deg, rgba(86, 38, 22, 0.22) 0 1px, transparent 1px 62px),
+    repeating-linear-gradient(180deg, rgba(76, 34, 20, 0.12) 0 1px, transparent 1px 28px);
+  opacity: 0.45;
+  pointer-events: none;
+}
+
+.guild-center-tavern {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+}
+
+.guild-center-tavern__shelves {
+  position: absolute;
+  left: 50%;
+  top: 14%;
+  transform: translateX(-50%);
+  width: min(42rem, calc(100% - 8rem));
+  height: 28%;
+  border: 4px solid rgba(48, 24, 13, 0.88);
+  background:
+    linear-gradient(180deg, rgba(40, 21, 13, 0.74) 0%, rgba(24, 13, 8, 0.84) 100%),
+    repeating-linear-gradient(90deg, rgba(143, 87, 49, 0.3) 0 18px, rgba(78, 46, 27, 0.3) 18px 36px);
+  box-shadow: inset 0 -26px 0 rgba(106, 63, 34, 0.25);
+}
+
+.guild-center-tavern__counter {
+  position: absolute;
+  left: 50%;
+  bottom: 18%;
+  transform: translateX(-50%);
+  width: min(44rem, calc(100% - 7rem));
+  height: 24%;
+  border: 4px solid rgba(49, 27, 15, 0.9);
+  background:
+    linear-gradient(180deg, rgba(169, 101, 56, 0.92) 0 14%, rgba(111, 64, 33, 0.96) 14% 100%),
+    repeating-linear-gradient(90deg, rgba(156, 95, 53, 0.35) 0 20px, rgba(96, 58, 30, 0.35) 20px 40px);
+  box-shadow:
+    inset 0 -18px 0 rgba(70, 40, 22, 0.4),
+    0 10px 0 rgba(29, 16, 9, 0.55);
+}
+
+.guild-center-tavern__stools {
+  position: absolute;
+  left: 50%;
+  bottom: 5%;
+  transform: translateX(-50%);
+  width: min(40rem, calc(100% - 10rem));
+  display: flex;
+  justify-content: space-between;
+}
+
+.guild-center-tavern__stools span {
+  position: relative;
+  width: 3.8rem;
+  height: 4.8rem;
+  border: 3px solid rgba(58, 32, 18, 0.92);
+  border-top-width: 8px;
+  background: linear-gradient(180deg, rgba(145, 86, 49, 0.95) 0%, rgba(95, 58, 32, 0.96) 100%);
+  box-shadow: inset 0 -8px 0 rgba(58, 33, 18, 0.55);
+}
+
+.guild-center-tavern__stools span::before,
+.guild-center-tavern__stools span::after {
+  content: "";
+  position: absolute;
+  bottom: -14px;
+  width: 5px;
+  height: 14px;
+  background: rgba(78, 44, 24, 0.96);
+}
+
+.guild-center-tavern__stools span::before {
+  left: 8px;
+}
+
+.guild-center-tavern__stools span::after {
+  right: 8px;
+}
+
+.guild-center-tavern__bottles {
+  position: absolute;
+  left: 50%;
+  top: 19%;
+  transform: translateX(-50%);
+  width: min(34rem, calc(100% - 14rem));
+  display: flex;
+  justify-content: space-between;
+}
+
+.guild-center-tavern__bottles span {
+  width: 0.9rem;
+  height: 2.6rem;
+  border: 2px solid rgba(31, 18, 10, 0.84);
+  border-bottom-width: 3px;
+  background: linear-gradient(180deg, #8ed8f8 0%, #3f96ca 100%);
+}
+
+.guild-center-tavern__bottles span:nth-child(2n) {
+  background: linear-gradient(180deg, #dcb57a 0%, #a7772b 100%);
+}
+
+.guild-center-tavern__bottles span:nth-child(3n) {
+  background: linear-gradient(180deg, #95dd8f 0%, #2f8a45 100%);
+}
+
+.guild-center-tavern__plant {
+  position: absolute;
+  left: clamp(1rem, 4vw, 2rem);
+  top: 31%;
+  width: 3.7rem;
+  height: 5.3rem;
+  border: 3px solid rgba(84, 53, 27, 0.84);
+  background: linear-gradient(180deg, #d5a16b 0%, #8a5930 100%);
+}
+
+.guild-center-tavern__plant::before {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: -30px;
+  transform: translateX(-50%);
+  width: 3rem;
+  height: 2.4rem;
+  background:
+    radial-gradient(circle at 20% 60%, #5fb862 0 36%, transparent 38%),
+    radial-gradient(circle at 50% 30%, #77ce77 0 40%, transparent 42%),
+    radial-gradient(circle at 80% 65%, #4ea658 0 38%, transparent 40%);
+}
+
+.guild-center-buttons {
+  top: clamp(2rem, 6vw, 3.2rem);
+  width: min(30rem, calc(100% - 4rem));
+}
+
+.guild-center-buttons button {
+  border: 3px solid #5d4f44;
+  border-radius: 0.2rem;
+  background: linear-gradient(180deg, #f3dec2 0%, #dfc39a 100%);
+  color: #47372f;
+  box-shadow:
+    inset 0 -4px 0 rgba(124, 93, 63, 0.38),
+    0 3px 0 rgba(42, 25, 13, 0.32);
+}
+
+.guild-center-wizard {
+  bottom: clamp(9.2rem, 16vw, 11.2rem);
+  width: clamp(8.5rem, 16vw, 10.3rem);
+  height: clamp(10rem, 18vw, 12rem);
+  z-index: 2;
+}
+
+.guild-center-wizard--left {
+  bottom: clamp(1.2rem, 6vw, 2.8rem);
+}
+
+.guild-wizard {
+  position: relative;
+  width: 100%;
+  height: 100%;
+}
+
+.guild-wizard span {
+  position: absolute;
+}
+
+.guild-wizard__hat {
+  left: 50%;
+  top: 4%;
+  transform: translateX(-50%);
+  width: 56%;
+  height: 28%;
+  background:
+    linear-gradient(135deg, transparent 0 14%, #0a264d 14% 72%, transparent 72%),
+    linear-gradient(180deg, #2f67af 0%, #1e3f78 100%);
+  clip-path: polygon(2% 92%, 15% 56%, 4% 36%, 32% 12%, 78% 7%, 98% 26%, 80% 44%, 78% 70%, 100% 88%);
+  filter: drop-shadow(0 2px 0 rgba(0, 0, 0, 0.35));
+}
+
+.guild-wizard__head {
+  left: 50%;
+  top: 29%;
+  transform: translateX(-50%);
+  width: 28%;
+  height: 20%;
+  background: #f0d4ae;
+  border: 3px solid #0f1a2c;
+}
+
+.guild-wizard__robe {
+  left: 50%;
+  bottom: 12%;
+  transform: translateX(-50%);
+  width: 56%;
+  height: 42%;
+  background:
+    linear-gradient(90deg, transparent 46%, rgba(15, 23, 40, 0.26) 46% 54%, transparent 54%),
+    linear-gradient(180deg, #2c5f9f 0%, #1f4377 100%);
+  border: 3px solid #10192c;
+  clip-path: polygon(10% 0, 90% 0, 100% 22%, 88% 100%, 12% 100%, 0 22%);
+}
+
+.guild-wizard__beard {
+  left: 50%;
+  top: 43%;
+  transform: translateX(-50%);
+  width: 30%;
+  height: 26%;
+  background: linear-gradient(180deg, #f7f6f2 0%, #dddbd3 100%);
+  clip-path: polygon(0 0, 100% 0, 84% 32%, 66% 100%, 34% 100%, 16% 32%);
+  border: 2px solid #111829;
+}
+
+.guild-wizard__arm {
+  left: 28%;
+  top: 54%;
+  width: 19%;
+  height: 12%;
+  background: #f0d4ae;
+  border: 2px solid #10192c;
+}
+
+.guild-wizard__staff {
+  right: 18%;
+  top: 34%;
+  width: 6%;
+  height: 52%;
+  background: linear-gradient(180deg, #4f3922 0%, #2f2215 100%);
+  border: 2px solid #131313;
+}
+
+.guild-wizard__orb {
+  right: 12%;
+  top: 31%;
+  width: 12%;
+  height: 10%;
+  border-radius: 999px;
+  border: 2px solid #122043;
+  background: radial-gradient(circle at 35% 30%, #bde7ff 0 28%, #5fa9db 45%, #325f9f 100%);
+}
+
+.guild-wizard__shadow {
+  left: 50%;
+  bottom: 7%;
+  transform: translateX(-50%);
+  width: 44%;
+  height: 7%;
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.38);
+}
+
+.guild-center-role-note {
+  right: clamp(1.2rem, 3vw, 2rem);
+  top: auto;
+  bottom: clamp(8.6rem, 15vw, 10.5rem);
+  border: 2px solid #80868f;
+  background: #eceff5;
+  font-weight: 600;
+}
+
+/* Guild Center hard overrides to avoid old duplicate rule conflicts */
+.guild-center-wizard > span {
+  all: unset;
+}
+
+.guild-center-tavern__shelves,
+.guild-center-tavern__counter,
+.guild-center-tavern__stools span {
+  opacity: 1 !important;
+}
+
+.guild-center-tavern__shelves {
+  border-color: rgba(34, 16, 8, 0.98) !important;
+  box-shadow:
+    inset 0 -28px 0 rgba(125, 74, 41, 0.36),
+    inset 0 -56px 0 rgba(95, 56, 31, 0.28) !important;
+}
+
+.guild-center-tavern__counter {
+  border-color: rgba(40, 22, 12, 0.98) !important;
+  box-shadow:
+    inset 0 -20px 0 rgba(71, 40, 22, 0.58),
+    0 12px 0 rgba(31, 17, 9, 0.62) !important;
+}
+
+.guild-wizard__hat {
+  background:
+    linear-gradient(135deg, transparent 0 14%, #123a72 14% 72%, transparent 72%),
+    linear-gradient(180deg, #4a8bd0 0%, #235183 100%) !important;
+}
+
+.guild-wizard__head {
+  background: #efd1a8 !important;
+  border: 3px solid #101d2f !important;
+}
+
+.guild-wizard__head::before,
+.guild-wizard__head::after {
+  content: "";
+  position: absolute;
+  top: 38%;
+  width: 3px;
+  height: 3px;
+  background: #192333;
+}
+
+.guild-wizard__head::before {
+  left: 24%;
+}
+
+.guild-wizard__head::after {
+  right: 24%;
+}
+
+.guild-wizard__robe {
+  background:
+    linear-gradient(90deg, transparent 46%, rgba(15, 23, 40, 0.28) 46% 54%, transparent 54%),
+    linear-gradient(180deg, #3b77bc 0%, #245282 100%) !important;
+  border: 3px solid #101b2d !important;
+}
+
+.guild-wizard__beard {
+  background: linear-gradient(180deg, #ffffff 0%, #e6e2d8 100%) !important;
+  border-color: #121d30 !important;
+}
+
+.guild-center-role-note {
+  position: absolute;
+}
+
+.guild-center-role-note::before {
+  content: "";
+  position: absolute;
+  left: -22px;
+  bottom: 16px;
+  width: 0;
+  height: 0;
+  border-top: 11px solid transparent;
+  border-bottom: 11px solid transparent;
+  border-right: 22px solid #eceff5;
+  filter: drop-shadow(-2px 0 0 #80868f);
+}
+
+.guild-book {
+  box-shadow:
+    0 14px 24px rgba(0, 0, 0, 0.3),
+    inset 0 0 0 2px rgba(167, 149, 126, 0.38) !important;
+}
+
+.guild-center-landing--pixi {
+  position: relative;
+  overflow: hidden;
+  border: 3px solid #111;
+  min-height: clamp(30rem, 52vw, 38rem);
+  background: #d3452a;
+}
+
+.guild-center-pixi-scene {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+}
+
+.guild-center-pixi-scene canvas {
+  width: 100%;
+  height: 100%;
+  display: block;
+  image-rendering: pixelated;
+}
+
+.guild-center-landing--pixi .guild-center-close {
+  z-index: 5;
+  right: 1.2rem;
+  top: 0.7rem;
+  color: #f4f4f4;
+  font-size: 3rem;
+  text-shadow: 0 2px 0 #2f2f2f;
+}
+
+.guild-center-buttons--pixi {
+  z-index: 4;
+  top: clamp(2.2rem, 6.5vw, 4rem);
+  width: min(28rem, calc(100% - 6rem));
+}
+
+.guild-center-menu-btn.nes-btn {
+  min-width: 100%;
+  margin: 0;
+  border-image-repeat: stretch;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  font-size: clamp(0.95rem, 1.4vw, 1.2rem);
+  color: #4f3f35;
+  background: #edd6b5;
+  box-shadow: inset 0 -4px 0 rgba(131, 107, 81, 0.34);
+}
+
+.guild-center-role-note--pixi {
+  z-index: 4;
+  right: clamp(3.2rem, 8vw, 5rem);
+  bottom: clamp(8.4rem, 15vw, 10.6rem);
+  width: min(16rem, 42%);
+  border: 2px solid #7f858e;
+  background: #ebeff5;
+  color: #47505b;
+  font-size: clamp(0.95rem, 1.3vw, 1.22rem);
+  font-family: "Trebuchet MS", "Verdana", "Segoe UI", sans-serif;
+  font-weight: 600;
+}
+
+.guild-center-role-note--pixi::before {
+  content: "";
+  position: absolute;
+  left: -24px;
+  bottom: 15px;
+  width: 0;
+  height: 0;
+  border-top: 12px solid transparent;
+  border-bottom: 12px solid transparent;
+  border-right: 24px solid #ebeff5;
+  filter: drop-shadow(-2px 0 0 #7f858e);
+}
+
+.guild-lib-preview {
+  position: absolute;
+  left: 1rem;
+  bottom: 1rem;
+  z-index: 4;
+  display: grid;
+  gap: 0.45rem;
+  width: min(23rem, calc(100% - 2rem));
+  border: 2px solid rgba(255, 236, 198, 0.32);
+  border-radius: 0.45rem;
+  background: rgba(8, 6, 4, 0.72);
+  padding: 0.45rem;
+}
+
+.guild-lib-preview__pixi {
+  min-height: 210px;
+  border: 2px solid rgba(255, 236, 198, 0.18);
+  border-radius: 0.25rem;
+  overflow: hidden;
+}
+
+.guild-lib-preview__pixi canvas {
+  display: block;
+  width: 100%;
+  height: auto;
+  image-rendering: pixelated;
+}
+
+.guild-lib-preview__nes {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  flex-wrap: wrap;
+}
+
+.guild-lib-preview__nes .nes-btn {
+  transform: scale(0.7);
+  transform-origin: left center;
+  margin-right: -1.2rem;
 }

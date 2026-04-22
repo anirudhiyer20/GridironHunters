@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import "nes.css/css/nes.min.css";
 import "./globals.css";
 
 export const metadata: Metadata = {
