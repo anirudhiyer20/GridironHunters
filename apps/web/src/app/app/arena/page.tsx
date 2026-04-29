@@ -1,146 +1,178 @@
+import Link from "next/link";
+import { TRIBE_COLORS } from "@gridiron/shared";
+import { type CSSProperties } from "react";
+
 import { PageShell } from "@/components/page-shell";
-import { Panel } from "@/components/panel";
-import { RoomScene } from "@/components/room-scene";
-import { createClient } from "@/lib/supabase/server";
-import { getRoomAvatarAppearance, normalizeCharacter } from "../house/wardrobe/wardrobe-model";
 
-export default async function ArenaPage() {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+import { getArenaViewContext, type ArenaLineupEntry } from "./arena-data";
+import styles from "./arena-stage.module.css";
 
-  const { data: memberships } = await supabase
-    .from("league_members")
-    .select("role, leagues!inner(name, slug, season, status)")
-    .eq("user_id", user?.id ?? "")
-    .order("joined_at", { ascending: false });
-  const { data: characterRow } = user
-    ? await supabase.from("user_characters").select("*").eq("user_id", user.id).maybeSingle()
-    : { data: null };
-  const character = normalizeCharacter(characterRow);
+type ArenaPageProps = {
+  searchParams: Promise<{
+    opponent?: string;
+  }>;
+};
 
-  const activeGuild = memberships?.[0];
-  const guild = activeGuild ? (Array.isArray(activeGuild.leagues) ? activeGuild.leagues[0] : activeGuild.leagues) : null;
+function formatScore(value: number) {
+  return value.toFixed(2).padStart(5, "0");
+}
+
+function buildDiamondColors(lineup: ArenaLineupEntry[]) {
+  return lineup.map((entry) => (entry.tribe ? TRIBE_COLORS[entry.tribe].background : "#f3f5fb"));
+}
+
+function toMatchupHref(opponentId: string) {
+  return `/app/arena?opponent=${encodeURIComponent(opponentId)}`;
+}
+
+function toDetailsHref(opponentId: string) {
+  return `/app/arena/matchup?opponent=${encodeURIComponent(opponentId)}`;
+}
+
+function FighterCard({
+  displayName,
+  score,
+  lineup,
+  appearance,
+  detailsHref,
+}: {
+  displayName: string;
+  score: number;
+  lineup: ArenaLineupEntry[];
+  appearance: {
+    skinColor: string;
+    hairColor: string;
+    shirtColor: string;
+    pantsColor: string;
+    hairStyle: "cropped" | "waves" | "braids" | "hooded";
+    bodyFrame: "Balanced" | "Sturdy" | "Swift";
+  };
+  detailsHref?: string;
+}) {
+  const diamondColors = buildDiamondColors(lineup);
+  const sprite = (
+    <div className={styles.spriteWrap}>
+      <div className={styles.diamonds} aria-hidden="true">
+        {diamondColors.map((color, index) => (
+          <span key={`${displayName}-diamond-${index}`} className={styles.diamond} style={{ backgroundColor: color }} />
+        ))}
+      </div>
+      <PixelCharacter appearance={appearance} />
+    </div>
+  );
 
   return (
-    <PageShell
-      eyebrow="Arena / Competitive Wing"
-      title="Arena Gate"
-    >
-      <RoomScene
-        roomName="Arena Gate"
-        roomMood="This stone court leads toward duels, records, and the score-driven pulse of the Guild season."
-        avatarName="Arena Navigation"
-        avatarAppearance={getRoomAvatarAppearance(character)}
-        sceneClassName="room-scene--arena room-scene--full"
-        showHud={false}
-        defaultSelectedHotspotId="duel-dais"
-        hotspots={[
-          {
-            id: "duel-dais",
-            label: "Duel Dais",
-            flavor: "The central dais is where Houses should step when they want the most immediate competitive view: live duels, matchup pressure, and weekly conflict.",
-            kind: "object",
-            tone: "ember",
-            x: 40,
-            y: 28,
-            width: 18,
-            height: 14,
-            href: "/app/arena/duels",
-            actionLabel: "Enter Duel Grounds",
-            stats: [
-              { label: "Current Guild", value: guild?.name ?? "No Guild Yet" },
-              { label: "Focus", value: "Weekly Duels" },
-            ],
-          },
-          {
-            id: "standings-plaque",
-            label: "Standings Plaque",
-            flavor: "The plaque tracks the long season: rank, pressure, and how close each House is to climbing into a stronger postseason position.",
-            kind: "object",
-            tone: "warm",
-            x: 18,
-            y: 20,
-            width: 16,
-            height: 18,
-            href: "/app/arena/standings",
-            actionLabel: "Open Standings Hall",
-            stats: [
-              { label: "Season", value: guild ? String(guild.season) : "Unclaimed" },
-              { label: "State", value: guild?.status?.replaceAll("_", " ") ?? "Awaiting Guild" },
-            ],
-          },
-          {
-            id: "results-board",
-            label: "Results Board",
-            flavor: "The results board is where the Arena becomes memory instead of tension: weekly outcomes, recap value, and the running story of the season.",
-            kind: "object",
-            tone: "stone",
-            x: 68,
-            y: 18,
-            width: 16,
-            height: 18,
-            href: "/app/arena/results",
-            actionLabel: "Open Results Archive",
-            stats: [
-              { label: "Archive", value: "Weekly Outcomes" },
-              { label: "Purpose", value: "Recall + Review" },
-            ],
-          },
-          {
-            id: "guild-door",
-            label: "Guild Door",
-            flavor: "Return to the Guild Hall when you want Draft tools, membership controls, and broader Guild planning.",
-            kind: "door",
-            tone: "forest",
-            x: 18,
-            y: 66,
-            width: 16,
-            height: 18,
-            href: "/app/guild",
-            stats: [
-              { label: "Destination", value: "Guild Hall" },
-              { label: "Purpose", value: "Planning" },
-            ],
-          },
-          {
-            id: "house-door",
-            label: "House Door",
-            flavor: "Head back to your House to check the Party Chest or reset your route through the world.",
-            kind: "door",
-            tone: "warm",
-            x: 68,
-            y: 66,
-            width: 16,
-            height: 18,
-            href: "/app",
-            stats: [
-              { label: "Destination", value: "House" },
-              { label: "Purpose", value: "Reset Route" },
-            ],
-          },
-        ]}
-      />
+    <article className={styles.fighter}>
+      {detailsHref ? (
+        <Link href={detailsHref} className={styles.avatarLink} aria-label={`Open ${displayName} lineup matchup card`}>
+          {sprite}
+        </Link>
+      ) : (
+        sprite
+      )}
+      <p className={styles.fighterName}>- {displayName} -</p>
+      <p className={styles.fighterScore}>{formatScore(score)}</p>
+    </article>
+  );
+}
 
-      <div className="mt-8">
-        <Panel title="Arena Focus" description="A small amount of season context is enough here. The Arena objects above should do the real navigation work.">
-          <div className="grid gap-3 sm:grid-cols-3">
-            <div className="rounded-[1.4rem] border border-[#a86a56]/24 bg-black/20 px-4 py-4">
-              <p className="fantasy-kicker text-[0.68rem] text-[#d0a697]">Current Guild</p>
-              <p className="mt-2 text-lg font-semibold text-[#fff4d8]">{guild?.name ?? "No Guild Yet"}</p>
-            </div>
-            <div className="rounded-[1.4rem] border border-[#a86a56]/24 bg-black/20 px-4 py-4">
-              <p className="fantasy-kicker text-[0.68rem] text-[#d0a697]">Season State</p>
-              <p className="mt-2 text-lg font-semibold text-[#fff4d8]">{guild?.status?.replaceAll("_", " ") ?? "Awaiting Guild"}</p>
-            </div>
-            <div className="rounded-[1.4rem] border border-[#a86a56]/24 bg-black/20 px-4 py-4">
-              <p className="fantasy-kicker text-[0.68rem] text-[#d0a697]">Wing Focus</p>
-              <p className="mt-2 text-lg font-semibold text-[#fff4d8]">Duels + Results</p>
-            </div>
-          </div>
-        </Panel>
+export default async function ArenaPage({ searchParams }: ArenaPageProps) {
+  const params = await searchParams;
+  const context = await getArenaViewContext(params.opponent);
+
+  if (!context) {
+    return (
+      <PageShell eyebrow="Arena / Matchups" title="Arena">
+        <section className="rounded-[1.5rem] border border-white/10 bg-black/20 px-5 py-6 text-sm text-[#f1e4c9]">
+          Join a Guild with at least one opponent to open the Arena.
+        </section>
+      </PageShell>
+    );
+  }
+
+  return (
+    <PageShell eyebrow="Arena / Matchups" title="Arena">
+      <section className={styles.stage}>
+        <Link
+          href={toMatchupHref(context.prevOpponentId)}
+          className={`${styles.nav} ${styles.navLeft}`}
+          aria-label="View previous matchup"
+        >
+          ‹
+        </Link>
+        <Link
+          href={toMatchupHref(context.nextOpponentId)}
+          className={`${styles.nav} ${styles.navRight}`}
+          aria-label="View next matchup"
+        >
+          ›
+        </Link>
+
+        <div className={styles.historTree} aria-hidden="true">
+          <p className={styles.historTreeTitle}>Histor-Tree</p>
+        </div>
+
+        <Link href="/app" className={styles.houseDoor} aria-label="Return to House">
+          <span className={styles.houseDoorLabel}>House</span>
+        </Link>
+
+        <div className={styles.fighters}>
+          <FighterCard
+            displayName={context.userFighter.displayName}
+            score={context.userFighter.actualTotal}
+            lineup={context.userFighter.lineup}
+            appearance={context.userFighter.appearance}
+            detailsHref={toDetailsHref(context.selectedOpponentId)}
+          />
+          <div className={styles.versus}>VS</div>
+          <FighterCard
+            displayName={context.opponentFighter.displayName}
+            score={context.opponentFighter.actualTotal}
+            lineup={context.opponentFighter.lineup}
+            appearance={context.opponentFighter.appearance}
+          />
+        </div>
+      </section>
+
+      <div className="mt-4 flex items-center justify-center">
+        <p className="rounded-full border border-white/15 bg-black/25 px-4 py-2 text-xs uppercase tracking-[0.18em] text-[#f4e6c8]">
+          Matchup {context.matchupIndex} of {context.matchupCount}
+        </p>
       </div>
     </PageShell>
+  );
+}
+
+function PixelCharacter({
+  appearance,
+}: {
+  appearance: {
+    skinColor: string;
+    hairColor: string;
+    shirtColor: string;
+    pantsColor: string;
+    hairStyle: "cropped" | "waves" | "braids" | "hooded";
+    bodyFrame: "Balanced" | "Sturdy" | "Swift";
+  };
+}) {
+  return (
+    <div
+      className={`pixel-character pixel-character--${appearance.bodyFrame.toLowerCase()} pixel-character--ready`}
+      style={
+        {
+          "--skin": appearance.skinColor,
+          "--hair": appearance.hairColor,
+          "--shirt": appearance.shirtColor,
+          "--pants": appearance.pantsColor,
+        } as CSSProperties
+      }
+    >
+      <div className={`pixel-character__hair pixel-character__hair--${appearance.hairStyle}`} />
+      <div className="pixel-character__head" />
+      <div className="pixel-character__torso" />
+      <div className="pixel-character__belt" />
+      <div className="pixel-character__legs" />
+      <div className="pixel-character__shadow" />
+    </div>
   );
 }
