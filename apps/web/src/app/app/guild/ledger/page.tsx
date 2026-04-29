@@ -1,17 +1,23 @@
-import { FANTASY_TERMS } from "@gridiron/shared";
-import Link from "next/link";
+import { redirect } from "next/navigation";
 
-import { HeroLink } from "@/components/hero-link";
 import { PageShell } from "@/components/page-shell";
 import { createClient } from "@/lib/supabase/server";
 
-export default async function GuildLedgerPage() {
+import { GuildCenterClient } from "./guild-center-client";
+
+export default async function GuildLedgerPage({
+  searchParams,
+}: {
+  searchParams?: Promise<{ message?: string }>;
+}) {
+  const resolvedSearchParams = searchParams ? await searchParams : undefined;
+  const message = resolvedSearchParams?.message;
   const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
 
-  const { data: memberships, error } = await supabase
+  const { data: memberships } = await supabase
     .from("league_members")
     .select(
       "role, joined_at, leagues!inner(id, name, slug, season, status, draft_starts_at, max_members)",
@@ -19,69 +25,29 @@ export default async function GuildLedgerPage() {
     .eq("user_id", user?.id ?? "")
     .order("joined_at", { ascending: false });
 
+  const currentGuild = memberships?.[0]
+    ? Array.isArray(memberships[0].leagues)
+      ? memberships[0].leagues[0]
+      : memberships[0].leagues
+    : null;
+
+  if (!currentGuild) {
+    redirect("/app/guild");
+  }
+
   return (
     <PageShell
-      eyebrow="Guild / Ledger"
-      title="Guild Ledger"
+      eyebrow="Guild / Center"
+      title="Guild Center"
     >
-      <section className="fantasy-panel fantasy-panel--stone rounded-[1.9rem] p-5">
-        <div className="flex flex-wrap items-center justify-between gap-4">
-          <div>
-            <p className="fantasy-kicker text-[0.68rem] text-[#d1b481]">Guild Record</p>
-            <h2 className="fantasy-title mt-2 text-3xl text-[#fff4d8]">Your Guilds</h2>
-          </div>
-          <div className="flex flex-wrap gap-3">
-            <HeroLink href="/app/leagues/create">Found a Guild</HeroLink>
-            <HeroLink href="/app/leagues/join" tone="secondary">Join with Code</HeroLink>
-            <HeroLink href="/app/guild" tone="secondary">Return to Guild Hall</HeroLink>
-          </div>
-        </div>
-
-        <div className="mt-5">
-          {error ? (
-            <p className="rounded-[1.4rem] border border-amber-400/20 bg-amber-400/10 px-4 py-3 text-sm text-amber-100">
-              Unable to load guilds: {error.message}
-            </p>
-          ) : memberships && memberships.length > 0 ? (
-            <div className="grid gap-4">
-              {memberships.map((membership) => {
-                const guild = Array.isArray(membership.leagues)
-                  ? membership.leagues[0]
-                  : membership.leagues;
-                const roleName = membership.role === "commissioner" ? FANTASY_TERMS.commissioner : FANTASY_TERMS.member;
-
-                return (
-                  <Link
-                    key={guild.id}
-                    href={`/app/leagues/${guild.slug}`}
-                    className="rounded-[1.5rem] border border-[#9e8455]/18 bg-black/20 px-5 py-5 transition-colors hover:bg-white/8"
-                  >
-                    <div className="flex flex-wrap items-start justify-between gap-3">
-                      <div>
-                        <p className="fantasy-kicker text-[0.7rem] text-[#c6ad7d]">{roleName}</p>
-                        <h2 className="mt-2 text-xl font-semibold text-[#fff4d8]">{guild.name}</h2>
-                        <p className="mt-2 text-sm text-[#efe2c9]">
-                          Season {guild.season} | {guild.status.replace("_", " ")}
-                        </p>
-                      </div>
-                      <div className="text-right text-sm text-[#d8c6a7]">
-                        <p>{guild.slug}</p>
-                        <p className="mt-1">
-                          Draft: {guild.draft_starts_at ? new Date(guild.draft_starts_at).toLocaleString() : "Not set"}
-                        </p>
-                      </div>
-                    </div>
-                  </Link>
-                );
-              })}
-            </div>
-          ) : (
-            <div className="rounded-[1.5rem] border border-dashed border-[#9e8455]/20 bg-black/15 px-5 py-8 text-sm text-[#efe2c9]">
-              Your House is not in a Guild yet. Found one or join with a code to begin the season loop.
-            </div>
-          )}
-        </div>
-      </section>
+      <GuildCenterClient
+        guildId={currentGuild.id}
+        guildName={currentGuild.name}
+        guildRole={memberships?.[0]?.role === "commissioner" ? "commissioner" : "member"}
+        guildSize={currentGuild.max_members}
+        draftStartsAt={currentGuild.draft_starts_at}
+        message={message}
+      />
     </PageShell>
   );
 }

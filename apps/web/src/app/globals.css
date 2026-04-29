@@ -5176,3 +5176,307 @@ a {
   transform-origin: left center;
   margin-right: -1.2rem;
 }
+
+.arena-stage {
+  position: relative;
+  overflow: hidden;
+  min-height: clamp(30rem, 56vw, 40rem);
+  border: 4px solid rgba(33, 19, 11, 0.9);
+  border-radius: 0.8rem;
+  background:
+    linear-gradient(180deg, #8cb7de 0%, #7eaad3 14%, #6f4a37 15%, #6f4a37 40%, #c89565 40%, #b9895a 100%);
+  box-shadow:
+    inset 0 0 0 2px rgba(255, 234, 190, 0.08),
+    0 18px 34px rgba(0, 0, 0, 0.34);
+}
+
+.arena-stage::before {
+  content: "";
+  position: absolute;
+  inset: 14% 3.5% 14% 3.5%;
+  border: 3px solid rgba(58, 31, 18, 0.82);
+  background:
+    linear-gradient(180deg, rgba(95, 62, 45, 0.55) 0 33%, rgba(188, 146, 103, 0.18) 33% 100%),
+    linear-gradient(90deg, rgba(78, 49, 29, 0.22) 0 1px, transparent 1px 34px),
+    linear-gradient(180deg, rgba(78, 49, 29, 0.22) 0 1px, transparent 1px 34px);
+  background-size: auto, 34px 34px, 34px 34px;
+  opacity: 0.6;
+  pointer-events: none;
+}
+
+.arena-stage__nav {
+  position: absolute;
+  top: 52%;
+  z-index: 6;
+  width: 3rem;
+  height: 4.1rem;
+  border: 2px solid rgba(93, 97, 103, 0.82);
+  background: linear-gradient(180deg, #f2f5f8 0%, #d9e0e7 100%);
+  color: #4f555e;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-family: "Courier New", "Consolas", monospace;
+  font-size: 2rem;
+  font-weight: 700;
+  line-height: 1;
+  transform: translateY(-50%);
+  transition: transform 160ms ease, filter 160ms ease;
+}
+
+.arena-stage__nav:hover {
+  transform: translateY(-50%) scale(1.03);
+  filter: brightness(1.04);
+}
+
+.arena-stage__nav--left {
+  left: 2%;
+}
+
+.arena-stage__nav--right {
+  right: 2%;
+}
+
+.arena-stage__histor-tree {
+  position: absolute;
+  left: 5.2%;
+  top: 11.5%;
+  z-index: 5;
+  width: 7.6rem;
+  min-height: 8.6rem;
+  border: 2px solid rgba(96, 82, 64, 0.7);
+  background:
+    radial-gradient(circle at 48% 42%, #77cd72 0 24%, #3f9c46 25% 42%, transparent 43%),
+    linear-gradient(180deg, rgba(115, 176, 108, 0.34) 0%, rgba(51, 113, 58, 0.24) 58%, rgba(36, 61, 35, 0.36) 100%),
+    #87a26d;
+  padding: 0.6rem 0.5rem;
+  display: grid;
+  align-content: end;
+  gap: 0.2rem;
+  color: #fff8e8;
+  text-shadow: 0 1px 0 rgba(0, 0, 0, 0.55);
+}
+
+.arena-stage__histor-tree::before {
+  content: "";
+  position: absolute;
+  left: 47%;
+  top: 47%;
+  width: 0.8rem;
+  height: 2.2rem;
+  transform: translateX(-50%);
+  background: linear-gradient(180deg, #7d4b2a 0%, #5f391f 100%);
+}
+
+.arena-stage__histor-tree::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 22%;
+  width: 4.8rem;
+  height: 4.1rem;
+  transform: translateX(-50%);
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, #b4e48c 0%, #4faf53 58%, #2c7d38 100%);
+  box-shadow:
+    0 -0.2rem 0 rgba(255, 255, 255, 0.18),
+    0.2rem 0.3rem 0 rgba(0, 0, 0, 0.18);
+}
+
+.arena-stage__histor-tree-title,
+.arena-stage__histor-tree-sub {
+  position: relative;
+  z-index: 1;
+  text-align: center;
+  font-family: "Courier New", "Consolas", monospace;
+}
+
+.arena-stage__histor-tree-title {
+  font-size: 0.72rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.arena-stage__histor-tree-sub {
+  font-size: 0.64rem;
+  opacity: 0.9;
+}
+
+.arena-stage__house-door {
+  position: absolute;
+  right: 6.5%;
+  top: 11%;
+  z-index: 5;
+  width: 5.2rem;
+  height: 8.6rem;
+  border: 2px solid rgba(53, 34, 19, 0.84);
+  border-radius: 0.55rem;
+  background:
+    linear-gradient(180deg, #cf965d 0%, #aa6b35 100%);
+  box-shadow: inset 0 0 0 2px rgba(255, 234, 192, 0.22);
+}
+
+.arena-stage__house-door::before {
+  content: "";
+  position: absolute;
+  inset: 0.4rem 0.45rem 1.7rem;
+  border: 2px solid rgba(80, 45, 19, 0.82);
+  border-radius: 2.3rem 2.3rem 0.15rem 0.15rem;
+  background:
+    repeating-linear-gradient(90deg, #b47842 0 10px, #9f6531 10px 20px);
+}
+
+.arena-stage__house-door::after {
+  content: "";
+  position: absolute;
+  right: 0.78rem;
+  top: 54%;
+  width: 0.55rem;
+  height: 0.55rem;
+  border-radius: 999px;
+  border: 1px solid rgba(84, 59, 23, 0.9);
+  background: #d7bb6c;
+}
+
+.arena-stage__house-door-label {
+  position: absolute;
+  left: 50%;
+  bottom: 0.45rem;
+  transform: translateX(-50%);
+  color: #ffffff;
+  font-family: "Courier New", "Consolas", monospace;
+  font-size: 0.86rem;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  text-shadow: 0 1px 0 rgba(0, 0, 0, 0.72);
+}
+
+.arena-stage__fighters {
+  position: relative;
+  z-index: 4;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  align-items: end;
+  gap: 0.35rem;
+  padding: clamp(9rem, 20vw, 11rem) clamp(4.2rem, 8vw, 5.4rem) clamp(1.5rem, 4vw, 2.5rem);
+}
+
+.arena-stage__versus {
+  padding-bottom: 4.7rem;
+  color: #ffffff;
+  font-family: "Courier New", "Consolas", monospace;
+  font-size: clamp(2.3rem, 6vw, 4.2rem);
+  font-weight: 800;
+  text-shadow: 0 2px 0 rgba(0, 0, 0, 0.55);
+  letter-spacing: 0.02em;
+}
+
+.arena-fighter {
+  position: relative;
+  display: grid;
+  justify-items: center;
+  gap: 0.35rem;
+}
+
+.arena-fighter__sprite-wrap {
+  position: relative;
+  width: 12.8rem;
+  height: 14.8rem;
+  display: grid;
+  place-items: end center;
+}
+
+.arena-fighter__sprite-wrap .pixel-character {
+  transform: scale(1.08);
+  transform-origin: center bottom;
+}
+
+.arena-fighter__diamonds {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.arena-fighter__diamond {
+  position: absolute;
+  width: 1.15rem;
+  height: 1.15rem;
+  border: 2px solid rgba(7, 10, 11, 0.9);
+  transform: rotate(45deg);
+  box-shadow: 0 1px 0 rgba(0, 0, 0, 0.35);
+}
+
+.arena-fighter__diamond:nth-child(1) {
+  left: 2.3rem;
+  top: 3.2rem;
+}
+
+.arena-fighter__diamond:nth-child(2) {
+  left: 4.2rem;
+  top: 2.25rem;
+}
+
+.arena-fighter__diamond:nth-child(3) {
+  left: 6.15rem;
+  top: 2.05rem;
+}
+
+.arena-fighter__diamond:nth-child(4) {
+  left: 8.1rem;
+  top: 2.45rem;
+}
+
+.arena-fighter__diamond:nth-child(5) {
+  left: 9.7rem;
+  top: 3.35rem;
+}
+
+.arena-fighter__diamond:nth-child(6) {
+  left: 5.95rem;
+  top: 3.9rem;
+}
+
+.arena-fighter__name {
+  color: #fff6e4;
+  font-family: "Courier New", "Consolas", monospace;
+  font-size: clamp(1rem, 1.95vw, 1.75rem);
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  text-shadow: 0 2px 0 rgba(0, 0, 0, 0.6);
+}
+
+.arena-fighter__score {
+  color: #ffffff;
+  font-family: "Courier New", "Consolas", monospace;
+  font-size: clamp(1.7rem, 3.4vw, 2.8rem);
+  font-weight: 800;
+  letter-spacing: 0.03em;
+  line-height: 1;
+  text-shadow:
+    0 2px 0 rgba(0, 0, 0, 0.65),
+    -1px -1px 0 rgba(0, 0, 0, 0.4),
+    1px -1px 0 rgba(0, 0, 0, 0.4),
+    -1px 1px 0 rgba(0, 0, 0, 0.4),
+    1px 1px 0 rgba(0, 0, 0, 0.4);
+}
+
+@media (max-width: 920px) {
+  .arena-stage__fighters {
+    grid-template-columns: minmax(0, 1fr);
+    justify-items: center;
+    padding-top: 8.5rem;
+    gap: 0.8rem;
+  }
+
+  .arena-stage__versus {
+    padding-bottom: 0;
+  }
+
+  .arena-stage__histor-tree {
+    left: 3.5%;
+  }
+
+  .arena-stage__house-door {
+    right: 4%;
+  }
+}

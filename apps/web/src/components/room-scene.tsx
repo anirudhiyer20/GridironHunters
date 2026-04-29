@@ -26,7 +26,19 @@ export type RoomHotspot = {
   height: number;
   kind: "door" | "object";
   tone?: "warm" | "stone" | "ember" | "forest";
-  displayStyle?: "board" | "wardrobe" | "cabinet" | "chest" | "door" | "mailbox" | "dungeon-door" | "portal";
+  displayStyle?:
+    | "board"
+    | "wardrobe"
+    | "cabinet"
+    | "chest"
+    | "door"
+    | "mailbox"
+    | "dungeon-door"
+    | "portal"
+    | "podium"
+    | "guild-center"
+    | "quest-board"
+    | "war-table";
   accentColor?: string;
   accentTextColor?: string;
   href?: string;

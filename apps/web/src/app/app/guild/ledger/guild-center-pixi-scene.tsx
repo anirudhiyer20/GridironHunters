@@ -15,6 +15,8 @@ export function GuildCenterPixiScene() {
     const mountTarget = hostNode;
 
     let alive = true;
+    let initialized = false;
+    let layoutFn: (() => void) | null = null;
     const app = new Application();
 
     async function mount() {
@@ -26,6 +28,7 @@ export function GuildCenterPixiScene() {
       });
 
       if (!alive) return;
+      initialized = true;
       mountTarget.appendChild(app.canvas);
 
       const world = new Container();
@@ -69,38 +72,105 @@ export function GuildCenterPixiScene() {
       }
 
       const wizard = new Container();
-      wizard.position.set(548, 248);
+      wizard.position.set(535, 248);
       world.addChild(wizard);
 
-      const hat = new Graphics()
-        .poly([-72, -16, -38, -74, 36, -78, 92, -44, 68, -10, -26, -6])
-        .fill(0x356eb2)
-        .poly([-52, -24, -30, -56, 24, -60, 70, -36, 46, -16, -16, -14])
-        .fill(0x1f4577);
-      wizard.addChild(hat);
+      const g = new Graphics();
+      wizard.addChild(g);
 
-      const head = new Graphics().rect(-20, -2, 40, 36).fill(0xf0d3ac);
-      wizard.addChild(head);
+      const unit = 8;
+      const px = (x: number, y: number, w: number, h: number, color: number) => {
+        g.rect(x * unit, y * unit, w * unit, h * unit).fill(color);
+      };
 
-      const eyes = new Graphics().rect(-10, 14, 6, 6).fill(0x1d1d1d).rect(4, 14, 6, 6).fill(0x1d1d1d);
-      wizard.addChild(eyes);
+      // palette
+      const k = 0x0d0d0d; // outline
+      const blueDark = 0x1e3d70;
+      const blueMid = 0x2e5f9f;
+      const skin = 0xf0d4ac;
+      const white = 0xf4f4f2;
+      const gray = 0x8f8e8a;
+      const black = 0x101010;
+      const purple = 0x8e53cf;
+      const cyan = 0x58cff7;
+      const red = 0xe33d5c;
+      const green = 0x49a45f;
+      const brown = 0x70411f;
+      const football = 0x8a4d24;
+      const lace = 0xf5e9d1;
 
-      const robe = new Graphics()
-        .poly([-60, 34, 60, 34, 72, 112, -72, 112])
-        .fill(0x2f5f9c)
-        .poly([-48, 42, 48, 42, 58, 102, -58, 102])
-        .fill(0x1e406f);
-      wizard.addChild(robe);
+      // Hat silhouette + brim
+      px(3, 0, 4, 1, k);
+      px(2, 1, 7, 1, k);
+      px(1, 2, 10, 1, k);
+      px(1, 3, 2, 1, k);
+      px(4, 3, 8, 1, k);
+      px(0, 4, 12, 1, k);
+      px(0, 5, 3, 1, k);
+      px(5, 5, 8, 1, k);
+      px(1, 6, 12, 1, k);
 
-      const beard = new Graphics().poly([-30, 34, 30, 34, 18, 86, -18, 86]).fill(0xf5f3ed);
-      wizard.addChild(beard);
+      px(3, 1, 4, 1, blueMid);
+      px(2, 2, 7, 1, blueMid);
+      px(5, 3, 5, 1, blueMid);
+      px(1, 4, 10, 1, blueDark);
+      px(6, 5, 6, 1, blueDark);
+      px(2, 6, 10, 1, blueMid);
 
-      const arm = new Graphics().rect(-70, 52, 26, 18).fill(0xf0d3ac);
-      wizard.addChild(arm);
+      // Hat details
+      px(6, 0, 1, 1, red);
+      px(8, 2, 1, 1, cyan);
+      px(9, 5, 2, 1, purple);
+      px(11, 4, 1, 2, green);
 
-      const staff = new Graphics().rect(64, 6, 10, 132).fill(0x4b311d);
-      const orb = new Graphics().circle(69, 2, 16).fill(0x6ad8ff).circle(64, -3, 5).fill(0xc5f2ff);
-      wizard.addChild(staff, orb);
+      // Face + eyes
+      px(5, 7, 4, 4, k);
+      px(6, 8, 2, 2, skin);
+      px(5, 9, 1, 1, skin);
+      px(8, 9, 1, 1, skin);
+      px(6, 9, 1, 1, k);
+      px(7, 9, 1, 1, k);
+
+      // Long beard (tapered)
+      px(4, 11, 6, 1, k);
+      px(5, 12, 4, 1, white);
+      px(4, 13, 6, 1, white);
+      px(4, 14, 6, 1, white);
+      px(4, 15, 6, 1, white);
+      px(5, 16, 4, 1, white);
+      px(5, 17, 4, 1, white);
+      px(5, 18, 4, 1, white);
+      px(6, 19, 2, 1, white);
+      px(6, 20, 2, 1, white);
+      px(6, 21, 2, 1, white);
+      px(6, 22, 2, 1, white);
+      px(5, 18, 1, 1, k);
+      px(8, 18, 1, 1, k);
+      px(6, 22, 2, 1, k);
+
+      // Referee-striped outfit / robe
+      px(3, 13, 1, 8, blueMid); // left outer robe
+      px(10, 13, 1, 8, blueMid); // right outer robe
+      px(4, 13, 6, 9, k); // body outline
+      px(5, 14, 4, 7, white); // base tunic
+      px(5, 14, 1, 7, black); // stripe 1
+      px(7, 14, 1, 7, black); // stripe 2
+      px(8, 14, 1, 7, gray); // side shade
+      px(5, 21, 4, 1, black); // hem/belt
+      px(4, 22, 6, 1, black); // robe bottom
+
+      // Left arm + hand + football
+      px(1, 12, 2, 1, blueDark);
+      px(0, 13, 2, 2, k);
+      px(2, 13, 1, 1, skin);
+      px(0, 15, 3, 1, football);
+      px(1, 15, 1, 1, lace);
+
+      // Staff + hand
+      px(11, 11, 1, 12, brown);
+      px(12, 11, 1, 12, k);
+      px(10, 14, 1, 2, skin);
+      px(10, 13, 1, 1, k);
 
       function layout() {
         const w = app.renderer.width;
@@ -112,14 +182,21 @@ export function GuildCenterPixiScene() {
       }
 
       layout();
+      layoutFn = layout;
       app.renderer.on("resize", layout);
     }
 
-    mount();
+    mount().catch(() => {
+      // Keep dev surface resilient: failing to initialize scene should not crash the page.
+    });
 
     return () => {
       alive = false;
-      app.destroy(true, { children: true });
+      if (!initialized) return;
+      if (layoutFn) {
+        app.renderer.off("resize", layoutFn);
+      }
+      app.destroy();
     };
   }, []);
 
