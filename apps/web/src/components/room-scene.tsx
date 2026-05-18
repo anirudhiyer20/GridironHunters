@@ -58,6 +58,12 @@ export type RoomAvatarAppearance = {
   bodyFrame: "Balanced" | "Sturdy" | "Swift";
 };
 
+const HOTSPOT_SPRITE_BY_ID: Record<string, string> = {
+  chest: "/ui/house/party-chest.png",
+  "guild-door": "/ui/house/guild-door.png",
+  "house-door": "/ui/house/house-door.png",
+};
+
 export function RoomScene({
   avatarName,
   avatarAppearance,
@@ -179,6 +185,7 @@ export function RoomScene({
               hotspot.displayStyle === "door" &&
               hotspot.href === "/app/dungeon";
             const isAnimating = animatedDoorId === hotspot.id;
+            const hotspotSprite = HOTSPOT_SPRITE_BY_ID[hotspot.id];
 
             return (
               <button
@@ -189,7 +196,7 @@ export function RoomScene({
                   event.stopPropagation();
                   handleHotspotClick(hotspot);
                 }}
-                className={`room-hotspot room-hotspot--${hotspot.kind} room-hotspot--${hotspot.tone ?? "warm"} room-hotspot--${hotspot.displayStyle ?? (hotspot.kind === "door" ? "door" : "board")} ${isAnimatedDungeonDoor ? "room-hotspot--dungeon-door-animated" : ""} ${isAnimating ? "room-hotspot--animating" : ""} ${selectedHotspotId === hotspot.id ? "room-hotspot--selected" : ""}`}
+                className={`room-hotspot room-hotspot--${hotspot.kind} room-hotspot--${hotspot.tone ?? "warm"} room-hotspot--${hotspot.displayStyle ?? (hotspot.kind === "door" ? "door" : "board")} room-hotspot--id-${hotspot.id} ${isAnimatedDungeonDoor ? "room-hotspot--dungeon-door-animated" : ""} ${isAnimating ? "room-hotspot--animating" : ""} ${selectedHotspotId === hotspot.id ? "room-hotspot--selected" : ""}`}
                 style={{
                   left: `${hotspot.x}%`,
                   top: `${hotspot.y}%`,
@@ -216,6 +223,11 @@ export function RoomScene({
                       src="/ui/doors/door_frame.png"
                       alt=""
                     />
+                  </span>
+                ) : null}
+                {hotspotSprite ? (
+                  <span className="room-hotspot__sprite-asset" aria-hidden="true">
+                    <img src={hotspotSprite} alt="" />
                   </span>
                 ) : null}
                 <span className="room-hotspot__label">{hotspot.displayLabel ?? hotspot.label}</span>

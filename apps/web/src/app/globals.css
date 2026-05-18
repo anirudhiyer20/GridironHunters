@@ -1695,6 +1695,60 @@ a {
     rgba(15, 33, 22, 0.64);
 }
 
+.room-hotspot--id-house-door,
+.room-hotspot--id-guild-door,
+.room-hotspot--id-chest {
+  border: none;
+  border-radius: 0.2rem;
+  background-color: transparent;
+  box-shadow: none;
+  overflow: visible;
+}
+
+.room-hotspot--id-house-door::before,
+.room-hotspot--id-house-door::after,
+.room-hotspot--id-guild-door::before,
+.room-hotspot--id-guild-door::after,
+.room-hotspot--id-chest::before,
+.room-hotspot--id-chest::after {
+  display: none;
+}
+
+.room-hotspot--id-house-door {
+  background-image: none;
+}
+
+.room-hotspot--id-guild-door {
+  background-image: none;
+}
+
+.room-hotspot--id-chest {
+  background-image: none;
+}
+
+.room-hotspot--id-house-door .room-hotspot__label,
+.room-hotspot--id-guild-door .room-hotspot__label,
+.room-hotspot--id-chest .room-hotspot__label {
+  display: none;
+}
+
+.room-hotspot__sprite-asset {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  pointer-events: none;
+}
+
+.room-hotspot__sprite-asset img {
+  max-width: 100%;
+  max-height: 100%;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  image-rendering: pixelated;
+}
+
 .room-hotspot--dungeon-door-animated {
   border: none;
   border-radius: 0.2rem;
