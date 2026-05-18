@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useMemo, useState, type CSSProperties } from "react";
+import { useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
 
 export type RoomHotspotAction = {
   href: string;
@@ -88,7 +88,26 @@ export function RoomScene({
   );
   const [selectedHotspotId, setSelectedHotspotId] = useState<string | null>(null);
   const [avatarPosition, setAvatarPosition] = useState(initialAvatarPosition);
+  const [animatedDoorId, setAnimatedDoorId] = useState<string | null>(null);
+  const navigationTimerRef = useRef<number | null>(null);
   const router = useRouter();
+  const DUNGEON_DOOR_ANIMATION_MS = 1000;
+
+  useEffect(() => {
+    hotspots.forEach((hotspot) => {
+      if (hotspot.href) {
+        router.prefetch(hotspot.href);
+      }
+    });
+  }, [hotspots, router]);
+
+  useEffect(() => {
+    return () => {
+      if (navigationTimerRef.current !== null) {
+        window.clearTimeout(navigationTimerRef.current);
+      }
+    };
+  }, []);
 
   const selectedHotspot = hotspots.find((hotspot) => hotspot.id === selectedHotspotId) ?? null;
   const selectedActions = selectedHotspot?.actions?.length
@@ -109,6 +128,22 @@ export function RoomScene({
     moveAvatarTo(hotspot.x + hotspot.width / 2, hotspot.y + hotspot.height + 10);
 
     const interactionMode = hotspot.interactionMode ?? (hotspot.kind === "door" ? "direct" : "modal");
+    const isAnimatedDungeonDoor =
+      hotspot.id === "dungeon-door" &&
+      hotspot.displayStyle === "door" &&
+      hotspot.href === "/app/dungeon";
+
+    if (isAnimatedDungeonDoor && interactionMode === "direct" && hotspot.href) {
+      if (navigationTimerRef.current !== null) {
+        window.clearTimeout(navigationTimerRef.current);
+      }
+      setSelectedHotspotId(null);
+      setAnimatedDoorId(hotspot.id);
+      navigationTimerRef.current = window.setTimeout(() => {
+        router.push(hotspot.href as string);
+      }, DUNGEON_DOOR_ANIMATION_MS);
+      return;
+    }
 
     if (interactionMode === "direct" && hotspot.href) {
       setSelectedHotspotId(null);
@@ -138,29 +173,56 @@ export function RoomScene({
           ) : null}
 
         <div className="room-scene__playfield">
-          {hotspots.map((hotspot) => (
-            <button
-              key={hotspot.id}
-              type="button"
-              aria-label={hotspot.label}
-              onClick={(event) => {
-                event.stopPropagation();
-                handleHotspotClick(hotspot);
-              }}
-              className={`room-hotspot room-hotspot--${hotspot.kind} room-hotspot--${hotspot.tone ?? "warm"} room-hotspot--${hotspot.displayStyle ?? (hotspot.kind === "door" ? "door" : "board")} ${selectedHotspotId === hotspot.id ? "room-hotspot--selected" : ""}`}
-              style={{
-                left: `${hotspot.x}%`,
-                top: `${hotspot.y}%`,
-                width: `${hotspot.width}%`,
-                height: `${hotspot.height}%`,
-                "--room-hotspot-accent": hotspot.accentColor,
-                "--room-hotspot-accent-text": hotspot.accentTextColor,
-              } as CSSProperties}
-            >
-              <span className="room-hotspot__label">{hotspot.displayLabel ?? hotspot.label}</span>
-              <span className="room-hotspot__hover-label">{hotspot.label}</span>
-            </button>
-          ))}
+          {hotspots.map((hotspot) => {
+            const isAnimatedDungeonDoor =
+              hotspot.id === "dungeon-door" &&
+              hotspot.displayStyle === "door" &&
+              hotspot.href === "/app/dungeon";
+            const isAnimating = animatedDoorId === hotspot.id;
+
+            return (
+              <button
+                key={hotspot.id}
+                type="button"
+                aria-label={hotspot.label}
+                onClick={(event) => {
+                  event.stopPropagation();
+                  handleHotspotClick(hotspot);
+                }}
+                className={`room-hotspot room-hotspot--${hotspot.kind} room-hotspot--${hotspot.tone ?? "warm"} room-hotspot--${hotspot.displayStyle ?? (hotspot.kind === "door" ? "door" : "board")} ${isAnimatedDungeonDoor ? "room-hotspot--dungeon-door-animated" : ""} ${isAnimating ? "room-hotspot--animating" : ""} ${selectedHotspotId === hotspot.id ? "room-hotspot--selected" : ""}`}
+                style={{
+                  left: `${hotspot.x}%`,
+                  top: `${hotspot.y}%`,
+                  width: `${hotspot.width}%`,
+                  height: `${hotspot.height}%`,
+                  "--room-hotspot-accent": hotspot.accentColor,
+                  "--room-hotspot-accent-text": hotspot.accentTextColor,
+                } as CSSProperties}
+              >
+                {isAnimatedDungeonDoor ? (
+                  <span className="room-dungeon-door-asset" aria-hidden="true">
+                    <img
+                      className="room-dungeon-door-asset__layer room-dungeon-door-asset__layer--back"
+                      src="/ui/doors/dark_interior.png"
+                      alt=""
+                    />
+                    <img
+                      className={`room-dungeon-door-asset__layer room-dungeon-door-asset__layer--middle ${isAnimating ? "room-dungeon-door-asset__layer--lift" : ""}`}
+                      src={isAnimating ? "/ui/doors/door_with_spikes.png" : "/ui/doors/door_closed.png"}
+                      alt=""
+                    />
+                    <img
+                      className="room-dungeon-door-asset__layer room-dungeon-door-asset__layer--front"
+                      src="/ui/doors/door_frame.png"
+                      alt=""
+                    />
+                  </span>
+                ) : null}
+                <span className="room-hotspot__label">{hotspot.displayLabel ?? hotspot.label}</span>
+                <span className="room-hotspot__hover-label">{hotspot.label}</span>
+              </button>
+            );
+          })}
 
           <div
             className={`room-avatar ${avatarAppearance ? "room-avatar--custom" : ""} ${avatarAppearance ? `room-avatar--${avatarAppearance.bodyFrame.toLowerCase()}` : ""}`}

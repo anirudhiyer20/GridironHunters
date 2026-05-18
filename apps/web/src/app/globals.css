@@ -1695,6 +1695,110 @@ a {
     rgba(15, 33, 22, 0.64);
 }
 
+.room-hotspot--dungeon-door-animated {
+  border: none;
+  border-radius: 0.2rem;
+  background: transparent;
+  box-shadow: none;
+  overflow: visible;
+  filter: drop-shadow(0 12px 10px rgba(0, 0, 0, 0.32));
+}
+
+.room-hotspot--dungeon-door-animated::before,
+.room-hotspot--dungeon-door-animated::after {
+  display: none;
+}
+
+.room-dungeon-door-asset {
+  position: absolute;
+  inset: 0;
+  display: block;
+  pointer-events: none;
+}
+
+.room-dungeon-door-asset__layer {
+  position: absolute;
+  left: 50%;
+  image-rendering: pixelated;
+  user-select: none;
+}
+
+.room-dungeon-door-asset__layer--back {
+  z-index: 1;
+  top: 20%;
+  width: 82%;
+  transform: translateX(-50%);
+}
+
+.room-dungeon-door-asset__layer--middle {
+  z-index: 2;
+  top: 20%;
+  width: 82%;
+  transform: translateX(-50%) translateY(0);
+  will-change: transform;
+}
+
+.room-dungeon-door-asset__layer--front {
+  z-index: 3;
+  top: 10%;
+  width: 98%;
+  transform: translateX(-50%);
+}
+
+.room-dungeon-door-asset__layer--lift {
+  animation: room-dungeon-door-lift 1000ms forwards;
+}
+
+.room-hotspot--dungeon-door-animated .room-dungeon-door-asset {
+  isolation: isolate;
+}
+
+.room-hotspot--dungeon-door-animated.room-hotspot--animating .room-dungeon-door-asset__layer--middle {
+  /* Animation-only clip: keep the raised gate visually inside the frame opening. */
+  clip-path: inset(11% 10% 17% 10% round 0.75rem 0.75rem 0.15rem 0.15rem);
+}
+
+@keyframes room-dungeon-door-lift {
+  0% {
+    transform: translateX(-50%) translateY(0);
+  }
+  25% {
+    transform: translateX(-50%) translateY(-20px);
+  }
+  50% {
+    transform: translateX(-50%) translateY(-44px);
+  }
+  75% {
+    transform: translateX(-50%) translateY(-68px);
+  }
+  92% {
+    transform: translateX(-50%) translateY(-92px);
+  }
+  96% {
+    transform: translateX(-50%) translateY(-88px);
+  }
+  100% {
+    transform: translateX(-50%) translateY(-92px);
+  }
+}
+
+.room-hotspot--dungeon-door-animated .room-hotspot__label {
+  top: 64%;
+  left: 50%;
+  z-index: 4;
+  width: 82%;
+  transform: translate(-50%, -50%);
+  text-align: center;
+  color: #ffffff;
+  font-size: clamp(0.62rem, 1.25vw, 0.95rem);
+  font-weight: 900;
+  letter-spacing: 0.03em;
+  text-transform: none;
+  text-shadow:
+    0 2px 0 rgba(0, 0, 0, 0.82),
+    0 0 8px rgba(41, 57, 51, 0.48);
+}
+
 .room-hotspot--portal {
   border: none;
   border-radius: 0.16rem;

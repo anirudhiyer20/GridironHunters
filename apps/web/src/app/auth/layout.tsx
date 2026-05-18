@@ -8,9 +8,9 @@ export default async function AuthLayout({
   children: React.ReactNode;
 }>) {
   const supabase = await createClient();
-  const { data } = await supabase.auth.getClaims();
+  const { data } = await supabase.auth.getUser();
 
-  if (data?.claims) {
+  if (data?.user) {
     redirect("/app");
   }
 
