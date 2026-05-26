@@ -50,12 +50,36 @@
   filter: brightness(1.04);
 }
 
+.navDisabled {
+  opacity: 0.4;
+  filter: grayscale(0.45);
+  pointer-events: none;
+}
+
 .navLeft {
   left: 2%;
 }
 
 .navRight {
   right: 2%;
+}
+
+.matchupChip {
+  position: absolute;
+  left: 50%;
+  top: 4.5%;
+  z-index: 6;
+  transform: translateX(-50%);
+  border: 2px solid rgba(93, 97, 103, 0.82);
+  border-radius: 999px;
+  background: linear-gradient(180deg, #f2f5f8 0%, #d9e0e7 100%);
+  padding: 0.4rem 0.95rem;
+  color: #4f555e;
+  font-family: "Courier New", "Consolas", monospace;
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
 }
 
 .historTree {
@@ -76,6 +100,19 @@
   justify-items: center;
   color: #fff8e8;
   text-shadow: 0 1px 0 rgba(0, 0, 0, 0.55);
+  text-decoration: none;
+  cursor: pointer;
+  transition: transform 120ms ease, filter 120ms ease, box-shadow 120ms ease;
+}
+
+.historTree:hover,
+.historTree:focus-visible {
+  transform: translateY(-1px);
+  filter: brightness(1.05);
+  box-shadow:
+    0 0 0 2px rgba(242, 191, 94, 0.35),
+    0 10px 14px rgba(0, 0, 0, 0.24);
+  outline: none;
 }
 
 .historTree::before {
@@ -295,6 +332,163 @@
     1px -1px 0 rgba(0, 0, 0, 0.4),
     -1px 1px 0 rgba(0, 0, 0, 0.4),
     1px 1px 0 rgba(0, 0, 0, 0.4);
+}
+
+.scoreboardShell {
+  border: 2px solid rgba(103, 66, 44, 0.7);
+  border-radius: 0.7rem;
+  background: linear-gradient(180deg, rgba(28, 18, 12, 0.9) 0%, rgba(15, 10, 7, 0.94) 100%);
+  padding: 0.8rem 0.95rem;
+}
+
+.scoreboardHeader {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.6rem;
+}
+
+.scoreboardTitle {
+  margin: 0;
+  font-family: "Courier New", "Consolas", monospace;
+  font-size: 0.85rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #f1e0bc;
+}
+
+.scoreboardWeekNav {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+}
+
+.scoreboardWeekButton {
+  border: 1px solid rgba(154, 116, 73, 0.62);
+  border-radius: 999px;
+  background: rgba(32, 22, 14, 0.9);
+  padding: 0.24rem 0.62rem;
+  font-family: "Courier New", "Consolas", monospace;
+  font-size: 0.66rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #f5e8cf;
+}
+
+.scoreboardWeekButtonDisabled {
+  opacity: 0.38;
+  pointer-events: none;
+}
+
+.scoreboardWeekLabel {
+  font-family: "Courier New", "Consolas", monospace;
+  font-size: 0.68rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #d6c6a2;
+}
+
+.scoreboardRows {
+  margin-top: 0.68rem;
+  display: grid;
+  gap: 0.42rem;
+}
+
+.scoreboardRow {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto auto auto minmax(0, 1fr);
+  align-items: center;
+  gap: 0.45rem;
+  border: 1px solid rgba(108, 74, 46, 0.6);
+  border-radius: 0.4rem;
+  background: rgba(24, 16, 11, 0.84);
+  padding: 0.35rem 0.48rem;
+}
+
+.scoreboardRowUser {
+  border-color: rgba(214, 174, 96, 0.72);
+}
+
+.scoreboardRowSelected {
+  box-shadow: inset 0 0 0 1px rgba(120, 184, 236, 0.56);
+}
+
+.scoreboardStatus {
+  min-width: 4.7rem;
+  text-align: center;
+  border: 1px solid rgba(121, 92, 55, 0.64);
+  border-radius: 999px;
+  background: rgba(44, 31, 20, 0.8);
+  padding: 0.12rem 0.45rem;
+  font-family: "Courier New", "Consolas", monospace;
+  font-size: 0.61rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #dec99d;
+}
+
+.scoreboardTeam {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-family: "Trebuchet MS", "Verdana", "Segoe UI", sans-serif;
+  font-size: 0.83rem;
+  font-weight: 600;
+  color: #f2e6ce;
+}
+
+.scoreboardScore {
+  min-width: 3.6rem;
+  text-align: center;
+  font-family: "Courier New", "Consolas", monospace;
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: #f5f6f8;
+}
+
+.scoreboardVs {
+  font-family: "Courier New", "Consolas", monospace;
+  font-size: 0.65rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #b9a988;
+}
+
+.scoreboardModal {
+  position: fixed;
+  inset: 0;
+  z-index: 80;
+  display: grid;
+  place-items: center;
+  padding: 1.2rem;
+}
+
+.scoreboardModalBackdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(6, 4, 3, 0.72);
+  backdrop-filter: blur(2px);
+}
+
+.scoreboardModalPanel {
+  position: relative;
+  z-index: 1;
+  width: min(68rem, calc(100vw - 2rem));
+  max-height: calc(100vh - 2rem);
+  overflow: auto;
+}
+
+.scoreboardClose {
+  border: 1px solid rgba(170, 133, 84, 0.7);
+  border-radius: 999px;
+  background: rgba(34, 24, 16, 0.92);
+  padding: 0.22rem 0.62rem;
+  font-family: "Courier New", "Consolas", monospace;
+  font-size: 0.66rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #f4e6cb;
 }
 
 @media (max-width: 920px) {

@@ -10,6 +10,8 @@ import styles from "./arena-stage.module.css";
 type ArenaPageProps = {
   searchParams: Promise<{
     opponent?: string;
+    week?: string;
+    scoreboard?: string;
   }>;
 };
 
@@ -21,12 +23,31 @@ function buildDiamondColors(lineup: ArenaLineupEntry[]) {
   return lineup.map((entry) => (entry.tribe ? TRIBE_COLORS[entry.tribe].background : "#f3f5fb"));
 }
 
-function toMatchupHref(opponentId: string) {
-  return `/app/arena?opponent=${encodeURIComponent(opponentId)}`;
+function toArenaHref({
+  opponentId,
+  weekNumber,
+  scoreboardOpen = false,
+}: {
+  opponentId?: string | null;
+  weekNumber?: number | null;
+  scoreboardOpen?: boolean;
+}) {
+  const query = new URLSearchParams();
+  if (opponentId) {
+    query.set("opponent", opponentId);
+  }
+  if (weekNumber && Number.isFinite(weekNumber)) {
+    query.set("week", String(weekNumber));
+  }
+  if (scoreboardOpen) {
+    query.set("scoreboard", "1");
+  }
+  const serialized = query.toString();
+  return serialized ? `/app/arena?${serialized}` : "/app/arena";
 }
 
-function toDetailsHref(opponentId: string) {
-  return `/app/arena/matchup?opponent=${encodeURIComponent(opponentId)}`;
+function toDetailsHref(opponentId: string, weekNumber: number) {
+  return `/app/arena/matchup?opponent=${encodeURIComponent(opponentId)}&week=${encodeURIComponent(String(weekNumber))}`;
 }
 
 function FighterCard({
@@ -78,7 +99,10 @@ function FighterCard({
 
 export default async function ArenaPage({ searchParams }: ArenaPageProps) {
   const params = await searchParams;
-  const context = await getArenaViewContext(params.opponent);
+  const parsedWeek = params.week ? Number.parseInt(params.week, 10) : null;
+  const requestedWeekNumber = parsedWeek && Number.isFinite(parsedWeek) ? parsedWeek : null;
+  const isScoreboardOpen = params.scoreboard === "1";
+  const context = await getArenaViewContext(params.opponent, requestedWeekNumber);
 
   if (!context) {
     return (
@@ -90,27 +114,68 @@ export default async function ArenaPage({ searchParams }: ArenaPageProps) {
     );
   }
 
+  const selectedWeek = context.selectedScoreboardWeekNumber;
+  const selectedWeekMatchups =
+    context.scoreboardWeeks.find((week) => week.weekNumber === selectedWeek)?.matchups ?? [];
+  const closeScoreboardHref = toArenaHref({
+    opponentId: context.selectedOpponentId,
+    weekNumber: selectedWeek,
+    scoreboardOpen: false,
+  });
+
   return (
     <PageShell eyebrow="Arena / Matchups" title="Arena">
       <section className={styles.stage}>
-        <Link
-          href={toMatchupHref(context.prevOpponentId)}
-          className={`${styles.nav} ${styles.navLeft}`}
-          aria-label="View previous matchup"
-        >
-          ‹
-        </Link>
-        <Link
-          href={toMatchupHref(context.nextOpponentId)}
-          className={`${styles.nav} ${styles.navRight}`}
-          aria-label="View next matchup"
-        >
-          ›
-        </Link>
+        {context.prevOpponentId ? (
+          <Link
+            href={toArenaHref({
+              opponentId: context.prevOpponentId,
+              weekNumber: selectedWeek,
+              scoreboardOpen: isScoreboardOpen,
+            })}
+            className={`${styles.nav} ${styles.navLeft}`}
+            aria-label="View previous matchup"
+          >
+            {"<"}
+          </Link>
+        ) : (
+          <span className={`${styles.nav} ${styles.navLeft} ${styles.navDisabled}`} aria-hidden="true">
+            {"<"}
+          </span>
+        )}
+        {context.nextOpponentId ? (
+          <Link
+            href={toArenaHref({
+              opponentId: context.nextOpponentId,
+              weekNumber: selectedWeek,
+              scoreboardOpen: isScoreboardOpen,
+            })}
+            className={`${styles.nav} ${styles.navRight}`}
+            aria-label="View next matchup"
+          >
+            {">"}
+          </Link>
+        ) : (
+          <span className={`${styles.nav} ${styles.navRight} ${styles.navDisabled}`} aria-hidden="true">
+            {">"}
+          </span>
+        )}
 
-        <div className={styles.historTree} aria-hidden="true">
-          <p className={styles.historTreeTitle}>Histor-Tree</p>
+        <div className={styles.matchupChip} aria-label={`Matchup ${context.matchupIndex} of ${context.matchupCount}`}>
+          Week {context.currentWeekNumber} - Matchup {context.matchupIndex} / {context.matchupCount}
         </div>
+
+        <Link
+          href={toArenaHref({
+            opponentId: context.selectedOpponentId,
+            weekNumber: selectedWeek,
+            scoreboardOpen: true,
+          })}
+          className={styles.historTree}
+          aria-label="Open Histor-Tree scoreboard"
+        >
+          <p className={styles.historTreeTitle}>Histor-Tree</p>
+        </Link>
 
         <Link href="/app" className={styles.houseDoor} aria-label="Return to House">
           <span className={styles.houseDoorLabel}>House</span>
@@ -122,7 +187,11 @@ export default async function ArenaPage({ searchParams }: ArenaPageProps) {
             score={context.userFighter.actualTotal}
             lineup={context.userFighter.lineup}
             appearance={context.userFighter.appearance}
-            detailsHref={toDetailsHref(context.selectedOpponentId)}
+            detailsHref={
+              context.selectedUserOpponentId
+                ? toDetailsHref(context.selectedUserOpponentId, selectedWeek)
+                : undefined
+            }
           />
           <div className={styles.versus}>VS</div>
           <FighterCard
@@ -134,11 +203,72 @@ export default async function ArenaPage({ searchParams }: ArenaPageProps) {
         </div>
       </section>
 
-      <div className="mt-4 flex items-center justify-center">
-        <p className="rounded-full border border-white/15 bg-black/25 px-4 py-2 text-xs uppercase tracking-[0.18em] text-[#f4e6c8]">
-          Matchup {context.matchupIndex} of {context.matchupCount}
-        </p>
-      </div>
+      {isScoreboardOpen ? (
+        <div className={styles.scoreboardModal}>
+          <Link href={closeScoreboardHref} className={styles.scoreboardModalBackdrop} aria-label="Close scoreboard" />
+          <section className={`${styles.scoreboardShell} ${styles.scoreboardModalPanel}`}>
+            <div className={styles.scoreboardHeader}>
+              <p className={styles.scoreboardTitle}>Histor-Tree Scoreboard</p>
+              <div className={styles.scoreboardWeekNav}>
+                {selectedWeek > 1 ? (
+                  <Link
+                    href={toArenaHref({
+                      opponentId: context.selectedOpponentId,
+                      weekNumber: selectedWeek - 1,
+                      scoreboardOpen: true,
+                    })}
+                    className={styles.scoreboardWeekButton}
+                  >
+                    Prev Week
+                  </Link>
+                ) : (
+                  <span className={`${styles.scoreboardWeekButton} ${styles.scoreboardWeekButtonDisabled}`}>Prev Week</span>
+                )}
+                <span className={styles.scoreboardWeekLabel}>
+                  Week {selectedWeek} / {context.seasonWeekCount}
+                </span>
+                {selectedWeek < context.seasonWeekCount ? (
+                  <Link
+                    href={toArenaHref({
+                      opponentId: context.selectedOpponentId,
+                      weekNumber: selectedWeek + 1,
+                      scoreboardOpen: true,
+                    })}
+                    className={styles.scoreboardWeekButton}
+                  >
+                    Next Week
+                  </Link>
+                ) : (
+                  <span className={`${styles.scoreboardWeekButton} ${styles.scoreboardWeekButtonDisabled}`}>Next Week</span>
+                )}
+                <Link href={closeScoreboardHref} className={styles.scoreboardClose}>
+                  Close
+                </Link>
+              </div>
+            </div>
+
+            <div className={styles.scoreboardRows}>
+              {selectedWeekMatchups.map((matchup) => (
+                <div
+                  key={`${selectedWeek}-${matchup.leftParticipantId}-${matchup.rightParticipantId}`}
+                  className={`${styles.scoreboardRow} ${matchup.isUserMatchup ? styles.scoreboardRowUser : ""} ${matchup.isSelectedMatchup ? styles.scoreboardRowSelected : ""}`}
+                >
+                  <span className={styles.scoreboardStatus}>{matchup.status.toUpperCase()}</span>
+                  <span className={styles.scoreboardTeam}>{matchup.leftName}</span>
+                  <span className={styles.scoreboardScore}>
+                    {matchup.leftScore === null ? "--" : formatScore(matchup.leftScore)}
+                  </span>
+                  <span className={styles.scoreboardVs}>vs</span>
+                  <span className={styles.scoreboardScore}>
+                    {matchup.rightScore === null ? "--" : formatScore(matchup.rightScore)}
+                  </span>
+                  <span className={styles.scoreboardTeam}>{matchup.rightName}</span>
+                </div>
+              ))}
+            </div>
+          </section>
+        </div>
+      ) : null}
     </PageShell>
   );
 }

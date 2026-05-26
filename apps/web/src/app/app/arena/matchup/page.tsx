@@ -9,6 +9,7 @@ import styles from "../arena-matchup.module.css";
 type ArenaMatchupPageProps = {
   searchParams: Promise<{
     opponent?: string;
+    week?: string;
   }>;
 };
 
@@ -82,7 +83,9 @@ function SlotCard({
 
 export default async function ArenaMatchupPage({ searchParams }: ArenaMatchupPageProps) {
   const params = await searchParams;
-  const context = await getArenaViewContext(params.opponent);
+  const parsedWeek = params.week ? Number.parseInt(params.week, 10) : null;
+  const requestedWeekNumber = parsedWeek && Number.isFinite(parsedWeek) ? parsedWeek : null;
+  const context = await getArenaViewContext(params.opponent, requestedWeekNumber);
 
   if (!context) {
     return (
@@ -98,7 +101,7 @@ export default async function ArenaMatchupPage({ searchParams }: ArenaMatchupPag
     <PageShell eyebrow="Arena / Matchup Card" title="Lineup Card">
       <section className={styles.shell}>
         <Link
-          href={`/app/arena?opponent=${encodeURIComponent(context.selectedOpponentId)}`}
+          href={`/app/arena?opponent=${encodeURIComponent(context.selectedOpponentId)}&week=${encodeURIComponent(String(context.selectedScoreboardWeekNumber))}`}
           className={styles.close}
           aria-label="Close matchup card"
         >

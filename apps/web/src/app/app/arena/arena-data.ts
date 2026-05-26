@@ -57,6 +57,16 @@ type UserCharacterRow = {
   pose: string | null;
 };
 
+type LeagueMatchupRow = {
+  week_number: number;
+  matchup_index: number;
+  left_participant_id: string;
+  right_participant_id: string;
+  status: "scheduled" | "live" | "final";
+  left_score: number | null;
+  right_score: number | null;
+};
+
 export type ArenaLineupEntry = {
   slotKey: ArenaSlotKey;
   slotLabel: string;
@@ -80,13 +90,38 @@ export type ArenaFighter = {
 export type ArenaViewContext = {
   leagueId: string;
   leagueName: string;
+  currentWeekNumber: number;
+  selectedScoreboardWeekNumber: number;
+  seasonWeekCount: number;
   userFighter: ArenaFighter;
   opponentFighter: ArenaFighter;
+  userParticipantId: string;
+  selectedUserOpponentId: string | null;
+  isSelectedMatchupUserMatchup: boolean;
   selectedOpponentId: string;
-  prevOpponentId: string;
-  nextOpponentId: string;
+  prevOpponentId: string | null;
+  nextOpponentId: string | null;
   matchupCount: number;
   matchupIndex: number;
+  scoreboardWeeks: ArenaScoreboardWeek[];
+};
+
+export type ArenaScoreboardMatchup = {
+  leftParticipantId: string;
+  leftName: string;
+  rightParticipantId: string;
+  rightName: string;
+  leftScore: number | null;
+  rightScore: number | null;
+  status: "scheduled" | "live" | "final";
+  isUserMatchup: boolean;
+  isSelectedMatchup: boolean;
+};
+
+export type ArenaScoreboardWeek = {
+  weekNumber: number;
+  status: "past" | "current" | "future";
+  matchups: ArenaScoreboardMatchup[];
 };
 
 function buildEmptyLineup(): ArenaLineupEntry[] {
@@ -144,8 +179,89 @@ function formatFallbackName(participant: LeagueParticipantRow) {
   return participant.display_name || "Guildmate";
 }
 
+type WeekMatchup = {
+  leftParticipantId: string;
+  rightParticipantId: string;
+};
+
+function buildRoundRobinSchedule(participants: LeagueParticipantRow[]): WeekMatchup[][] {
+  if (participants.length < 2) {
+    return [];
+  }
+
+  const BYE = "__bye__";
+  const initialIds = participants.map((participant) => participant.id);
+  const ids = initialIds.length % 2 === 0 ? initialIds : [...initialIds, BYE];
+  const teamCount = ids.length;
+  const weekCount = teamCount - 1;
+  const schedule: WeekMatchup[][] = [];
+  let rotation = ids.slice();
+
+  for (let weekIndex = 0; weekIndex < weekCount; weekIndex += 1) {
+    const weekMatchups: WeekMatchup[] = [];
+    for (let pairIndex = 0; pairIndex < teamCount / 2; pairIndex += 1) {
+      const left = rotation[pairIndex];
+      const right = rotation[teamCount - 1 - pairIndex];
+      if (left !== BYE && right !== BYE) {
+        weekMatchups.push({
+          leftParticipantId: left,
+          rightParticipantId: right,
+        });
+      }
+    }
+    schedule.push(weekMatchups);
+    rotation = [rotation[0], rotation[teamCount - 1], ...rotation.slice(1, teamCount - 1)];
+  }
+
+  return schedule;
+}
+
+function wrapsToSeasonWeek(currentWeekNumber: number, seasonWeekCount: number) {
+  if (seasonWeekCount <= 0) {
+    return 1;
+  }
+  return ((currentWeekNumber - 1) % seasonWeekCount) + 1;
+}
+
+function toFallbackMatchupRows(schedule: WeekMatchup[][]): LeagueMatchupRow[] {
+  const rows: LeagueMatchupRow[] = [];
+  schedule.forEach((weekMatchups, weekIndex) => {
+    weekMatchups.forEach((matchup, matchupIndex) => {
+      rows.push({
+        week_number: weekIndex + 1,
+        matchup_index: matchupIndex + 1,
+        left_participant_id: matchup.leftParticipantId,
+        right_participant_id: matchup.rightParticipantId,
+        status: "scheduled",
+        left_score: null,
+        right_score: null,
+      });
+    });
+  });
+  return rows;
+}
+
+function groupMatchupsByWeek(rows: LeagueMatchupRow[]) {
+  const byWeek = new Map<number, LeagueMatchupRow[]>();
+  for (const row of rows) {
+    const existing = byWeek.get(row.week_number);
+    if (existing) {
+      existing.push(row);
+    } else {
+      byWeek.set(row.week_number, [row]);
+    }
+  }
+
+  for (const weekRows of byWeek.values()) {
+    weekRows.sort((a, b) => a.matchup_index - b.matchup_index);
+  }
+
+  return byWeek;
+}
+
 export async function getArenaViewContext(
   requestedOpponentId: string | null | undefined,
+  requestedWeekNumber: number | null | undefined,
 ): Promise<ArenaViewContext | null> {
   const supabase = await createClient();
   const {
@@ -173,6 +289,16 @@ export async function getArenaViewContext(
     return null;
   }
 
+  const { data: latestGrantRow } = await supabase
+    .from("battle_key_grants")
+    .select("week_number")
+    .eq("league_id", league.id)
+    .order("week_number", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  const currentWeekNumber = latestGrantRow?.week_number ?? 1;
+
   const { data: participantRows } = await supabase
     .from("league_participants")
     .select("id, user_id, participant_type, display_name")
@@ -186,18 +312,70 @@ export async function getArenaViewContext(
     return null;
   }
 
-  const opponents = participants.filter((participant) => participant.id !== userParticipant.id);
-  if (opponents.length === 0) {
+  await supabase.rpc("ensure_league_matchups", { p_league_id: league.id });
+
+  const { data: persistedMatchupRows } = await supabase
+    .from("league_matchups")
+    .select(
+      "week_number, matchup_index, left_participant_id, right_participant_id, status, left_score, right_score",
+    )
+    .eq("league_id", league.id)
+    .order("week_number", { ascending: true })
+    .order("matchup_index", { ascending: true });
+
+  const persistedRows = (persistedMatchupRows ?? []) as LeagueMatchupRow[];
+  const fallbackRows = toFallbackMatchupRows(buildRoundRobinSchedule(participants));
+  const matchupRows = persistedRows.length ? persistedRows : fallbackRows;
+
+  const seasonWeekCount =
+    matchupRows.reduce((maxWeek, row) => Math.max(maxWeek, row.week_number), 0) || 1;
+  const matchupsByWeek = groupMatchupsByWeek(matchupRows);
+  const seasonWeekNumber = wrapsToSeasonWeek(currentWeekNumber, seasonWeekCount);
+  const selectedScoreboardWeekNumber =
+    requestedWeekNumber && Number.isInteger(requestedWeekNumber) && requestedWeekNumber >= 1
+      ? Math.min(requestedWeekNumber, seasonWeekCount)
+      : seasonWeekNumber;
+  const weekMatchups = matchupsByWeek.get(seasonWeekNumber) ?? [];
+  if (!weekMatchups.length) {
     return null;
   }
 
-  const selectedOpponent =
-    opponents.find((participant) => participant.id === requestedOpponentId) ?? opponents[0];
-  const opponentIndex = opponents.findIndex((participant) => participant.id === selectedOpponent.id);
-  const prevOpponent = opponents[(opponentIndex - 1 + opponents.length) % opponents.length];
-  const nextOpponent = opponents[(opponentIndex + 1) % opponents.length];
+  const userMatchup =
+    weekMatchups.find(
+      (matchup) =>
+        matchup.left_participant_id === userParticipant.id ||
+        matchup.right_participant_id === userParticipant.id,
+    ) ?? null;
 
-  const selectedParticipantIds = [userParticipant.id, selectedOpponent.id];
+  const selectedMatchup =
+    (requestedOpponentId
+      ? weekMatchups.find(
+          (matchup) =>
+            matchup.left_participant_id === requestedOpponentId ||
+            matchup.right_participant_id === requestedOpponentId,
+        )
+      : null) ??
+    userMatchup ??
+    weekMatchups[0];
+
+  const matchupIndex = weekMatchups.findIndex(
+    (matchup) =>
+      matchup.left_participant_id === selectedMatchup.left_participant_id &&
+      matchup.right_participant_id === selectedMatchup.right_participant_id,
+  );
+
+  const prevMatchup = matchupIndex > 0 ? weekMatchups[matchupIndex - 1] : null;
+  const nextMatchup = matchupIndex < weekMatchups.length - 1 ? weekMatchups[matchupIndex + 1] : null;
+
+  const participantById = new Map(participants.map((participant) => [participant.id, participant]));
+  const leftParticipant = participantById.get(selectedMatchup.left_participant_id);
+  const rightParticipant = participantById.get(selectedMatchup.right_participant_id);
+
+  if (!leftParticipant || !rightParticipant) {
+    return null;
+  }
+
+  const selectedParticipantIds = [leftParticipant.id, rightParticipant.id];
   const { data: assignmentRows } = await supabase
     .from("party_assignments")
     .select("participant_id, slot_key, draft_pick_id")
@@ -227,7 +405,7 @@ export async function getArenaViewContext(
   const players = (playerRows ?? []) as PlayerRow[];
   const playersById = new Map(players.map((player) => [player.id, player]));
 
-  const characterUserIds = [userParticipant.user_id, selectedOpponent.user_id].filter(
+  const characterUserIds = [leftParticipant.user_id, rightParticipant.user_id].filter(
     (userId): userId is string => Boolean(userId),
   );
   const { data: characterRows } = characterUserIds.length
@@ -242,39 +420,102 @@ export async function getArenaViewContext(
     ((characterRows ?? []) as UserCharacterRow[]).map((row) => [row.user_id, row]),
   );
 
-  const userLineup = buildFighterLineup(userParticipant.id, assignments, picksById, playersById);
-  const opponentLineup = buildFighterLineup(selectedOpponent.id, assignments, picksById, playersById);
+  const userLineup = buildFighterLineup(leftParticipant.id, assignments, picksById, playersById);
+  const opponentLineup = buildFighterLineup(rightParticipant.id, assignments, picksById, playersById);
 
   const userCharacter = normalizeCharacter(
-    userParticipant.user_id ? charactersByUserId.get(userParticipant.user_id) ?? null : null,
+    leftParticipant.user_id ? charactersByUserId.get(leftParticipant.user_id) ?? null : null,
   );
   const opponentCharacter = normalizeCharacter(
-    selectedOpponent.user_id ? charactersByUserId.get(selectedOpponent.user_id) ?? null : null,
+    rightParticipant.user_id ? charactersByUserId.get(rightParticipant.user_id) ?? null : null,
   );
+
+  const isSelectedMatchupUserMatchup =
+    selectedMatchup.left_participant_id === userParticipant.id ||
+    selectedMatchup.right_participant_id === userParticipant.id;
+  const selectedUserOpponentId = isSelectedMatchupUserMatchup
+    ? selectedMatchup.left_participant_id === userParticipant.id
+      ? selectedMatchup.right_participant_id
+      : selectedMatchup.left_participant_id
+      : null;
+
+  const scoreboardWeeks: ArenaScoreboardWeek[] = Array.from({ length: seasonWeekCount }, (_, index) => {
+    const weekNumber = index + 1;
+    const scheduleWeek = matchupsByWeek.get(weekNumber) ?? [];
+    const weekStatus: ArenaScoreboardWeek["status"] =
+      weekNumber < seasonWeekNumber ? "past" : weekNumber === seasonWeekNumber ? "current" : "future";
+
+    return {
+      weekNumber,
+      status: weekStatus,
+      matchups: scheduleWeek.map((matchup) => {
+        const left = participantById.get(matchup.left_participant_id);
+        const right = participantById.get(matchup.right_participant_id);
+        const isSelectedMatchup =
+          weekNumber === seasonWeekNumber &&
+          matchup.left_participant_id === selectedMatchup.left_participant_id &&
+          matchup.right_participant_id === selectedMatchup.right_participant_id;
+
+        const leftScoreFromRow = matchup.left_score;
+        const rightScoreFromRow = matchup.right_score;
+
+        return {
+          leftParticipantId: matchup.left_participant_id,
+          leftName: left ? formatFallbackName(left) : "Unknown House",
+          rightParticipantId: matchup.right_participant_id,
+          rightName: right ? formatFallbackName(right) : "Unknown House",
+          leftScore:
+            isSelectedMatchup && leftParticipant.id === matchup.left_participant_id
+              ? sumLineupScore(userLineup, "actualScore")
+              : isSelectedMatchup && rightParticipant.id === matchup.left_participant_id
+                ? sumLineupScore(opponentLineup, "actualScore")
+                : leftScoreFromRow,
+          rightScore:
+            isSelectedMatchup && leftParticipant.id === matchup.right_participant_id
+              ? sumLineupScore(userLineup, "actualScore")
+              : isSelectedMatchup && rightParticipant.id === matchup.right_participant_id
+                ? sumLineupScore(opponentLineup, "actualScore")
+                : rightScoreFromRow,
+          status: matchup.status,
+          isUserMatchup:
+            matchup.left_participant_id === userParticipant.id ||
+            matchup.right_participant_id === userParticipant.id,
+          isSelectedMatchup,
+        } satisfies ArenaScoreboardMatchup;
+      }),
+    };
+  });
 
   return {
     leagueId: league.id,
     leagueName: league.name,
+    currentWeekNumber: seasonWeekNumber,
+    selectedScoreboardWeekNumber,
+    seasonWeekCount,
     userFighter: {
-      participantId: userParticipant.id,
-      displayName: formatFallbackName(userParticipant),
+      participantId: leftParticipant.id,
+      displayName: formatFallbackName(leftParticipant),
       appearance: getRoomAvatarAppearance(userCharacter),
       lineup: userLineup.length ? userLineup : buildEmptyLineup(),
       actualTotal: sumLineupScore(userLineup, "actualScore"),
       projectedTotal: sumLineupScore(userLineup, "projectedScore"),
     },
     opponentFighter: {
-      participantId: selectedOpponent.id,
-      displayName: formatFallbackName(selectedOpponent),
+      participantId: rightParticipant.id,
+      displayName: formatFallbackName(rightParticipant),
       appearance: getRoomAvatarAppearance(opponentCharacter),
       lineup: opponentLineup.length ? opponentLineup : buildEmptyLineup(),
       actualTotal: sumLineupScore(opponentLineup, "actualScore"),
       projectedTotal: sumLineupScore(opponentLineup, "projectedScore"),
     },
-    selectedOpponentId: selectedOpponent.id,
-    prevOpponentId: prevOpponent.id,
-    nextOpponentId: nextOpponent.id,
-    matchupCount: opponents.length,
-    matchupIndex: opponentIndex + 1,
+    userParticipantId: userParticipant.id,
+    selectedUserOpponentId,
+    isSelectedMatchupUserMatchup,
+    selectedOpponentId: selectedMatchup.left_participant_id,
+    prevOpponentId: prevMatchup?.left_participant_id ?? null,
+    nextOpponentId: nextMatchup?.left_participant_id ?? null,
+    matchupCount: weekMatchups.length,
+    matchupIndex: matchupIndex + 1,
+    scoreboardWeeks,
   };
 }
